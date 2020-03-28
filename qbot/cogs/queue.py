@@ -73,15 +73,20 @@ class QueueCog(commands.Cog):
         queue.bursted = queue.active  # Save bursted queue for player draft
         queue.active = []  # Reset the player queue to empty
         user_mentions = ''.join(user.mention for user in queue.bursted)
-        popflash_cog = self.bot.get_cog('PopflashCog')
 
-        if popflash_cog:
-            popflash_url = popflash_cog.get_popflash_url(guild)
-            description = f'[Join the PopFlash lobby here]({popflash_url})'
+        team_size = 5
+        team_one, team_two = [queue.bursted[i * team_size:(i + 1) * team_size] for i in range((len(queue.bursted) + team_size - 1) // team_size )]
+
+        response = apiHelper.request_server('base_url', 'api_key', team_one, team_two)
+        response = response.json()
+
+        if response.status == 200:
+            description = f'[Join the server here](steam://connect/{response.ip}:{response.port}) - `connect {response.ip}:{response.port}`'
+            pop_embed = discord.Embed(title='Queue has filled up!', description=description, color=self.color)
         else:
-            description = ''
+            description = 'Sorry! Looks like there wasn\'t a server available at this time. Please try again later.'
+            pop_embed = discord.Embed(title='There was a problem!', description=description, color=self.color), user_mentions
 
-        pop_embed = discord.Embed(title='Queue has filled up!', description=description, color=self.color)
         return pop_embed, user_mentions
 
     @commands.command(brief='Join the queue')
