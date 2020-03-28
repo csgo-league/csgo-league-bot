@@ -15,10 +15,10 @@ def run(discord_token, api_base_url, api_key, dbl_token=None, donate_url=None):
     bot.add_cog(cogs.CacherCog(bot, DATA_PATH))
     bot.add_cog(cogs.ConsoleCog(bot))
     bot.add_cog(cogs.HelpCog(bot, BOT_COLOR))
+    bot.add_cog(cogs.AuthCog(bot, api_helper, BOT_COLOR))
     bot.add_cog(cogs.QueueCog(bot, api_helper, BOT_COLOR))
     bot.add_cog(cogs.TeamDraftCog(bot, BOT_COLOR))
     bot.add_cog(cogs.MapDraftCog(bot, BOT_COLOR))
-    bot.add_cog(cogs.AuthCog(bot, api_helper, BOT_COLOR))
 
     if dbl_token:
         bot.add_cog(cogs.DblCog(bot, dbl_token))
