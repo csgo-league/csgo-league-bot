@@ -39,9 +39,11 @@ import requests
 BASE_URL = 'base_url'
 API_KEY = 'api_key'
 
+
 def generate_code(discord_id):
     url = f'{BASE_URL}/discord/generate/{discord_id}'
     return requests.get(url=url, headers={'authentication': API_KEY})
+
 
 def is_linked(discord_id):
     url = f'{BASE_URL}/discord/check/{discord_id}'
@@ -49,13 +51,16 @@ def is_linked(discord_id):
     response = response.json()
     return response.linked
 
+
 def update_discord_name(discord_id, discord_name):
     url = f'{BASE_URL}/discord/update/{discord_id}'
     return requests.post(url=url, headers={'authentication': API_KEY}, data={'discord_name': discord_name})
 
+
 def get_player(discord_id):
     url = f'{BASE_URL}/player/discord/{discord_id}'
     return requests.get(url=url, headers={'authentication': API_KEY})
+
 
 def start_match(team_one, team_two):
     url = f'{BASE_URL}/match/start'
