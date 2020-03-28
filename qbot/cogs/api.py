@@ -57,6 +57,6 @@ def request_server(base_url, api_key, team_one, team_two):
 
 # Can't run as main right now because of module comflicts
 # API_KEY = 'XXXXXXXX'
-# r = request_server('http://pugs.viquity.pro', API_KEY, {"76561198054402080": "Shane"}, {"76561198028510846": "B3none"})
+# r = request_server('http://pugs.viquity.pro', API_KEY, {89918424687349760: "Shane"}, {214053860119937024: "B3none"})
 # print(r)
 # print(r.json())
