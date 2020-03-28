@@ -75,22 +75,7 @@ class QueueCog(commands.Cog):
         queue.bursted = queue.active  # Save bursted queue for player draft
         queue.active = []  # Reset the player queue to empty
         user_mentions = ''.join(user.mention for user in queue.bursted)
-
-        team_size = queue.capacity // 2
-        shuffled_players = queue.bursted.copy()
-        random.shuffle(shuffled_players)
-        # team_one = shuffled_players[:team_size + 1]
-        # team_two = shuffled_players[team_size + 1:]
-        team_one, team_two = [shuffled_players[i * team_size:(i + 1) * team_size] for i in range((len(shuffled_players) + team_size - 1) // team_size)]
-        match = self.api_helper.start_match(team_one, team_two)
-
-        if match:
-            description = f'{match.connect_url} - `{match.connect_command}`'
-            pop_embed = discord.Embed(title='Queue has filled up!', description=description, color=self.color)
-        else:
-            description = 'Sorry! Looks like there wasn\'t a server available at this time. Please try again later.'
-            pop_embed = discord.Embed(title='There was a problem!', description=description, color=self.color)
-
+        pop_embed = discord.Embed(title='Queue has filled up!', description='Fetching server...')
         return pop_embed, user_mentions
 
     @commands.command(brief='Join the queue')
@@ -116,8 +101,25 @@ class QueueCog(commands.Cog):
 
         # Check and burst queue if full
         if len(queue.active) == queue.capacity:
-            embed, user_mentions = self.burst_queue(ctx.guild)
-            await ctx.send(user_mentions, embed=embed)
+            pop_embed, user_mentions = self.burst_queue(ctx.guild)
+            burst_message = await ctx.send(user_mentions, embed=pop_embed)
+            team_size = queue.capacity // 2
+            shuffled_players = queue.bursted.copy()
+            random.shuffle(shuffled_players)
+            # team_one = shuffled_players[:team_size]
+            # team_two = shuffled_players[team_size:]
+            team_one, team_two = [shuffled_players[i * team_size:(i + 1) * team_size] for i in range((len(shuffled_players) + team_size - 1) // team_size)]
+            match = self.api_helper.start_match(team_one, team_two)
+            title = 'Queue has filled up!'
+
+            if match:
+                description = f'URL: {match.connect_url}\nCommand: `{match.connect_command}`'
+                new_pop_embed = discord.Embed(title='Server ready!', description=description, color=self.color)
+            else:
+                description = 'Sorry! Looks like there wasn\'t a server available at this time. Please try again later.'
+                new_pop_embed = discord.Embed(title='There was a problem!', description=description, color=self.color)
+
+            await burst_message.edit(embed=new_pop_embed)
         else:
             embed = self.queue_embed(ctx.guild, title)
 
@@ -128,6 +130,7 @@ class QueueCog(commands.Cog):
                     pass
 
             queue.last_msg = await ctx.send(embed=embed)
+
 
     @commands.command(brief='Leave the queue (or the bursted queue)')
     async def leave(self, ctx):
