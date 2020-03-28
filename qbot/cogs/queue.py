@@ -96,43 +96,38 @@ class QueueCog(commands.Cog):
     @commands.command(brief='Join the queue')
     async def join(self, ctx):
         """ Check if the member can be added to the guild queue and add them if so. """
-        try:
-            queue = self.guild_queues[ctx.guild]
+        queue = self.guild_queues[ctx.guild]
 
-            if ctx.author in queue.active:  # Author already in queue
-                title = f'**{ctx.author.display_name}** is already in the queue'
-            elif len(queue.active) >= queue.capacity:  # Queue full
-                title = f'Unable to add **{ctx.author.display_name}**: Queue is full'
-            elif not self.api_helper.is_linked(ctx.author.id):
-                title = f'Unable to add **{ctx.author.display_name}**: The player is not linked'
-            else:
-                player = self.api_helper.get_player(ctx.author.id)
-                player = player.json()
+        if ctx.author in queue.active:  # Author already in queue
+            title = f'**{ctx.author.display_name}** is already in the queue'
+        elif len(queue.active) >= queue.capacity:  # Queue full
+            title = f'Unable to add **{ctx.author.display_name}**: Queue is full'
+        elif not self.api_helper.is_linked(ctx.author.id):
+            title = f'Unable to add **{ctx.author.display_name}**: The player is not linked'
+        else:
+            player = self.api_helper.get_player(ctx.author.id)
+            player = player.json()
 
-                if player['inMatch']:
-                    title = f'Unable to add **{ctx.author.display_name}**: They are already in a match'
-                else:  # Open spot in queue
-                    queue.active.append(ctx.author)
-                    title = f'**{ctx.author.display_name}** has been added to the queue'
+            if player['inMatch']:
+                title = f'Unable to add **{ctx.author.display_name}**: They are already in a match'
+            else:  # Open spot in queue
+                queue.active.append(ctx.author)
+                title = f'**{ctx.author.display_name}** has been added to the queue'
 
-            # Check and burst queue if full
-            if len(queue.active) == queue.capacity:
-                embed, user_mentions = self.burst_queue(ctx.guild)
-                await ctx.send(user_mentions, embed=embed)
-            else:
-                embed = self.queue_embed(ctx.guild, title)
+        # Check and burst queue if full
+        if len(queue.active) == queue.capacity:
+            embed, user_mentions = self.burst_queue(ctx.guild)
+            await ctx.send(user_mentions, embed=embed)
+        else:
+            embed = self.queue_embed(ctx.guild, title)
 
-                if queue.last_msg:
-                    try:
-                        await queue.last_msg.delete()
-                    except discord.errors.NotFound:
-                        pass
+            if queue.last_msg:
+                try:
+                    await queue.last_msg.delete()
+                except discord.errors.NotFound:
+                    pass
 
-                queue.last_msg = await ctx.send(embed=embed)
-        except Exception as e:
-            import traceback
-            print(traceback.format_exc())
-            print(e)
+            queue.last_msg = await ctx.send(embed=embed)
 
     @commands.command(brief='Leave the queue (or the bursted queue)')
     async def leave(self, ctx):

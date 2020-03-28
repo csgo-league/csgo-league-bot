@@ -20,24 +20,21 @@ class AuthCog(commands.Cog):
     @commands.command(brief='Link a player on the backend')
     async def link(self, ctx):
         """ Link a player by sending them a link to sign in with steam on the backend. """
-        meme = self.api_helper.is_linked(ctx.author.id)
-        if meme:
+        if self.api_helper.is_linked(ctx.author.id):
             title = f'Unable to link **{ctx.author.display_name}**: They are already linked'
         else:
             response = self.api_helper.generate_code(ctx.author.id)
             response = response.json()
-            print(response)
             code = response['code']
             id = response['discord']
 
             if code:
                 # Send the author a DM containing this link
                 link = f'{self.api_helper.base_url}/discord/{id}/{code}'
-                await self.bot.send_message(ctx.author, link)
+                await ctx.author.send(f'Click this URL to authorize CS:GO League to verify your Steam account\n{link}')
                 title = f'Link URL sent to **{ctx.author.display_name}**'
             else:
                 title = f'Unable to link **{ctx.author.display_name}**: Unknown error'
 
         embed = discord.Embed(title=title, color=self.color)
         await ctx.send(embed=embed)
-
