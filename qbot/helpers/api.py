@@ -36,24 +36,33 @@
 
 import requests
 
-def get_code(base_url, api_key, discord_id):
-    url = f'{base_url}/discord/generate/{discord_id}'
-    return requests.get(url=url, headers={'authentication': api_key})
+BASE_URL = 'base_url'
+API_KEY = 'api_key'
 
-def post_check(base_url, api_key, discord_id, discord_name):
-    url = f'{base_url}/discord/update/{discord_id}'
-    return requests.post(url=url, headers={'authentication': api_key}, data={'discord_name': discord_name})
+def generate_code(discord_id):
+    url = f'{BASE_URL}/discord/generate/{discord_id}'
+    return requests.get(url=url, headers={'authentication': API_KEY})
 
-def get_discord(base_url, api_key, discord_id):
-    url = f'{base_url}/player/discord/{discord_id}'
-    return requests.get(url=url, headers={'authentication': api_key})
+def is_linked(discord_id):
+    url = f'{BASE_URL}/discord/check/{discord_id}'
+    response = requests.get(url=url, headers={'authentication': API_KEY})
+    response = response.json()
+    return response.linked
 
-def request_server(base_url, api_key, team_one, team_two):
-    url = f'{base_url}/match/start'
+def update_discord_name(discord_id, discord_name):
+    url = f'{BASE_URL}/discord/update/{discord_id}'
+    return requests.post(url=url, headers={'authentication': API_KEY}, data={'discord_name': discord_name})
+
+def get_player(discord_id):
+    url = f'{BASE_URL}/player/discord/{discord_id}'
+    return requests.get(url=url, headers={'authentication': API_KEY})
+
+def start_match(team_one, team_two):
+    url = f'{BASE_URL}/match/start'
     data = {}
     data['team_one'] = team_one
     data['team_two'] = team_two
-    return requests.post(url=url, headers={'authentication': api_key}, json=data)
+    return requests.post(url=url, headers={'authentication': API_KEY}, json=data)
 
 # Can't run as main right now because of module conflicts
 # API_KEY = 'XXXXXXXX'

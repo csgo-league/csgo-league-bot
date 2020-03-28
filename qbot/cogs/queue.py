@@ -77,7 +77,7 @@ class QueueCog(commands.Cog):
         team_size = 5
         team_one, team_two = [queue.bursted[i * team_size:(i + 1) * team_size] for i in range((len(queue.bursted) + team_size - 1) // team_size )]
 
-        response = apiHelper.request_server('base_url', 'api_key', team_one, team_two)
+        response = apiHelper.start_match(team_one, team_two)
         response = response.json()
 
         if response.status == 200:
@@ -98,9 +98,17 @@ class QueueCog(commands.Cog):
             title = f'**{ctx.author.display_name}** is already in the queue'
         elif len(queue.active) >= queue.capacity:  # Queue full
             title = f'Unable to add **{ctx.author.display_name}**: Queue is full'
-        else:  # Open spot in queue
-            queue.active.append(ctx.author)
-            title = f'**{ctx.author.display_name}** has been added to the queue'
+        elif apiHelper.is_linked(ctx.author.id) != True:
+            title = f'Unable to add **{ctx.author.display_name}**: The player is not linked'
+        else:
+            player = apiHelper.get_player(ctx.author.id)
+            player = player.json()
+
+            if player.inMatch:
+                title = f'Unable to add **{ctx.author.display_name}**: They are already in a match'
+            else:  # Open spot in queue
+                queue.active.append(ctx.author)
+                title = f'**{ctx.author.display_name}** has been added to the queue'
 
         # Check and burst queue if full
         if len(queue.active) == queue.capacity:
