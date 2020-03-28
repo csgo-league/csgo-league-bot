@@ -2,6 +2,7 @@
 
 import discord
 from discord.ext import commands
+import random
 
 
 class QQueue:
@@ -25,9 +26,10 @@ class QQueue:
 class QueueCog(commands.Cog):
     """ Cog to manage queues of players among multiple servers. """
 
-    def __init__(self, bot, color):
+    def __init__(self, bot, api_helper, color):
         """ Set attributes. """
         self.bot = bot
+        self.api_helper = api_helper
         self.guild_queues = {}  # Maps Guild -> QQueue
         self.color = color
 
@@ -74,56 +76,63 @@ class QueueCog(commands.Cog):
         queue.active = []  # Reset the player queue to empty
         user_mentions = ''.join(user.mention for user in queue.bursted)
 
-        team_size = 5
-        team_one, team_two = [queue.bursted[i * team_size:(i + 1) * team_size] for i in range((len(queue.bursted) + team_size - 1) // team_size )]
+        team_size = queue.capacity // 2
+        shuffled_players = queue.bursted.copy()
+        random.shuffle(shuffled_players)
+        # team_one = shuffled_players[:team_size + 1]
+        # team_two = shuffled_players[team_size + 1:]
+        team_one, team_two = [shuffled_players[i * team_size:(i + 1) * team_size] for i in range((len(shuffled_players) + team_size - 1) // team_size)]
+        match = self.api_helper.start_match(team_one, team_two)
 
-        response = apiHelper.start_match(team_one, team_two)
-        response = response.json()
-
-        if response.status == 200:
-            description = f'[Join the server here](steam://connect/{response.ip}:{response.port}) - `connect {response.ip}:{response.port}`'
+        if match:
+            description = f'{match.connect_url} - `{match.connect_command}`'
             pop_embed = discord.Embed(title='Queue has filled up!', description=description, color=self.color)
         else:
             description = 'Sorry! Looks like there wasn\'t a server available at this time. Please try again later.'
-            pop_embed = discord.Embed(title='There was a problem!', description=description, color=self.color), user_mentions
+            pop_embed = discord.Embed(title='There was a problem!', description=description, color=self.color)
 
         return pop_embed, user_mentions
 
     @commands.command(brief='Join the queue')
     async def join(self, ctx):
         """ Check if the member can be added to the guild queue and add them if so. """
-        queue = self.guild_queues[ctx.guild]
+        try:
+            queue = self.guild_queues[ctx.guild]
 
-        if ctx.author in queue.active:  # Author already in queue
-            title = f'**{ctx.author.display_name}** is already in the queue'
-        elif len(queue.active) >= queue.capacity:  # Queue full
-            title = f'Unable to add **{ctx.author.display_name}**: Queue is full'
-        elif apiHelper.is_linked(ctx.author.id) != True:
-            title = f'Unable to add **{ctx.author.display_name}**: The player is not linked'
-        else:
-            player = apiHelper.get_player(ctx.author.id)
-            player = player.json()
+            if ctx.author in queue.active:  # Author already in queue
+                title = f'**{ctx.author.display_name}** is already in the queue'
+            elif len(queue.active) >= queue.capacity:  # Queue full
+                title = f'Unable to add **{ctx.author.display_name}**: Queue is full'
+            elif not self.api_helper.is_linked(ctx.author.id):
+                title = f'Unable to add **{ctx.author.display_name}**: The player is not linked'
+            else:
+                player = self.api_helper.get_player(ctx.author.id)
+                player = player.json()
 
-            if player.inMatch:
-                title = f'Unable to add **{ctx.author.display_name}**: They are already in a match'
-            else:  # Open spot in queue
-                queue.active.append(ctx.author)
-                title = f'**{ctx.author.display_name}** has been added to the queue'
+                if player['inMatch']:
+                    title = f'Unable to add **{ctx.author.display_name}**: They are already in a match'
+                else:  # Open spot in queue
+                    queue.active.append(ctx.author)
+                    title = f'**{ctx.author.display_name}** has been added to the queue'
 
-        # Check and burst queue if full
-        if len(queue.active) == queue.capacity:
-            embed, user_mentions = self.burst_queue(ctx.guild)
-            await ctx.send(user_mentions, embed=embed)
-        else:
-            embed = self.queue_embed(ctx.guild, title)
+            # Check and burst queue if full
+            if len(queue.active) == queue.capacity:
+                embed, user_mentions = self.burst_queue(ctx.guild)
+                await ctx.send(user_mentions, embed=embed)
+            else:
+                embed = self.queue_embed(ctx.guild, title)
 
-            if queue.last_msg:
-                try:
-                    await queue.last_msg.delete()
-                except discord.errors.NotFound:
-                    pass
+                if queue.last_msg:
+                    try:
+                        await queue.last_msg.delete()
+                    except discord.errors.NotFound:
+                        pass
 
-            queue.last_msg = await ctx.send(embed=embed)
+                queue.last_msg = await ctx.send(embed=embed)
+        except Exception as e:
+            import traceback
+            print(traceback.format_exc())
+            print(e)
 
     @commands.command(brief='Leave the queue (or the bursted queue)')
     async def leave(self, ctx):

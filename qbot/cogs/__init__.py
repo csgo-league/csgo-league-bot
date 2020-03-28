@@ -1,5 +1,6 @@
 # __init__.py
 
+from .auth import AuthCog
 from .cacher import CacherCog
 from .console import ConsoleCog
 from .dbl import DblCog
@@ -11,6 +12,7 @@ from .queue import QueueCog
 from .teamdraft import TeamDraftCog
 
 __all__ = [
+    AuthCog,
     CacherCog,
     ConsoleCog,
     DblCog,

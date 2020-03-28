@@ -1,76 +1,54 @@
-# link process
-# !login - https://github.com/csgo-league/csgo-league-bot/blob/develop/src/commands/login.js#L13
-# Send a GET request to /discord/generate/{DISCORD_ID} which returns the 'code' in the body of the json response
-# If code is not a falsy value send a message to the channel telling the user to check their PMs
-# send PM containing link to /discord/{DISCORD_ID}/{CODE}
-
-# check process
-# !check - https://github.com/csgo-league/csgo-league-bot/blob/develop/src/commands/check.js#L13
-# send POST request to /discord/update/{DISCORD_ID} with a body of {discord_name: '{DISCORD_NAME}'}
-# if error = link_discord start link process
-
-# As people join the queue check they're linked with the system
-# If not linked -> follow link process
-# Else add to queue
-
-# loop through queue and get players steam ID and rank score from the backend via
-# GET request to /player/discord/{DISCORD_ID}
-
-# Get available IP and Ports of the servers via GET request to /servers
-
-# format the player data from the endpoint and then send it off to
-# POST /match/start
-# Example:
-# {
-#     "ip": "",
-#     "port": "",
-#     "team_one": {
-#             "{STEAM64 ID}": "{Discord Name}"
-#     },
-#     "team_two": {
-#             "7651234678123": "Shane"
-#     }
-# }
-
 # api.py
 
 import requests
 
-BASE_URL = 'base_url'
-API_KEY = 'api_key'
+
+class Match:
+    def __init__(self, id, ip, port):
+        self.id = id
+        self.ip = ip
+        self.port = port
+
+    @property
+    def connect_url(self):
+        return f'steam://connect/{self.ip}:{self.port}'
+
+    @property
+    def connect_command(self):
+        return f'connect {self.ip}:{self.port}'
 
 
-def generate_code(discord_id):
-    url = f'{BASE_URL}/discord/generate/{discord_id}'
-    return requests.get(url=url, headers={'authentication': API_KEY})
+class ApiHelper:
+    def __init__(self, base_url, api_key):
+        self.base_url = base_url
+        self.api_key = api_key
 
+    @property
+    def headers(self):
+        return {'authentication': self.api_key}
 
-def is_linked(discord_id):
-    url = f'{BASE_URL}/discord/check/{discord_id}'
-    response = requests.get(url=url, headers={'authentication': API_KEY})
-    response = response.json()
-    return response.linked
+    def generate_code(self, discord_id):
+        url = f'{self.base_url}/discord/generate/{discord_id}'
+        return requests.get(url=url, headers=self.headers)
 
+    def is_linked(self, discord_id):
+        url = f'{self.base_url}/discord/check/{discord_id}'
+        response = requests.get(url=url, headers=self.headers)
+        response = response.json()
+        return response['linked']
 
-def update_discord_name(discord_id, discord_name):
-    url = f'{BASE_URL}/discord/update/{discord_id}'
-    return requests.post(url=url, headers={'authentication': API_KEY}, data={'discord_name': discord_name})
+    def update_discord_name(self, discord_id, discord_name):
+        url = f'{self.base_url}/discord/update/{discord_id}'
+        return requests.post(url=url, headers=self.headers, data={'discord_name': discord_name})
 
+    def get_player(self, discord_id):
+        url = f'{self.base_url}/player/discord/{discord_id}'
+        return requests.get(url=url, headers=self.headers)
 
-def get_player(discord_id):
-    url = f'{BASE_URL}/player/discord/{discord_id}'
-    return requests.get(url=url, headers={'authentication': API_KEY})
-
-
-def start_match(team_one, team_two):
-    url = f'{BASE_URL}/match/start'
-    data = {}
-    data['team_one'] = team_one
-    data['team_two'] = team_two
-    return requests.post(url=url, headers={'authentication': API_KEY}, json=data)
-
-# Can't run as main right now because of module conflicts
-# API_KEY = 'XXXXXXXX'
-# r = request_server('http://pugs.viquity.pro', API_KEY, {89918424687349760: "Shane"}, {214053860119937024: "B3none"})
-# print(r)
-# print(r.json())
+    def start_match(self, team_one, team_two):
+        teams = {}
+        teams['team_one'] = {user.id: user.display_name for user in team_one}
+        teams['team_two'] = {user.id: user.display_name for user in team_two}
+        response = requests.post(url=f'{self.base_url}/match/start', headers=self.headers, json=teams)
+        json = response.json()
+        return Match(json['match_id'], json['ip'], json['port']) if response.status_code == 200 else None
