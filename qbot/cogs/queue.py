@@ -87,13 +87,14 @@ class QueueCog(commands.Cog):
             title = f'**{ctx.author.display_name}** is already in the queue'
         elif len(queue.active) >= queue.capacity:  # Queue full
             title = f'Unable to add **{ctx.author.display_name}**: Queue is full'
-        elif not self.api_helper.is_linked(ctx.author.id):
+        elif not self.api_helper.is_linked(ctx.author):
             title = f'Unable to add **{ctx.author.display_name}**: The player is not linked'
         else:
-            player = self.api_helper.get_player(ctx.author.id)
-            player = player.json()
+            player = self.api_helper.get_player(ctx.author)
 
-            if player['inMatch']:
+            if not player:
+                title = f'Unable to add **{ctx.author.display_name}**: Cannot verify match status'
+            elif player.in_match:
                 title = f'Unable to add **{ctx.author.display_name}**: They are already in a match'
             else:  # Open spot in queue
                 queue.active.append(ctx.author)
@@ -110,7 +111,6 @@ class QueueCog(commands.Cog):
             # team_two = shuffled_players[team_size:]
             team_one, team_two = [shuffled_players[i * team_size:(i + 1) * team_size] for i in range((len(shuffled_players) + team_size - 1) // team_size)]
             match = self.api_helper.start_match(team_one, team_two)
-            title = 'Queue has filled up!'
 
             if match:
                 description = f'URL: {match.connect_url}\nCommand: `{match.connect_command}`'
@@ -130,7 +130,6 @@ class QueueCog(commands.Cog):
                     pass
 
             queue.last_msg = await ctx.send(embed=embed)
-
 
     @commands.command(brief='Leave the queue (or the bursted queue)')
     async def leave(self, ctx):
