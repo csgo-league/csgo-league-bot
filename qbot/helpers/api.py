@@ -94,8 +94,8 @@ class Player:
         self.in_match = json['inMatch']
 
 
-class Match:
-    """ Represents a match with the contents returned from the API. """
+class MatchServer:
+    """ Represents a match server with the contents returned by the API. """
 
     def __init__(self, json):
         """ Set attributes. """
@@ -116,6 +116,7 @@ class Match:
 
 class ApiHelper:
     """ Class to contain API request wrapper functions. """
+
     def __init__(self, base_url, api_key):
         """ Set attributes. """
         self.base_url = base_url
@@ -129,7 +130,7 @@ class ApiHelper:
     def generate_link_url(self, user):
         """ Get custom URL from API for user to link accounts. """
         url = f'{self.base_url}/discord/generate/{user.id}'
-        response = requests.get(url=url, headers=self.headers)
+        response = requests.get(url=url)
         json = response.json()
         discord = 'discord'  # Can't put quote inside f-string
         code = 'code'
@@ -159,4 +160,4 @@ class ApiHelper:
         teams['team_one'] = {user.id: user.display_name for user in team_one}
         teams['team_two'] = {user.id: user.display_name for user in team_two}
         response = requests.post(url=f'{self.base_url}/match/start', headers=self.headers, json=teams)
-        return Match(response.json()) if response.status_code == 200 else None
+        return MatchServer(response.json()) if response.status_code == 200 else None
