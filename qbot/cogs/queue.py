@@ -108,7 +108,7 @@ class QueueCog(commands.Cog):
             random.shuffle(shuffled_players)
             team_one = shuffled_players[:team_size]
             team_two = shuffled_players[team_size:]
-            # team_one, team_two = [shuffled_players[i * team_size:(i + 1) * team_size] for i in range((len(shuffled_players) + team_size - 1) // team_size)]
+            # team_one, team_two = [shuffled_players[i * team_size:(i + 1) * team_size] for i in range((len(shuffled_players) + team_size - 1) // team_size)]  # noqa
             match = self.api_helper.start_match(team_one, team_two)
 
             if match:
