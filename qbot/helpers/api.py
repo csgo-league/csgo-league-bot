@@ -123,7 +123,7 @@ class ApiHelper:
 
     @property
     def headers(self):
-        """ Default authenrication header the API needs. """
+        """ Default authentication header the API needs. """
         return {'authentication': self.api_key}
 
     def generate_link_url(self, user):
