@@ -14,7 +14,6 @@ class QQueue:
         self.active = [] if active is None else active  # List of players in the queue
         self.capacity = capacity  # Max queue size
         self.bursted = [] if bursted is None else bursted  # Cached last filled queue
-        # self.timeout = timeout  # Number of minutes of inactivity after which to empty the queue
         self.last_msg = last_msg  # Last sent confirmation message for the join command
 
     @property
@@ -55,7 +54,7 @@ class QueueCog(commands.Cog):
         await ctx.trigger_typing()
 
     def queue_embed(self, guild, title=None):
-        """"""
+        """ Method to create the queue embed for a guild. """
         queue = self.guild_queues[guild]
 
         if title:
@@ -170,6 +169,7 @@ class QueueCog(commands.Cog):
                       brief='Remove the mentioned user from the queue (must have server kick perms)')
     @commands.has_permissions(kick_members=True)
     async def remove(self, ctx):
+        """ Remove the specified user from the queue. """
         try:
             removee = ctx.message.mentions[0]
         except IndexError:
