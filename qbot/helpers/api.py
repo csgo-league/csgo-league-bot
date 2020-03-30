@@ -130,11 +130,11 @@ class ApiHelper:
     def generate_link_url(self, user):
         """ Get custom URL from API for user to link accounts. """
         url = f'{self.base_url}/discord/generate/{user.id}'
-        response = requests.get(url=url)
+        response = requests.get(url=url, headers=self.headers)
         json = response.json()
         discord = 'discord'  # Can't put quote inside f-string
         code = 'code'
-        return f'{self.base_url}/discord/{json.get[discord]}/{json[code]}' if response.status_code == 200 else None
+        return f'{self.base_url}/discord/{json[discord]}/{json[code]}' if response.status_code == 200 else None
 
     def is_linked(self, user):
         """ Check if a user has their account linked with the API. """
