@@ -128,52 +128,50 @@ class ApiHelper:
 
     async def generate_link_url(self, user):
         """ Get custom URL from API for user to link accounts. """
+        url = f'{self.base_url}/discord/generate/{user.id}'
 
-        # Use .format, f'' is pretty ugly.
-        url = "{}/discord/generate/{}".format(self.base_url, user.id)
         async with self.session.get(url=url, headers=self.headers) as resp:
             if resp.status == 200:
                 resp_json = await resp.json()
 
-                if resp_json.get("discord") or resp_json.get("code"):                
-                    return "{}/discord/{}/{}".format(self.base_url, resp_json["discord"], resp_json["code"])
+                if resp_json.get('discord') and resp_json.get('code'):
+                    return f'{self.base_url}/discord/{resp_json["discord"]}/{resp_json["code"]}'
 
     async def is_linked(self, user):
         """ Check if a user has their account linked with the API. """
+        url = f'{self.base_url}/discord/check/{user.id}'
 
-        url = "{}/discord/check/{}".format(self.base_url, user.id)
         async with self.session.get(url=url, headers=self.headers) as resp:
             if resp.status == 200:
                 resp_json = await resp.json()
 
-                if resp_json.get("linked"):
-                    return resp_json["linked"]
-        
+                if resp_json.get('linked'):
+                    return resp_json['linked']
+
     async def update_discord_name(self, user):
         """ Update a users API name to their current Discord display name. """
-        
-        url = "{}/discord/update/{}".format(self.base_url, user.id)
-        data = {"discord_name": user.display_name}
+        url = f'{self.base_url}/discord/update/{user.id}'
+        data = {'discord_name': user.display_name}
+
         async with self.session.post(url=url, headers=self.headers, data=data) as resp:
             return resp.status == 200
 
     async def get_player(self, user):
         """ Get player data from the API. """
+        url = f'{self.base_url}/player/discord/{user.id}'
 
-        url = "{}/player/discord/{}".format(self.base_url, user.id)
         async with self.session.get(url=url, headers=self.headers) as resp:
             if resp.status == 200:
                 return Player(await resp.json())
-        
+
     async def start_match(self, team_one, team_two):
         """ Get a match server from the API. """
-
+        url = f'{self.base_url}/match/start'
         teams = {
-            "team_one": {user.id: user.display_name for user in team_one},
-            "team_two": {user.id: user.display_name for user in team_two},
+            'team_one': {user.id: user.display_name for user in team_one},
+            'team_two': {user.id: user.display_name for user in team_two}
         }
 
-        url = "{}/match/start".format(self.base_url)
-        async with self.session.get(url=url, headers=self.headers, json=teams) as resp:
+        async with self.session.post(url=url, headers=self.headers, json=teams) as resp:
             if resp.status == 200:
                 return MatchServer(await resp.json())

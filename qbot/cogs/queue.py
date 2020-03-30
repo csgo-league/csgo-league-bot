@@ -79,7 +79,7 @@ class QueueCog(commands.Cog):
             title = f'**{ctx.author.display_name}** is already in the queue'
         elif len(queue.active) >= queue.capacity:  # Queue full
             title = f'Unable to add **{ctx.author.display_name}**: Queue is full'
-        elif not self.api_helper.is_linked(ctx.author):
+        elif not await self.api_helper.is_linked(ctx.author):
             title = f'Unable to add **{ctx.author.display_name}**: Their account not linked'
         else:
             player = await self.api_helper.get_player(ctx.author)
@@ -124,7 +124,7 @@ class QueueCog(commands.Cog):
                 unreadied = set(queue.active) - reactors
 
                 for user in unreadied:
-                    queue.active.remove
+                    queue.active.remove(user)
 
                 description = '\n'.join('\u2022 ' + user.mention for user in unreadied)
                 title = 'Not everyone was ready!'
@@ -154,6 +154,7 @@ class QueueCog(commands.Cog):
                 if match:
                     description = f'URL: {match.connect_url}\nCommand: `{match.connect_command}`'
                     burst_embed = discord.Embed(title='Server ready!', description=description, color=self.color)
+                    burst_embed.set_footer(text='Server will close after 5 minutes if anyone doesn\'t join')
                 else:
                     description = ('Sorry! Looks like there aren\'t any servers available at this time. ',
                                    'Please try again later.')

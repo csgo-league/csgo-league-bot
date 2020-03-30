@@ -21,7 +21,7 @@ class AuthCog(commands.Cog):
     async def link(self, ctx):
         """ Link a player by sending them a link to sign in with steam on the backend. """
         is_linked = await self.api_helper.is_linked(ctx.author)
-        
+
         if is_linked:
             title = f'Unable to link **{ctx.author.display_name}**: They are already linked'
         else:
