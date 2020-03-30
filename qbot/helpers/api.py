@@ -1,5 +1,6 @@
 # api.py
 
+
 class Player:
     """ Represents a player with the contents returned by the API. """
 
