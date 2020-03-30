@@ -2,16 +2,21 @@
 
 from discord.ext import commands
 from helpers.api import ApiHelper
+
 import cogs
+import aiohttp
 
 BOT_COLOR = 0x000000
 DATA_PATH = 'guild_data.json'
 
-
 def run(discord_token, api_base_url, api_key, dbl_token=None, donate_url=None):
     """ Create the bot, add the cogs and run it. """
-    api_helper = ApiHelper(api_base_url, api_key)
     bot = commands.Bot(command_prefix=('q!', 'Q!'), case_insensitive=True)
+
+    # Because of the current method of initializing
+    # We can't close the aiohttp session cleanly. 
+    api_helper = ApiHelper(aiohttp.ClientSession(loop=bot.loop), api_base_url, api_key)
+
     bot.add_cog(cogs.CacherCog(bot, DATA_PATH))
     bot.add_cog(cogs.ConsoleCog(bot))
     bot.add_cog(cogs.HelpCog(bot, BOT_COLOR))

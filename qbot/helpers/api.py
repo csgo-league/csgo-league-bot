@@ -1,8 +1,5 @@
 # api.py
 
-import requests
-
-
 class Player:
     """ Represents a player with the contents returned by the API. """
 
@@ -117,8 +114,10 @@ class MatchServer:
 class ApiHelper:
     """ Class to contain API request wrapper functions. """
 
-    def __init__(self, base_url, api_key):
+    def __init__(self, session, base_url, api_key):
         """ Set attributes. """
+
+        self.session = session
         self.base_url = base_url
         self.api_key = api_key
 
@@ -127,37 +126,54 @@ class ApiHelper:
         """ Default authentication header the API needs. """
         return {'authentication': self.api_key}
 
-    def generate_link_url(self, user):
+    async def generate_link_url(self, user):
         """ Get custom URL from API for user to link accounts. """
-        url = f'{self.base_url}/discord/generate/{user.id}'
-        response = requests.get(url=url, headers=self.headers)
-        json = response.json()
-        discord = 'discord'  # Can't put quote inside f-string
-        code = 'code'
-        return f'{self.base_url}/discord/{json[discord]}/{json[code]}' if response.status_code == 200 else None
 
-    def is_linked(self, user):
+        # Use .format, f'' is pretty ugly.
+        url = "{}/discord/generate/{}".format(self.base_url, user.id)
+        async with self.session.get(url=url, headers=self.headers) as resp:
+            if resp.status == 200:
+                resp_json = await resp.json()
+
+                if resp_json.get("discord") or resp_json.get("code"):                
+                    return "{}/discord/{}/{}".format(self.base_url, resp_json["discord"], resp_json["code"])
+
+    async def is_linked(self, user):
         """ Check if a user has their account linked with the API. """
-        url = f'{self.base_url}/discord/check/{user.id}'
-        response = requests.get(url=url, headers=self.headers)
-        json = response.json()
-        return json['linked'] if response.status_code == 200 else None
 
-    def update_discord_name(self, user):
+        url = "{}/discord/check/{}".format(self.base_url, user.id)
+        async with self.session.get(url=url, headers=self.headers) as resp:
+            if resp.status == 200:
+                resp_json = await resp.json()
+
+                if resp_json.get("linked"):
+                    return resp_json["linked"]
+        
+    async def update_discord_name(self, user):
         """ Update a users API name to their current Discord display name. """
-        url = f'{self.base_url}/discord/update/{user.id}'
-        requests.post(url=url, headers=self.headers, data={'discord_name': user.display_name})
+        
+        url = "{}/discord/update/{}".format(self.base_url, user.id)
+        data = {"discord_name": user.display_name}
+        async with self.session.post(url=url, headers=self.headers, data=data) as resp:
+            return resp.status == 200
 
-    def get_player(self, user):
+    async def get_player(self, user):
         """ Get player data from the API. """
-        url = f'{self.base_url}/player/discord/{user.id}'
-        response = requests.get(url=url, headers=self.headers)
-        return Player(response.json()) if response.status_code == 200 else None
 
-    def start_match(self, team_one, team_two):
+        url = "{}/player/discord/{}".format(self.base_url, user.id)
+        async with self.session.get(url=url, headers=self.headers) as resp:
+            if resp.status == 200:
+                return Player(await resp.json())
+        
+    async def start_match(self, team_one, team_two):
         """ Get a match server from the API. """
-        teams = {}
-        teams['team_one'] = {user.id: user.display_name for user in team_one}
-        teams['team_two'] = {user.id: user.display_name for user in team_two}
-        response = requests.post(url=f'{self.base_url}/match/start', headers=self.headers, json=teams)
-        return MatchServer(response.json()) if response.status_code == 200 else None
+
+        teams = {
+            "team_one": {user.id: user.display_name for user in team_one},
+            "team_two": {user.id: user.display_name for user in team_two},
+        }
+
+        url = "{}/match/start".format(self.base_url)
+        async with self.session.get(url=url, headers=self.headers, json=teams) as resp:
+            if resp.status == 200:
+                return MatchServer(await resp.json())
