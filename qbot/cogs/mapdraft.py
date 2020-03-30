@@ -152,7 +152,7 @@ class MapDraftCog(commands.Cog):
                     embed_title = f'We\'re going to {map_result.name}! {map_result.emoji}'
                     embed = discord.Embed(title=embed_title, color=self.color)
                     embed.set_image(url=map_result.image_url)
-                    embed.set_footer(text=f'Be sure to select {map_result.name} in the PopFlash lobby')
+                    embed.set_footer(text='Map pick has been sent to the server')
                     await mdraft_data.message.edit(embed=embed)
                     mdraft_data.maps_left = None
                     mdraft_data.message = None
