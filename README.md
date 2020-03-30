@@ -1,35 +1,57 @@
-<img src="assets/logo/rounded-logo.png" alt="10-Man Queues" align="right" width="50" height="50"/>
+[![HitCount](http://hits.dwyl.io/csgo-league/csgo-queue-bot.svg)](http://hits.dwyl.io/csgo-league/csgo-queue-bot)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/csgo-league/csgo-queue-bot/graphs/commit-activity)
+[![GitHub release](https://img.shields.io/github/release/csgo-league/csgo-queue-bot.svg)](https://github.com/csgo-league/csgo-queue-bot/releases/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+[![Open Source Love svg3](https://badges.frapsoft.com/os/v3/open-source.svg?v=103)](https://github.com/csgo-league)
 
-# CS:GO Queue Bot &ensp; [![Discord Bots](https://top.gg/api/widget/status/539669626863353868.svg?noavatar=true)](https://top.gg/bot/539669626863353868) [![Discord Bots](https://top.gg/api/widget/servers/539669626863353868.svg?noavatar=true)](https://top.gg/bot/539669626863353868)
-*A Discord bot to manage and setup CS:GO games*
+# CS:GO League Bot
+A Discord bot to manage CS:GO PUGs. Connects to the CS:GO League web API.
 
-This script uses the Discord Python API via a bot to manage queues of CS:GO players who want to play with other Discord server members. It is complete with a queueing system, team drafter, map drafter and a link to a unique PopFlash lobby.
+Our support discord can be found [here](https://discord.gg/b5MhANU).
 
+# Author
+[cameronshinn](https://github.com/cameronshinn) - Developer / Maintainer
+
+## Watch for releases
+
+So as to keep the latest version of the plugin I recommend watching the repository
+
+![Watch releases](https://github.com/b3none/gdprconsent/raw/development/.github/README_ASSETS/watch_releases.png)
+
+## Share the love
+
+If you appreciate the project then please take the time to star our repository.
+
+![Star us](https://github.com/b3none/gdprconsent/raw/development/.github/README_ASSETS/star_us.png)
 
 ## Setup
 1. First you must have a bot instance to run this script on. Follow Discord's tutorial [here](https://discord.onl/2019/03/21/how-to-set-up-a-bot-application/) on how to set one up. Be sure to invite it to a server to use it.
 
    * The permissions integer necessary is `17067072`.
+   
+2. Get an API token for the CS:GO League [web API](https://github.com/csgo-league/csgo-league-web) along with the host URL. 
 
-2. (Optional) If you have a Discord Bot List token to use with [top.gg](https://top.gg/) then retrieve that from its editing menu.
+3. (Optional) If you have a Discord Bot List token to use with [top.gg](https://top.gg/) then retrieve that from its editing menu.
 
-3. Run `pip3 install -r requirements.txt` in the repository's root directory to get the necessary libraries.
+4. Run `pip3 install -r requirements.txt` in the repository's root directory to get the necessary libraries.
 
     * Note that python-Levenshtein requires your system to have a C++ compiler (Visual Studio C++ compiler for Windows or g++ for Linux). This library may be replaced in the future to eliminate this requirement.
 
-4. Add the `/qbot` path to your `PYTHONPATH` environment variable to be able to import it from anywhere.
+5. Add the `/qbot` path to your `PYTHONPATH` environment variable to be able to import it from anywhere.
 
-5. Using your bot's Discord token and Discord Bot List token, run the bot like so...
+6. Using your bot's Discord token, League web server URL, League API token and Discord Bot List token, run the bot like so...
 
 ```python
 import qbot
 
 DISCORD_TOKEN = 'XXXXXXXX'
+API_BASE_URL = 'XXXXXXXX'
+API_KEY = 'XXXXXXXX'
 DBL_TOKEN = 'XXXXXXXX'
-qbot.run(discord_token=DISCORD_TOKEN, dbl_token=DBL_TOKEN)
+qbot.run(DISCORD_TOKEN, API_BASE_URL, API_KEY, dbl_token=DBL_TOKEN)
 ```
 
-Now you are ready to start using the CS:GO Queue Bot! Try out some of the commands to make sure it works.
+Now you are ready to start using the League CS:GO Queue Bot! Try out some of the commands to make sure it works.
 
 *Note that currently the `mdraft` command depends on custom emojis to be used as buttons which are hardcoded [here](https://github.com/cameronshinn/csgo-queue-bot/blob/abb06e1876546bb3948094faa795e90184642882/qbot/cogs/mapdraft.py#L20). As of right now you will need to make the emojis yourself and replace the emoji code in the map objects there.*
 
@@ -55,8 +77,6 @@ Now you are ready to start using the CS:GO Queue Bot! Try out some of the comman
 `q!mdraft` **-** Start (or restart) a map draft<br>
 
 `q!setmp {+|-}<map name> ...` **-** Add or remove maps from the mdraft map pool (Must have admin perms)<br>
-
-`q!popflash` **-** Link the server's designated PopFlash lobby<br>
 
 `q!donate` **-** Link the bot's donation link<br>
 
