@@ -102,7 +102,7 @@ class MapDraftCog(commands.Cog):
 
     def maps_left_str(self, guild):
         """ Get the maps left string representation for a given giuld. """
-        x_emoji = ':heavy_multiplication_x:'
+        x_emoji = '✖️'
         mdraft_data = self.guild_mdraft_data[guild]
         maps_left = mdraft_data.map_pool if mdraft_data.maps_left is None else mdraft_data.maps_left
         out_str = ''
