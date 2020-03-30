@@ -82,7 +82,7 @@ class QueueCog(commands.Cog):
         elif not self.api_helper.is_linked(ctx.author):
             title = f'Unable to add **{ctx.author.display_name}**: Their account not linked'
         else:
-            player = self.api_helper.get_player(ctx.author)
+            player = await self.api_helper.get_player(ctx.author)
 
             if not player:
                 title = f'Unable to add **{ctx.author.display_name}**: Cannot verify match status'
@@ -148,7 +148,7 @@ class QueueCog(commands.Cog):
                 team_one = shuffled_players[:team_size]
                 team_two = shuffled_players[team_size:]
                 # team_one, team_two = [shuffled_players[i * team_size:(i + 1) * team_size] for i in range((len(shuffled_players) + team_size - 1) // team_size)]  # noqa
-                match = self.api_helper.start_match(team_one, team_two)
+                match = await self.api_helper.start_match(team_one, team_two)
 
                 # Check if able to get a match server and edit message embed accordingly
                 if match:
