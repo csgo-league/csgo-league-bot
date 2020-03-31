@@ -76,21 +76,21 @@ class QueueCog(commands.Cog):
             return None
 
         # Get players' RankMe scores tied to their user object
-        player_scores = {await self.api_helper.get_player(user).score: user for user in users}
-        scores = player_scores.keys().sort()
+        player_scores = {getattr(await self.api_helper.get_player(user), 'score'): user for user in users}
+        scores = sorted(player_scores.keys())
 
         # Balance teams
         team_size = len(users) // 2
-        team_one = [scores.pop()]
-        team_two = [scores.pop()]
+        team_one_scores = [scores.pop()]
+        team_two_scores = [scores.pop()]
 
         while scores:
-            if len(team_one) < team_size and sum(team_one) > sum(team_two):
-                team_one.append(scores.pop())
+            if len(team_one_scores) < team_size and sum(team_one_scores) < sum(team_two_scores):
+                team_one_scores.append(scores.pop())
             else:
-                team_two.append(scores.pop())
+                team_two_scores.append(scores.pop())
 
-        return team_one, team_two
+        return map(player_scores.get, team_one_scores), map(player_scores.get, team_two_scores)
 
     async def start_match(self, ctx, users):
         """ Ready all the users up and start a match. """
@@ -139,7 +139,7 @@ class QueueCog(commands.Cog):
             title = 'All players ready'
             burst_embed = discord.Embed(title=title, description='Fetching server...', color=self.color)
             await ready_message.edit(embed=burst_embed)
-            team_one, team_two = self.balance_teams(users)  # Get teams
+            team_one, team_two = await self.balance_teams(users)  # Get teams
             match = await self.api_helper.start_match(team_one, team_two)  # Request match from API
 
             # Check if able to get a match server and edit message embed accordingly
@@ -175,11 +175,11 @@ class QueueCog(commands.Cog):
                 title = f'Unable to add **{ctx.author.display_name}**: They are already in a match'
             else:  # User can be added
                 queue.active.append(ctx.author)
-                title = f'**{ctx.Authorhor.display_name}** has been added to the queue'
+                title = f'**{ctx.author.display_name}** has been added to the queue'
 
                 # Check and burst queue if full
                 if len(queue.active) == queue.capacity:
-                    all_readied = self.start_match(ctx, queue.active)
+                    all_readied = await self.start_match(ctx, queue.active)
 
                     if all_readied:
                         queue.bursted = queue.active  # Save bursted queue for player draft
@@ -190,12 +190,12 @@ class QueueCog(commands.Cog):
         # Send message based on outcome
         embed = self.queue_embed(ctx.guild, title)
 
-        # # Leave out message deleting for now (uncertain if it's stable)
-        # if queue.last_msg:
-        #     try:
-        #         await queue.last_msg.delete()
-        #     except discord.errors.NotFound:
-        #         pass
+        # Delete last queue message
+        if queue.last_msg:
+            try:
+                await queue.last_msg.delete()
+            except discord.errors.NotFound:
+                pass
 
         queue.last_msg = await ctx.send(embed=embed)
 
