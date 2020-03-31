@@ -117,7 +117,6 @@ class ApiHelper:
 
     def __init__(self, session, base_url, api_key):
         """ Set attributes. """
-
         self.session = session
         self.base_url = base_url
         self.api_key = api_key
