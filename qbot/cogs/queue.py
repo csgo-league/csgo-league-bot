@@ -287,18 +287,27 @@ class QueueCog(commands.Cog):
 
     @commands.command(brief='Set the capacity of the queue (Must have admin perms)')
     @commands.has_permissions(administrator=True)
-    async def cap(self, ctx, new_cap):
+    async def cap(self, ctx, *args):
         """ Set the queue capacity. """
-        try:
-            new_cap = int(new_cap)
-        except ValueError:
-            embed = discord.Embed(title=f'{new_cap} is not an integer', color=self.color)
+        queue = self.guild_queues[ctx.guild]
+
+        if len(args) == 0:  # No size argument specified
+            embed = discord.Embed(title=f'The queue capacity is currently set to {queue.capacity}')
         else:
-            if new_cap < 2 or new_cap > 100:
-                embed = discord.Embed(title='Capacity is outside of valid range', color=self.color)
+            new_cap = args[0]
+
+            try:
+                new_cap = int(new_cap)
+            except ValueError:
+                embed = discord.Embed(title=f'{new_cap} is not an integer', color=self.color)
             else:
-                self.guild_queues[ctx.guild].capacity = new_cap
-                embed = discord.Embed(title=f'Queue capacity set to {new_cap}', color=self.color)
+                if new_cap < 2 or new_cap > 100:
+                    embed = discord.Embed(title='Capacity is outside of valid range', color=self.color)
+                else:
+                    queue.active.clear()  # Empty active queue to prevent bugs related to capacity size
+                    queue.capacity = new_cap
+                    embed = discord.Embed(title=f'Queue capacity set to {new_cap}', color=self.color)
+                    embed.set_footer(text='The queue has been emptied because of the capacity change')
 
         await ctx.send(embed=embed)
 
