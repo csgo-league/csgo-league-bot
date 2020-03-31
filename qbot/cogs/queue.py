@@ -92,103 +92,112 @@ class QueueCog(commands.Cog):
 
         return team_one, team_two
 
+    async def start_match(self, ctx, users):
+        """ Ready all the users up and start a match. """
+        # Notify everyone to ready up
+        user_mentions = ''.join(user.mention for user in users)
+        ready_emoji = '✅'
+        description = f'React with the {ready_emoji} below to ready up (1 min)'
+        burst_embed = discord.Embed(title='Queue has filled up!', description=description, color=self.color)
+        ready_message = await ctx.send(user_mentions, embed=burst_embed)
+        await ready_message.add_reaction(ready_emoji)
+
+        # Wait for everyone to ready up
+        reactors = set()  # Track who has readied up
+
+        def all_ready(reaction, user):
+            """ Check if all players in the queue have readied up. """
+            # Check if this is a reaction we care about
+            if reaction.message.id != ready_message.id or user not in users or reaction.emoji != ready_emoji:
+                return False
+
+            reactors.add(user)
+
+            if reactors.issuperset(users):  # All queued users have reacted
+                return True
+            else:
+                return False
+
+        try:
+            reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=all_ready)
+        except asyncio.TimeoutError:  # Not everyone readied up
+            await ready_message.clear_reactions()
+            unreadied = set(users) - reactors
+
+            for user in unreadied:
+                users.remove(user)  # Modifies users in the scope where this function is called
+
+            description = '\n'.join('× ' + user.mention for user in unreadied)
+            title = 'Not everyone was ready!'
+            burst_embed = discord.Embed(title=title, description=description, color=self.color)
+            burst_embed.set_footer(text='The missing players have been removed from the queue')
+            await ready_message.edit(embed=burst_embed)
+            return False  # Not everyone readied up
+        else:  # Everyone readied up
+            # Attempt to make teams and start match
+            await ready_message.clear_reactions()
+            title = 'All players ready'
+            burst_embed = discord.Embed(title=title, description='Fetching server...', color=self.color)
+            await ready_message.edit(embed=burst_embed)
+            team_one, team_two = self.balance_teams(users)  # Get teams
+            match = await self.api_helper.start_match(team_one, team_two)  # Request match from API
+
+            # Check if able to get a match server and edit message embed accordingly
+            if match:
+                description = f'URL: {match.connect_url}\nCommand: `{match.connect_command}`'
+                burst_embed = discord.Embed(title='Server ready!', description=description, color=self.color)
+                burst_embed.set_footer(text='Server will close after 5 minutes if anyone doesn\'t join')
+            else:
+                description = ('Sorry! Looks like there aren\'t any servers available at this time. ',
+                               'Please try again later.')
+                burst_embed = discord.Embed(title='There was a problem!', description=description, color=self.color)
+
+            await ready_message.edit(embed=burst_embed)
+            return True  # Everyone readied up
+
     @commands.command(brief='Join the queue')
     async def join(self, ctx):
         """ Check if the member can be added to the guild queue and add them if so. """
         queue = self.guild_queues[ctx.guild]
 
-        if ctx.author in queue.active:  # Author already in queue
-            title = f'**{ctx.author.display_name}** is already in the queue'
-        elif len(queue.active) >= queue.capacity:  # Queue full
-            title = f'Unable to add **{ctx.author.display_name}**: Queue is full'
-        elif not await self.api_helper.is_linked(ctx.author):  # Message author isn't linked
+        if not await self.api_helper.is_linked(ctx.author):  # Message author isn't linked
             title = f'Unable to add **{ctx.author.display_name}**: Their account not linked'
-        else:
+        else:  # Message author is linked
             player = await self.api_helper.get_player(ctx.author)
 
-            if not player:  # ApiHelper couldn't get player
+            if ctx.author in queue.active:  # Author already in queue
+                title = f'**{ctx.author.display_name}** is already in the queue'
+            elif len(queue.active) >= queue.capacity:  # Queue full
+                title = f'Unable to add **{ctx.author.display_name}**: Queue is full'
+            elif not player:  # ApiHelper couldn't get player
                 title = f'Unable to add **{ctx.author.display_name}**: Cannot verify match status'
             elif player.in_match:  # User is already in a match
                 title = f'Unable to add **{ctx.author.display_name}**: They are already in a match'
             else:  # User can be added
                 queue.active.append(ctx.author)
-                title = f'**{ctx.author.display_name}** has been added to the queue'
+                title = f'**{ctx.Authorhor.display_name}** has been added to the queue'
 
-        # Check and burst queue if full
-        if len(queue.active) == queue.capacity:
-            # Notify everyone to ready up
-            user_mentions = ''.join(user.mention for user in queue.active)
-            ready_emoji = '✅'
-            description = f'React with the {ready_emoji} below to ready up (1 min)'
-            burst_embed = discord.Embed(title='Queue has filled up!', description=description, color=self.color)
-            burst_message = await ctx.send(user_mentions, embed=burst_embed)
+                # Check and burst queue if full
+                if len(queue.active) == queue.capacity:
+                    all_readied = self.start_match(ctx, queue.active)
 
-            # Wait for everyone to ready up
-            await burst_message.add_reaction(ready_emoji)
-            reactors = set()
+                    if all_readied:
+                        queue.bursted = queue.active  # Save bursted queue for player draft
+                        queue.active = []  # Reset the player queue to empty
 
-            def all_ready(reaction, user):
-                """ Check if all players in the queue have readied up. """
-                if reaction.message.id != burst_message.id or user not in queue.active or reaction.emoji != ready_emoji:
-                    return False
+                    return
 
-                reactors.add(user)
+        # Send message based on outcome
+        embed = self.queue_embed(ctx.guild, title)
 
-                if set(queue.active) <= reactors:  # Users in queue is a subset of those who have reacted
-                    return True
-                else:
-                    return False
+        # # Leave out message deleting for now (uncertain if it's stable)
+        # if queue.last_msg:
+        #     try:
+        #         await queue.last_msg.delete()
+        #     except discord.errors.NotFound:
+        #         pass
 
-            try:
-                reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=all_ready)
-            except asyncio.TimeoutError:
-                await burst_message.clear_reactions()
-                unreadied = set(queue.active) - reactors
-
-                for user in unreadied:
-                    queue.active.remove(user)
-
-                description = '\n'.join('× ' + user.mention for user in unreadied)
-                title = 'Not everyone was ready!'
-                burst_embed = discord.Embed(title=title, description=description, color=self.color)
-                burst_embed.set_footer(text='The missing players have been removed from the queue')
-                await burst_message.edit(embed=burst_embed)
-            else:
-                await burst_message.clear_reactions()
-
-                # Burst queue
-                queue.bursted = queue.active  # Save bursted queue for player draft
-                queue.active = []  # Reset the player queue to empty
-                title = 'All players ready'
-                burst_embed = discord.Embed(title=title, description='Fetching server...', color=self.color)
-                await burst_message.edit(embed=burst_embed)
-
-                # Set teams and request match server
-                team_one, team_two = self.balance_teams(queue.bursted)
-                match = await self.api_helper.start_match(team_one, team_two)
-
-                # Check if able to get a match server and edit message embed accordingly
-                if match:
-                    description = f'URL: {match.connect_url}\nCommand: `{match.connect_command}`'
-                    burst_embed = discord.Embed(title='Server ready!', description=description, color=self.color)
-                    burst_embed.set_footer(text='Server will close after 5 minutes if anyone doesn\'t join')
-                else:
-                    description = ('Sorry! Looks like there aren\'t any servers available at this time. ',
-                                   'Please try again later.')
-                    burst_embed = discord.Embed(title='There was a problem!', description=description, color=self.color)
-
-                await burst_message.edit(embed=burst_embed)
-
-        else:
-            embed = self.queue_embed(ctx.guild, title)
-
-            if queue.last_msg:
-                try:
-                    await queue.last_msg.delete()
-                except discord.errors.NotFound:
-                    pass
-
-            queue.last_msg = await ctx.send(embed=embed)
+        queue.last_msg = await ctx.send(embed=embed)
 
     @commands.command(brief='Leave the queue (or the bursted queue)')
     async def leave(self, ctx):
