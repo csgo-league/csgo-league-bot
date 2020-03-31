@@ -17,6 +17,7 @@ def run(discord_token, api_base_url, api_key, dbl_token=None, donate_url=None):
     # Can't close aiohttp session cleanly because of current initialization method
     api_helper = ApiHelper(aiohttp.ClientSession(loop=bot.loop), api_base_url, api_key)
 
+    # Add cogs
     bot.add_cog(cogs.CacherCog(bot, DATA_PATH))
     bot.add_cog(cogs.ConsoleCog(bot))
     bot.add_cog(cogs.HelpCog(bot, BOT_COLOR))
@@ -31,4 +32,5 @@ def run(discord_token, api_base_url, api_key, dbl_token=None, donate_url=None):
     if donate_url:
         bot.add_cog(cogs.DonateCog(bot, BOT_COLOR, donate_url))
 
+    # Run bot (BLOCKING)
     bot.run(discord_token)
