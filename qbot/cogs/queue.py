@@ -292,7 +292,7 @@ class QueueCog(commands.Cog):
         queue = self.guild_queues[ctx.guild]
 
         if len(args) == 0:  # No size argument specified
-            embed = discord.Embed(title=f'The queue capacity is currently set to {queue.capacity}')
+            embed = discord.Embed(title=f'The queue capacity is currently set to {queue.capacity}', color=self.color)
         else:
             new_cap = args[0]
 
