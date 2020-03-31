@@ -17,24 +17,15 @@ class Map:
 
 BASE_URL = 'https://raw.githubusercontent.com/cameronshinn/csgo-queue-bot/master/assets/maps/images/'
 
-de_cache = Map('Cache', 'de_cache', '<:de_cache:693554472525365271>',
-               f'{BASE_URL}cache.jpg')
-de_cbble = Map('Cobblestone', 'de_cbble', '<:de_cbble:693554473276145774>',
-               f'{BASE_URL}cobblestone.jpg')
-de_dust2 = Map('Dust II', 'de_dust2', '<:de_dust2:693554474085515286>',
-               f'{BASE_URL}dust-ii.jpg')
-de_inferno = Map('Inferno', 'de_inferno', '<:de_inferno:693554475356520512>',
-                 f'{BASE_URL}inferno.jpg')
-de_mirage = Map('Mirage', 'de_mirage', '<:de_mirage:693554473993502750>',
-                f'{BASE_URL}mirage.jpg')
-de_nuke = Map('Nuke', 'de_nuke', '<:de_nuke:693554474391830549>',
-              f'{BASE_URL}nuke.jpg')
-de_overpass = Map('Overpass', 'de_overpass', '<:de_overpass:693554473624141865>',
-                  f'{BASE_URL}overpass.jpg')
-de_train = Map('Train', 'de_train', '<:de_train:693554473800302682>',
-               f'{BASE_URL}train.jpg')
-de_vertigo = Map('Vertigo', 'de_vertigo', '<:de_vertigo:693554473829662771>',
-                 f'{BASE_URL}vertigo.jpg')
+de_cache = Map('Cache', 'de_cache', '<:de_cache:693554472525365271>', f'{BASE_URL}cache.jpg')
+de_cbble = Map('Cobblestone', 'de_cbble', '<:de_cbble:693554473276145774>', f'{BASE_URL}cobblestone.jpg')
+de_dust2 = Map('Dust II', 'de_dust2', '<:de_dust2:693554474085515286>', f'{BASE_URL}dust-ii.jpg')
+de_inferno = Map('Inferno', 'de_inferno', '<:de_inferno:693554475356520512>', f'{BASE_URL}inferno.jpg')
+de_mirage = Map('Mirage', 'de_mirage', '<:de_mirage:693554473993502750>', f'{BASE_URL}mirage.jpg')
+de_nuke = Map('Nuke', 'de_nuke', '<:de_nuke:693554474391830549>', f'{BASE_URL}nuke.jpg')
+de_overpass = Map('Overpass', 'de_overpass', '<:de_overpass:693554473624141865>', f'{BASE_URL}overpass.jpg')
+de_train = Map('Train', 'de_train', '<:de_train:693554473800302682>', f'{BASE_URL}train.jpg')
+de_vertigo = Map('Vertigo', 'de_vertigo', '<:de_vertigo:693554473829662771>', f'{BASE_URL}vertigo.jpg')
 
 ALL_MAPS = [
     de_cache,
@@ -63,6 +54,7 @@ class MDraftData:
     """ Holds guild-specific map draft data. """
 
     def __init__(self, map_pool=DEFAULT_MAP_POOL, maps_left=None, message=None):
+        """ Set attributes. """
         self.map_pool = map_pool
         self.maps_left = maps_left
         self.message = message
@@ -169,7 +161,7 @@ class MapDraftCog(commands.Cog):
                       brief='Add or remove maps from the mdraft map pool (Must have admin perms)')
     @commands.has_permissions(administrator=True)
     async def setmp(self, ctx, *args):
-        """"""
+        """ Edit the guild's map pool for map drafts. """
         mdraft_data = self.guild_mdraft_data[ctx.guild]
 
         if len(args) == 0:
