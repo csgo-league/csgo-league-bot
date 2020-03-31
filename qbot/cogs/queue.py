@@ -70,6 +70,29 @@ class QueueCog(commands.Cog):
         embed.set_footer(text='Players will receive a notification when the queue fills up')
         return embed
 
+    async def balance_teams(self, users):
+        """ Balance teams based on players' RankMe score. """
+        # Only balance teams with even amounts of players
+        if len(users) % 2 != 0:
+            return None
+
+        # Get players' RankMe scores tied to their user object
+        player_scores = {await self.api_helper.get_player(user).score: user for user in users}
+        scores = player_scores.keys().sort()
+
+        # Balance teams
+        team_size = len(users) // 2
+        team_one = [scores.pop()]
+        team_two = [scores.pop()]
+
+        while scores:
+            if len(team_one) < team_size and sum(team_one) > sum(team_two):
+                team_one.append(scores.pop())
+            else:
+                team_two.append(scores.pop())
+
+        return team_one, team_two
+
     @commands.command(brief='Join the queue')
     async def join(self, ctx):
         """ Check if the member can be added to the guild queue and add them if so. """
@@ -79,16 +102,16 @@ class QueueCog(commands.Cog):
             title = f'**{ctx.author.display_name}** is already in the queue'
         elif len(queue.active) >= queue.capacity:  # Queue full
             title = f'Unable to add **{ctx.author.display_name}**: Queue is full'
-        elif not await self.api_helper.is_linked(ctx.author):
+        elif not await self.api_helper.is_linked(ctx.author):  # Message author isn't linked
             title = f'Unable to add **{ctx.author.display_name}**: Their account not linked'
         else:
             player = await self.api_helper.get_player(ctx.author)
 
-            if not player:
+            if not player:  # ApiHelper couldn't get player
                 title = f'Unable to add **{ctx.author.display_name}**: Cannot verify match status'
-            elif player.in_match:
+            elif player.in_match:  # User is already in a match
                 title = f'Unable to add **{ctx.author.display_name}**: They are already in a match'
-            else:  # Open spot in queue
+            else:  # User can be added
                 queue.active.append(ctx.author)
                 title = f'**{ctx.author.display_name}** has been added to the queue'
 
@@ -126,7 +149,7 @@ class QueueCog(commands.Cog):
                 for user in unreadied:
                     queue.active.remove(user)
 
-                description = '\n'.join('\u2022 ' + user.mention for user in unreadied)
+                description = '\n'.join('× ' + user.mention for user in unreadied)
                 title = 'Not everyone was ready!'
                 burst_embed = discord.Embed(title=title, description=description, color=self.color)
                 burst_embed.set_footer(text='The missing players have been removed from the queue')
@@ -142,12 +165,7 @@ class QueueCog(commands.Cog):
                 await burst_message.edit(embed=burst_embed)
 
                 # Set teams and request match server
-                team_size = queue.capacity // 2
-                shuffled_players = queue.bursted.copy()
-                random.shuffle(shuffled_players)
-                team_one = shuffled_players[:team_size]
-                team_two = shuffled_players[team_size:]
-                # team_one, team_two = [shuffled_players[i * team_size:(i + 1) * team_size] for i in range((len(shuffled_players) + team_size - 1) // team_size)]  # noqa
+                team_one, team_two = self.balance_teams(queue.bursted)
                 match = await self.api_helper.start_match(team_one, team_two)
 
                 # Check if able to get a match server and edit message embed accordingly
