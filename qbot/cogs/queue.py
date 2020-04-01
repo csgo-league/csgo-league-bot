@@ -75,22 +75,22 @@ class QueueCog(commands.Cog):
         if len(users) % 2 != 0:
             return None
 
-        # Get players' RankMe scores tied to their user object
-        player_scores = {getattr(await self.api_helper.get_player(user), 'score'): user for user in users}
-        scores = sorted(player_scores.keys())
+        # Get players and sort by RankMe score
+        players = [await self.api_helper.get_player(user) for user in users]
+        players.sort(key=lambda x: x.score)
 
         # Balance teams
-        team_size = len(users) // 2
-        team_one_scores = [scores.pop()]
-        team_two_scores = [scores.pop()]
+        team_size = len(players) // 2
+        team_one = [players.pop()]
+        team_two = [players.pop()]
 
-        while scores:
-            if len(team_one_scores) < team_size and sum(team_one_scores) < sum(team_two_scores):
-                team_one_scores.append(scores.pop())
+        while players:
+            if len(team_one) < team_size and sum(team_one) < sum(team_two):
+                team_one.append(players.pop())
             else:
-                team_two_scores.append(scores.pop())
+                team_two.append(players.pop())
 
-        return map(player_scores.get, team_one_scores), map(player_scores.get, team_two_scores)
+        return team_one, team_two
 
     async def start_match(self, ctx, users):
         """ Ready all the users up and start a match. """
