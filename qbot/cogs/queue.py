@@ -76,7 +76,8 @@ class QueueCog(commands.Cog):
             return None
 
         # Get players and sort by RankMe score
-        players = [await self.api_helper.get_player(user) for user in users]
+        users_dict = {await self.api_helper.get_player(user): user for user in users}
+        players = list(users_dict.keys())
         players.sort(key=lambda x: x.score)
 
         # Balance teams
@@ -85,12 +86,12 @@ class QueueCog(commands.Cog):
         team_two = [players.pop()]
 
         while players:
-            if len(team_one) < team_size and sum(team_one) < sum(team_two):
+            if len(team_one) < team_size and sum(p.score for p in team_one) < sum(p.score for p in team_two):
                 team_one.append(players.pop())
             else:
                 team_two.append(players.pop())
 
-        return team_one, team_two
+        return map(users_dict.get, team_one), map(users_dict.get, team_two)
 
     async def start_match(self, ctx, users):
         """ Ready all the users up and start a match. """
