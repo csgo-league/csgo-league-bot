@@ -86,7 +86,11 @@ class QueueCog(commands.Cog):
         team_two = [players.pop()]
 
         while players:
-            if len(team_one) < team_size and sum(p.score for p in team_one) < sum(p.score for p in team_two):
+            if len(team_one) >= team_size:
+                team_two.append(players.pop())
+            elif len(team_two) >= team_size:
+                team_one.append(players.pop())
+            elif sum(p.score for p in team_one) < sum(p.score for p in team_two):
                 team_one.append(players.pop())
             else:
                 team_two.append(players.pop())
