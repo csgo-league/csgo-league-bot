@@ -15,8 +15,9 @@ class Map:
         self.image_url = image_url
 
 
-BASE_URL = 'https://raw.githubusercontent.com/cameronshinn/csgo-queue-bot/master/assets/maps/images/'
+BASE_URL = 'https://raw.githubusercontent.com/csgo-league/csgo-queue-bot/master/assets/maps/images/'
 
+# Create map objects
 de_cache = Map('Cache', 'de_cache', '<:de_cache:693554472525365271>', f'{BASE_URL}cache.jpg')
 de_cbble = Map('Cobblestone', 'de_cbble', '<:de_cbble:693554473276145774>', f'{BASE_URL}cobblestone.jpg')
 de_dust2 = Map('Dust II', 'de_dust2', '<:de_dust2:693554474085515286>', f'{BASE_URL}dust-ii.jpg')

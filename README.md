@@ -28,8 +28,8 @@ If you appreciate the project then please take the time to star our repository.
 1. First you must have a bot instance to run this script on. Follow Discord's tutorial [here](https://discord.onl/2019/03/21/how-to-set-up-a-bot-application/) on how to set one up. Be sure to invite it to a server to use it.
 
    * The permissions integer necessary is `17067072`.
-   
-2. Get an API token for the CS:GO League [web API](https://github.com/csgo-league/csgo-league-web) along with the host URL. 
+
+2. Get an API token for the CS:GO League [web API](https://github.com/csgo-league/csgo-league-web) along with the host URL.
 
 3. (Optional) If you have a Discord Bot List token to use with [top.gg](https://top.gg/) then retrieve that from its editing menu.
 
@@ -53,7 +53,7 @@ qbot.run(DISCORD_TOKEN, API_BASE_URL, API_KEY, dbl_token=DBL_TOKEN)
 
 Now you are ready to start using the League CS:GO Queue Bot! Try out some of the commands to make sure it works.
 
-*Note that currently the `mdraft` command depends on custom emojis to be used as buttons which are hardcoded [here](https://github.com/cameronshinn/csgo-queue-bot/blob/abb06e1876546bb3948094faa795e90184642882/qbot/cogs/mapdraft.py#L20). As of right now you will need to make the emojis yourself and replace the emoji code in the map objects there.*
+*Note that currently the `mdraft` command depends on custom emojis to be used as buttons which are hardcoded [here](https://github.com/csgo-league/csgo-queue-bot/blob/abb06e1876546bb3948094faa795e90184642882/qbot/cogs/mapdraft.py#L20). As of right now you will need to make the emojis yourself and replace the emoji code in the map objects there.*
 
 ## Commands
 `q!help` **-** Display help menu<br>

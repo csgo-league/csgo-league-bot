@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 import Levenshtein as lev
 
-GITHUB = 'https://github.com/cameronshinn/csgo-queue-bot'  # TODO: Use git API to get link to repo?
+GITHUB = 'https://github.com/csgo-league/csgo-queue-bot'  # TODO: Use git API to get link to repo?
 
 
 class HelpCog(commands.Cog):
@@ -14,7 +14,7 @@ class HelpCog(commands.Cog):
         """ Set attributes and remove default help command. """
         self.bot = bot
         self.color = color
-        self.logo = 'https://raw.githubusercontent.com/cameronshinn/csgo-queue-bot/master/assets/logo/logo.png'
+        self.logo = 'https://raw.githubusercontent.com/csgo-league/csgo-queue-bot/master/assets/logo/logo.png'
         self.bot.remove_command('help')
 
     def help_embed(self, title):
