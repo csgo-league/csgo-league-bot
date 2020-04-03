@@ -76,7 +76,7 @@ class QueueCog(commands.Cog):
             return None
 
         # Get players and sort by RankMe score
-        users_dict = {await self.api_helper.get_player(user): user for user in users}
+        users_dict = dict(zip(await self.api_helper.get_players(users), users))
         players = list(users_dict.keys())
         players.sort(key=lambda x: x.score)
 

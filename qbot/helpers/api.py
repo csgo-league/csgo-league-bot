@@ -164,6 +164,16 @@ class ApiHelper:
             if resp.status == 200:
                 return Player(await resp.json())
 
+    async def get_players(self, users):
+        """ Get multiple players' data from the API. """
+        url = f'{self.base_url}/players/discord'
+        discord_ids = {"discordIds": [user.id for user in users]}
+
+        async with self.session.post(url=url, headers=self.headers, json=discord_ids) as resp:
+            if resp.status == 200:
+                players = await resp.json()
+                return [Player(player_data) for player_data in players]
+
     async def start_match(self, team_one, team_two):
         """ Get a match server from the API. """
         url = f'{self.base_url}/match/start'
