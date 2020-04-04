@@ -78,7 +78,7 @@ class HelpCog(commands.Cog):
             await message.channel.send(embed=self.help_embed('__CS:GO League Bot Commands__'))
 
     @commands.command(brief='Display basic info about this bot')
-    async def info(self, ctx):
+    async def about(self, ctx):
         """ Display the info embed. """
         description = '_The definitive bot for setting CS:GO PUGs_\n'
         description += f'\nJoin the support server [here]({SERVER_INV})'
