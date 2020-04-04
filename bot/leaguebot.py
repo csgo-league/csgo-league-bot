@@ -47,7 +47,7 @@ class LeagueBot(commands.AutoShardedBot):
 
     async def close(self):
         """ Override parent close to close the API session also. """
-        await super.close()
+        await super().close()
         await self.session.close()
 
     def run(self):
