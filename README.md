@@ -35,7 +35,7 @@ If you appreciate the project then please take the time to star our repository.
 
     * Note that python-Levenshtein requires your system to have a C++ compiler (Visual Studio C++ compiler for Windows or g++ for Linux). This library may be replaced in the future to eliminate this requirement.
 
-4. Add the `/qbot` path to your `PYTHONPATH` environment variable to be able to import it from anywhere.
+4. Add the `/bot` path to your `PYTHONPATH` environment variable to be able to import it from anywhere.
 
 5. Using your bot's Discord token, League web server URL, League API token and Discord Bot List token, run the bot like so...
 
