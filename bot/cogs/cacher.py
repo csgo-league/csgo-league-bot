@@ -22,7 +22,6 @@ class CacherCog(commands.Cog):
         await asyncio.wait(tasks)
 
         # Load guild data
-        print('Loading guild data...')
         self.load()
         print('Loaded guild data')
 
@@ -61,7 +60,9 @@ class CacherCog(commands.Cog):
 
         queue_cog = self.bot.get_cog('QueueCog')
         mapdraft_cog = self.bot.get_cog('MapDraftCog')
-        data = json.load(open(self.bot.guild_data_file, 'r'))
+
+        with open(self.bot.guild_data_file, 'r') as f:
+            data = json.load(f)
 
         for guild_id, guild_data in data.items():
             guild = self.bot.get_guild(int(guild_id))
