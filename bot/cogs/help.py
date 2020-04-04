@@ -80,7 +80,7 @@ class HelpCog(commands.Cog):
     @commands.command(brief='Display basic info about this bot')
     async def about(self, ctx):
         """ Display the info embed. """
-        description = '_The definitive bot for setting CS:GO PUGs_\n'
+        description = '_CS:GO PUGs made easy so you can just play. End-to-end support from Discord to servers._\n'
         description += f'\nJoin the support server [here]({SERVER_INV})'
         dbl_cog = self.bot.get_cog('DblCog')
 
