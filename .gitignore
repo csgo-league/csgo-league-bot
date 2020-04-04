@@ -1,3 +1,4 @@
 __pycache__/
 *.pyc
-qbot/run.py
+bot/guild_data.json
+bot/run.py
