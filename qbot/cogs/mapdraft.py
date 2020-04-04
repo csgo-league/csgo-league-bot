@@ -109,7 +109,8 @@ class MapDraftCog(commands.Cog):
         """ Start a map draft by sending a map draft embed panel. """
         mdraft_data = self.guild_mdraft_data[ctx.guild]
         mdraft_data.maps_left = mdraft_data.map_pool.copy()  # Set or reset map pool
-        embed = discord.Embed(title='Map draft has begun!', description=self.maps_left_str(ctx.guild), color=self.bot.color)
+        embed = discord.Embed(title='Map draft has begun!', description=self.maps_left_str(ctx.guild),
+                              color=self.bot.color)
         embed.set_footer(text=MapDraftCog.footer)
         msg = await ctx.send(embed=embed)
         await msg.edit(embed=embed)
@@ -150,7 +151,8 @@ class MapDraftCog(commands.Cog):
                     mdraft_data.message = None
                 else:
                     embed_title = f'**{user.name}** has banned **{m.name}**'
-                    embed = discord.Embed(title=embed_title, description=self.maps_left_str(guild), color=self.bot.color)
+                    embed = discord.Embed(title=embed_title, description=self.maps_left_str(guild),
+                                          color=self.bot.color)
                     embed.set_thumbnail(url=m.image_url)
                     embed.set_footer(text=MapDraftCog.footer)
                     await mdraft_data.message.edit(embed=embed)
