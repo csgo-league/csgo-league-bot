@@ -15,7 +15,7 @@ class Map:
         self.image_url = image_url
 
 
-BASE_URL = 'https://raw.githubusercontent.com/csgo-league/csgo-queue-bot/master/assets/maps/images/'
+BASE_URL = 'https://raw.githubusercontent.com/csgo-league/csgo-league-bot/master/assets/maps/images/'
 
 # Create map objects
 de_cache = Map('Cache', 'de_cache', '<:de_cache:693554472525365271>', f'{BASE_URL}cache.jpg')

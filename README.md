@@ -1,6 +1,6 @@
-[![HitCount](http://hits.dwyl.io/csgo-league/csgo-queue-bot.svg)](http://hits.dwyl.io/csgo-league/csgo-queue-bot)
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/csgo-league/csgo-queue-bot/graphs/commit-activity)
-[![GitHub release](https://img.shields.io/github/release/csgo-league/csgo-queue-bot.svg)](https://github.com/csgo-league/csgo-queue-bot/releases/)
+[![HitCount](http://hits.dwyl.io/csgo-league/csgo-league-bot.svg)](http://hits.dwyl.io/csgo-league/csgo-league-bot)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/csgo-league/csgo-league-bot/graphs/commit-activity)
+[![GitHub release](https://img.shields.io/github/release/csgo-league/csgo-league-bot.svg)](https://github.com/csgo-league/csgo-league-bot/releases/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![Open Source Love svg3](https://badges.frapsoft.com/os/v3/open-source.svg?v=103)](https://github.com/csgo-league)
 
@@ -40,20 +40,20 @@ If you appreciate the project then please take the time to star our repository.
 5. Using your bot's Discord token, League web server URL, League API token and Discord Bot List token, run the bot like so...
 
 ```python
-import qbot
+import leaguebot
 
 DISCORD_TOKEN = 'XXXXXXXX'
 API_BASE_URL = 'XXXXXXXX'
 API_KEY = 'XXXXXXXX'
 
-bot = qbot.QBot(DISCORD_TOKEN, API_BASE_URL, API_KEY)
+bot = leaguebot.LeagueBot(DISCORD_TOKEN, API_BASE_URL, API_KEY)
 bot.run()  # Blocking
 
 ```
 
-Now you are ready to start using the League CS:GO Queue Bot! Try out some of the commands to make sure it works.
+Now you are ready to start using the CS:GO League Bot! Try out some of the commands to make sure it works.
 
-*Note that currently the `mdraft` command depends on custom emojis to be used as buttons which are hardcoded [here](https://github.com/csgo-league/csgo-queue-bot/blob/abb06e1876546bb3948094faa795e90184642882/qbot/cogs/mapdraft.py#L20). As of right now you will need to make the emojis yourself and replace the emoji code in the map objects there.*
+*Note that currently the `mdraft` command depends on custom emojis to be used as buttons which are hardcoded [here](https://github.com/csgo-league/csgo-league-bot/blob/abb06e1876546bb3948094faa795e90184642882/qbot/cogs/mapdraft.py#L20). As of right now you will need to make the emojis yourself and replace the emoji code in the map objects there.*
 
 ## Commands
 `q!help` **-** Display help menu<br>

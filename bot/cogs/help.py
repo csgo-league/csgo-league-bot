@@ -4,7 +4,8 @@ import discord
 from discord.ext import commands
 import Levenshtein as lev
 
-GITHUB = 'https://github.com/csgo-league/csgo-queue-bot'  # TODO: Use git API to get link to repo?
+GITHUB = 'https://github.com/csgo-league/csgo-league-bot'  # TODO: Use git API to get link to repo?
+SERVER_INV = 'https://discord.gg/b5MhANU'
 
 
 class HelpCog(commands.Cog):
@@ -13,7 +14,7 @@ class HelpCog(commands.Cog):
     def __init__(self, bot):
         """ Set attributes and remove default help command. """
         self.bot = bot
-        self.logo = 'https://raw.githubusercontent.com/csgo-league/csgo-queue-bot/master/assets/logo/logo.png'
+        self.logo = 'https://raw.githubusercontent.com/csgo-league/csgo-league-bot/master/assets/logo/logo.png'
         self.bot.remove_command('help')
 
     def help_embed(self, title):
@@ -67,26 +68,26 @@ class HelpCog(commands.Cog):
     @commands.command(brief='Display the help menu')  # TODO: Add 'or details of the specified command'
     async def help(self, ctx):
         """ Generate and send help embed based on the bot's commands. """
-        embed = self.help_embed('__Queue Bot Commands__')
+        embed = self.help_embed('__CS:GO League Bot Commands__')
         await ctx.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_message(self, message):
         """ Send the help embed if the bot is mentioned. """
         if self.bot.user in message.mentions:
-            await message.channel.send(embed=self.help_embed('__Queue Bot Commands__'))
+            await message.channel.send(embed=self.help_embed('__CS:GO League Bot Commands__'))
 
     @commands.command(brief='Display basic info about this bot')
     async def info(self, ctx):
         """ Display the info embed. """
-        description = '_The definitive bot for setting up 10-man lobbies_\n'
-        description += '\nJoin the support server [here](https://discordapp.com/invite/tskeyDA)'
+        description = '_The definitive bot for setting CS:GO PUGs_\n'
+        description += f'\nJoin the support server [here]({SERVER_INV})'
         dbl_cog = self.bot.get_cog('DblCog')
 
         if dbl_cog:
             description += f'\nBe sure to upvote the bot on [top.gg]({dbl_cog.topgg_url})'
 
         description += f'\nSource code can be found [here]({GITHUB}) on GitHub'
-        embed = discord.Embed(title='__10-Man Queue Bot__', description=description, color=self.bot.color)
+        embed = discord.Embed(title='__CS:GO League Bot__', description=description, color=self.bot.color)
         embed.set_thumbnail(url=self.logo)
         await ctx.send(embed=embed)

@@ -1,4 +1,4 @@
-# qbot.py
+# leaguebot.py
 
 from discord.ext import commands
 from helpers.api import ApiHelper
@@ -7,7 +7,7 @@ import cogs
 import aiohttp
 
 
-class QBot(commands.AutoShardedBot):
+class LeagueBot(commands.AutoShardedBot):
     """ Sub-classed AutoShardedBot modified to fit the needs of the application. """
 
     def __init__(self, discord_token, api_base_url, api_key, dbl_token=None, donate_url=None):
