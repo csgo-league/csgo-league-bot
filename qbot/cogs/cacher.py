@@ -10,9 +10,8 @@ import os
 
 class CacherCog(commands.Cog):
     """ Cog to handle the caching of guild data. """
-    def __init__(self, bot, guild_data_file):
+    def __init__(self, bot):
         self.bot = bot
-        self.guild_data_file = guild_data_file
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -53,16 +52,16 @@ class CacherCog(commands.Cog):
 
             data[str(guild.id)] = guild_data
 
-        json.dump(data, open(self.guild_data_file, 'w+'))  # Dump dict to JSON
+        json.dump(data, open(self.bot.guild_data_file, 'w+'))  # Dump dict to JSON
 
     def load(self):
         """ Load guild data from JSON. """
-        if not os.path.exists(self.guild_data_file):  # Check for guild data file first
+        if not os.path.exists(self.bot.guild_data_file):  # Check for guild data file first
             return
 
         queue_cog = self.bot.get_cog('QueueCog')
         mapdraft_cog = self.bot.get_cog('MapDraftCog')
-        data = json.load(open(self.guild_data_file, 'r'))
+        data = json.load(open(self.bot.guild_data_file, 'r'))
 
         for guild_id, guild_data in data.items():
             guild = self.bot.get_guild(int(guild_id))

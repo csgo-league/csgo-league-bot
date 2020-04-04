@@ -25,12 +25,10 @@ class QQueue:
 class QueueCog(commands.Cog):
     """ Cog to manage queues of players among multiple servers. """
 
-    def __init__(self, bot, api_helper, color):
+    def __init__(self, bot):
         """ Set attributes. """
         self.bot = bot
-        self.api_helper = api_helper
         self.guild_queues = {}  # Maps Guild -> QQueue
-        self.color = color
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -65,7 +63,7 @@ class QueueCog(commands.Cog):
         else:  # No users in queue
             queue_str = '_The queue is empty..._'
 
-        embed = discord.Embed(title=title, description=queue_str, color=self.color)
+        embed = discord.Embed(title=title, description=queue_str, color=self.bot.color)
         embed.set_footer(text='Players will receive a notification when the queue fills up')
         return embed
 
@@ -76,7 +74,7 @@ class QueueCog(commands.Cog):
             return None
 
         # Get players and sort by RankMe score
-        users_dict = dict(zip(await self.api_helper.get_players(users), users))
+        users_dict = dict(zip(await self.bot.api_helper.get_players(users), users))
         players = list(users_dict.keys())
         players.sort(key=lambda x: x.score)
 
@@ -103,7 +101,7 @@ class QueueCog(commands.Cog):
         user_mentions = ''.join(user.mention for user in users)
         ready_emoji = '✅'
         description = f'React with the {ready_emoji} below to ready up (1 min)'
-        burst_embed = discord.Embed(title='Queue has filled up!', description=description, color=self.color)
+        burst_embed = discord.Embed(title='Queue has filled up!', description=description, color=self.bot.color)
         ready_message = await ctx.send(user_mentions, embed=burst_embed)
         await ready_message.add_reaction(ready_emoji)
 
@@ -134,7 +132,7 @@ class QueueCog(commands.Cog):
 
             description = '\n'.join('× ' + user.mention for user in unreadied)
             title = 'Not everyone was ready!'
-            burst_embed = discord.Embed(title=title, description=description, color=self.color)
+            burst_embed = discord.Embed(title=title, description=description, color=self.bot.color)
             burst_embed.set_footer(text='The missing players have been removed from the queue')
             await ready_message.edit(embed=burst_embed)
             return False  # Not everyone readied up
@@ -142,20 +140,20 @@ class QueueCog(commands.Cog):
             # Attempt to make teams and start match
             await ready_message.clear_reactions()
             title = 'All players ready'
-            burst_embed = discord.Embed(title=title, description='Fetching server...', color=self.color)
+            burst_embed = discord.Embed(title=title, description='Fetching server...', color=self.bot.color)
             await ready_message.edit(embed=burst_embed)
             team_one, team_two = await self.balance_teams(users)  # Get teams
-            match = await self.api_helper.start_match(team_one, team_two)  # Request match from API
+            match = await self.bot.api_helper.start_match(team_one, team_two)  # Request match from API
 
             # Check if able to get a match server and edit message embed accordingly
             if match:
                 description = f'URL: {match.connect_url}\nCommand: `{match.connect_command}`'
-                burst_embed = discord.Embed(title='Server ready!', description=description, color=self.color)
+                burst_embed = discord.Embed(title='Server ready!', description=description, color=self.bot.color)
                 burst_embed.set_footer(text='Server will close after 5 minutes if anyone doesn\'t join')
             else:
                 description = ('Sorry! Looks like there aren\'t any servers available at this time. ',
                                'Please try again later.')
-                burst_embed = discord.Embed(title='There was a problem!', description=description, color=self.color)
+                burst_embed = discord.Embed(title='There was a problem!', description=description, color=self.bot.color)
 
             await ready_message.edit(embed=burst_embed)
             return True  # Everyone readied up
@@ -165,10 +163,10 @@ class QueueCog(commands.Cog):
         """ Check if the member can be added to the guild queue and add them if so. """
         queue = self.guild_queues[ctx.guild]
 
-        if not await self.api_helper.is_linked(ctx.author):  # Message author isn't linked
+        if not await self.bot.api_helper.is_linked(ctx.author):  # Message author isn't linked
             title = f'Unable to add **{ctx.author.display_name}**: Their account not linked'
         else:  # Message author is linked
-            player = await self.api_helper.get_player(ctx.author)
+            player = await self.bot.api_helper.get_player(ctx.author)
 
             if ctx.author in queue.active:  # Author already in queue
                 title = f'**{ctx.author.display_name}** is already in the queue'
@@ -247,7 +245,7 @@ class QueueCog(commands.Cog):
         try:
             removee = ctx.message.mentions[0]
         except IndexError:
-            embed = discord.Embed(title='Mention a player in the command to remove them', color=self.color)
+            embed = discord.Embed(title='Mention a player in the command to remove them', color=self.bot.color)
             await ctx.send(embed=embed)
         else:
             queue = self.guild_queues[ctx.guild]
@@ -313,7 +311,7 @@ class QueueCog(commands.Cog):
             await ctx.trigger_typing()
             missing_perm = error.missing_perms[0].replace('_', ' ')
             title = f'Cannot remove players without {missing_perm} permission!'
-            embed = discord.Embed(title=title, color=self.color)
+            embed = discord.Embed(title=title, color=self.bot.color)
             await ctx.send(embed=embed)
 
     @commands.command(brief='Set the capacity of the queue (Must have admin perms)')
@@ -323,21 +321,21 @@ class QueueCog(commands.Cog):
         queue = self.guild_queues[ctx.guild]
 
         if len(args) == 0:  # No size argument specified
-            embed = discord.Embed(title=f'The queue capacity is currently set to {queue.capacity}', color=self.color)
+            embed = discord.Embed(title=f'The current queue capacity is {queue.capacity}', color=self.bot.color)
         else:
             new_cap = args[0]
 
             try:
                 new_cap = int(new_cap)
             except ValueError:
-                embed = discord.Embed(title=f'{new_cap} is not an integer', color=self.color)
+                embed = discord.Embed(title=f'{new_cap} is not an integer', color=self.bot.color)
             else:
                 if new_cap < 2 or new_cap > 100:
-                    embed = discord.Embed(title='Capacity is outside of valid range', color=self.color)
+                    embed = discord.Embed(title='Capacity is outside of valid range', color=self.bot.color)
                 else:
                     queue.active.clear()  # Empty active queue to prevent bugs related to capacity size
                     queue.capacity = new_cap
-                    embed = discord.Embed(title=f'Queue capacity set to {new_cap}', color=self.color)
+                    embed = discord.Embed(title=f'Queue capacity set to {new_cap}', color=self.bot.color)
                     embed.set_footer(text='The queue has been emptied because of the capacity change')
 
         await ctx.send(embed=embed)
@@ -349,5 +347,5 @@ class QueueCog(commands.Cog):
             await ctx.trigger_typing()
             missing_perm = error.missing_perms[0].replace('_', ' ')
             title = f'Cannot change queue capacity without {missing_perm} permission!'
-            embed = discord.Embed(title=title, color=self.color)
+            embed = discord.Embed(title=title, color=self.bot.color)
             await ctx.send(embed=embed)

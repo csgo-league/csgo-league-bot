@@ -7,11 +7,9 @@ from discord.ext import commands
 class AuthCog(commands.Cog):
     """ Cog to manage authorisation. """
 
-    def __init__(self, bot, api_helper, color):
+    def __init__(self, bot):
         """ Set attributes. """
         self.bot = bot
-        self.api_helper = api_helper
-        self.color = color
 
     async def cog_before_invoke(self, ctx):
         """ Trigger typing at the start of every command. """
@@ -20,12 +18,12 @@ class AuthCog(commands.Cog):
     @commands.command(brief='Link a player on the backend')
     async def link(self, ctx):
         """ Link a player by sending them a link to sign in with steam on the backend. """
-        is_linked = await self.api_helper.is_linked(ctx.author)
+        is_linked = await self.bot.api_helper.is_linked(ctx.author)
 
         if is_linked:
             title = f'Unable to link **{ctx.author.display_name}**: They are already linked'
         else:
-            link = await self.api_helper.generate_link_url(ctx.author)
+            link = await self.bot.api_helper.generate_link_url(ctx.author)
 
             if link:
                 # Send the author a DM containing this link
@@ -34,5 +32,5 @@ class AuthCog(commands.Cog):
             else:
                 title = f'Unable to link **{ctx.author.display_name}**: Unknown error'
 
-        embed = discord.Embed(title=title, color=self.color)
+        embed = discord.Embed(title=title, color=self.bot.color)
         await ctx.send(embed=embed)

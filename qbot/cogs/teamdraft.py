@@ -18,10 +18,9 @@ EMOJI_LIST = [u'\u0031\u20E3',
 class TeamDraftCog(commands.Cog):
     """ Handles the player drafter command. """
 
-    def __init__(self, bot, color):
+    def __init__(self, bot):
         """ Set attributes and initialize empty draft teams. """
         self.bot = bot
-        self.color = color
         self.guild_player_pool = {}  # Players participating in the draft for each guild
         self.guild_teams = {}  # Teams for each guild
         self.guild_msgs = {}  # Last team draft embed message sent for each guild
@@ -50,7 +49,7 @@ class TeamDraftCog(commands.Cog):
         """ Return the player draft embed based on the guild attributes. """
         team_1 = self.guild_teams[guild][0]
         team_2 = self.guild_teams[guild][1]
-        embed = discord.Embed(title=title, color=self.color)
+        embed = discord.Embed(title=title, color=self.bot.color)
         x_emoji = ':heavy_multiplication_x:'
         players_left_str = ''
 
@@ -91,7 +90,7 @@ class TeamDraftCog(commands.Cog):
 
         if queue.bursted == []:
             embed_title = f'Cannot start player draft until the queue is full ({len(queue.active)}/{queue.capacity})'
-            embed = discord.Embed(title=embed_title, color=self.color)
+            embed = discord.Embed(title=embed_title, color=self.bot.color)
             await ctx.send(embed=embed)
             return
 

@@ -31,15 +31,13 @@ If you appreciate the project then please take the time to star our repository.
 
 2. Get an API token for the CS:GO League [web API](https://github.com/csgo-league/csgo-league-web) along with the host URL.
 
-3. (Optional) If you have a Discord Bot List token to use with [top.gg](https://top.gg/) then retrieve that from its editing menu.
-
-4. Run `pip3 install -r requirements.txt` in the repository's root directory to get the necessary libraries.
+3. Run `pip3 install -r requirements.txt` in the repository's root directory to get the necessary libraries.
 
     * Note that python-Levenshtein requires your system to have a C++ compiler (Visual Studio C++ compiler for Windows or g++ for Linux). This library may be replaced in the future to eliminate this requirement.
 
-5. Add the `/qbot` path to your `PYTHONPATH` environment variable to be able to import it from anywhere.
+4. Add the `/qbot` path to your `PYTHONPATH` environment variable to be able to import it from anywhere.
 
-6. Using your bot's Discord token, League web server URL, League API token and Discord Bot List token, run the bot like so...
+5. Using your bot's Discord token, League web server URL, League API token and Discord Bot List token, run the bot like so...
 
 ```python
 import qbot
@@ -47,8 +45,10 @@ import qbot
 DISCORD_TOKEN = 'XXXXXXXX'
 API_BASE_URL = 'XXXXXXXX'
 API_KEY = 'XXXXXXXX'
-DBL_TOKEN = 'XXXXXXXX'
-qbot.run(DISCORD_TOKEN, API_BASE_URL, API_KEY, dbl_token=DBL_TOKEN)
+
+bot = qbot.QBot(DISCORD_TOKEN, API_BASE_URL, API_KEY)
+bot.run()  # Blocking
+
 ```
 
 Now you are ready to start using the League CS:GO Queue Bot! Try out some of the commands to make sure it works.

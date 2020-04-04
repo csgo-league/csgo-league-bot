@@ -6,31 +6,50 @@ from helpers.api import ApiHelper
 import cogs
 import aiohttp
 
-BOT_COLOR = 0x000000
-DATA_PATH = 'guild_data.json'
 
+class QBot(commands.AutoShardedBot):
+    """ Sub-classed AutoShardedBot modified to fit the needs of the application. """
 
-def run(discord_token, api_base_url, api_key, dbl_token=None, donate_url=None):
-    """ Create the bot, add the cogs and run it. """
-    bot = commands.Bot(command_prefix=('q!', 'Q!'), case_insensitive=True)
+    def __init__(self, discord_token, api_base_url, api_key, dbl_token=None, donate_url=None):
+        """ Set attributes and configure bot. """
+        # Call parent init
+        super().__init__(command_prefix=('q!', 'Q!'), case_insensitive=True)
 
-    # Can't close aiohttp session cleanly because of current initialization method
-    api_helper = ApiHelper(aiohttp.ClientSession(loop=bot.loop), api_base_url, api_key)
+        # Set argument attributes
+        self.discord_token = discord_token
+        self.api_base_url = api_base_url
+        self.api_key = api_key
+        self.dbl_token = dbl_token
+        self.donate_url = donate_url
 
-    # Add cogs
-    bot.add_cog(cogs.CacherCog(bot, DATA_PATH))
-    bot.add_cog(cogs.ConsoleCog(bot))
-    bot.add_cog(cogs.HelpCog(bot, BOT_COLOR))
-    bot.add_cog(cogs.AuthCog(bot, api_helper, BOT_COLOR))
-    bot.add_cog(cogs.QueueCog(bot, api_helper, BOT_COLOR))
-    bot.add_cog(cogs.TeamDraftCog(bot, BOT_COLOR))
-    bot.add_cog(cogs.MapDraftCog(bot, BOT_COLOR))
+        # Set constants
+        self.color = 0x000000
+        self.guild_data_file = 'guild_data.json'
 
-    if dbl_token:
-        bot.add_cog(cogs.DblCog(bot, dbl_token))
+        # Create session for API
+        self.session = aiohttp.ClientSession(loop=self.loop)
+        self.api_helper = ApiHelper(self.session, self.api_base_url, self.api_key)
 
-    if donate_url:
-        bot.add_cog(cogs.DonateCog(bot, BOT_COLOR, donate_url))
+        # Add cogs
+        self.add_cog(cogs.CacherCog(self))
+        self.add_cog(cogs.ConsoleCog(self))
+        self.add_cog(cogs.HelpCog(self))
+        self.add_cog(cogs.AuthCog(self))
+        self.add_cog(cogs.QueueCog(self))
+        self.add_cog(cogs.TeamDraftCog(self))
+        self.add_cog(cogs.MapDraftCog(self))
 
-    # Run bot (BLOCKING)
-    bot.run(discord_token)
+        if self.dbl_token:
+            self.add_cog(cogs.DblCog(self))
+
+        if self.donate_url:
+            self.add_cog(cogs.DonateCog(self))
+
+    async def close(self):
+        """ Override parent close to close the API session also. """
+        await super.close()
+        await self.session.close()
+
+    def run(self):
+        """ Override parent run to automatically include Discord token. """
+        super().run(self.discord_token)

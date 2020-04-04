@@ -66,10 +66,9 @@ class MapDraftCog(commands.Cog):
 
     footer = 'React to any of the map icons below to ban the corresponding map'
 
-    def __init__(self, bot, color):
+    def __init__(self, bot):
         """ Set attributes. """
         self.bot = bot
-        self.color = color
         self.guild_mdraft_data = {}  # Map guild -> guild map draft data
 
     @commands.Cog.listener()
@@ -110,7 +109,7 @@ class MapDraftCog(commands.Cog):
         """ Start a map draft by sending a map draft embed panel. """
         mdraft_data = self.guild_mdraft_data[ctx.guild]
         mdraft_data.maps_left = mdraft_data.map_pool.copy()  # Set or reset map pool
-        embed = discord.Embed(title='Map draft has begun!', description=self.maps_left_str(ctx.guild), color=self.color)
+        embed = discord.Embed(title='Map draft has begun!', description=self.maps_left_str(ctx.guild), color=self.bot.color)
         embed.set_footer(text=MapDraftCog.footer)
         msg = await ctx.send(embed=embed)
         await msg.edit(embed=embed)
@@ -143,7 +142,7 @@ class MapDraftCog(commands.Cog):
                     map_result = mdraft_data.maps_left[0]
                     await mdraft_data.message.clear_reactions()
                     embed_title = f'We\'re going to {map_result.name}! {map_result.emoji}'
-                    embed = discord.Embed(title=embed_title, color=self.color)
+                    embed = discord.Embed(title=embed_title, color=self.bot.color)
                     embed.set_image(url=map_result.image_url)
                     embed.set_footer(text='Map pick has been sent to the server')
                     await mdraft_data.message.edit(embed=embed)
@@ -151,7 +150,7 @@ class MapDraftCog(commands.Cog):
                     mdraft_data.message = None
                 else:
                     embed_title = f'**{user.name}** has banned **{m.name}**'
-                    embed = discord.Embed(title=embed_title, description=self.maps_left_str(guild), color=self.color)
+                    embed = discord.Embed(title=embed_title, description=self.maps_left_str(guild), color=self.bot.color)
                     embed.set_thumbnail(url=m.image_url)
                     embed.set_footer(text=MapDraftCog.footer)
                     await mdraft_data.message.edit(embed=embed)
@@ -166,7 +165,7 @@ class MapDraftCog(commands.Cog):
         mdraft_data = self.guild_mdraft_data[ctx.guild]
 
         if len(args) == 0:
-            embed = discord.Embed(title='Current map pool', color=self.color)
+            embed = discord.Embed(title='Current map pool', color=self.bot.color)
         else:
             original_mp = mdraft_data.map_pool.copy()  # Save map pool copy incase outcome state is invalid
             description = ''
@@ -192,7 +191,7 @@ class MapDraftCog(commands.Cog):
                 mdraft_data.map_pool = original_mp
                 description = 'Pool cannot have fewer than 3 maps!'
 
-            embed = discord.Embed(title='Modified map pool', description=description, color=self.color)
+            embed = discord.Embed(title='Modified map pool', description=description, color=self.bot.color)
 
             if any_wrong_arg:  # Add example usage footer if command was used incorrectly
                 embed.set_footer(text=f'Ex: {self.bot.command_prefix[0]}setmp +de_cache -de_mirage')
@@ -214,5 +213,5 @@ class MapDraftCog(commands.Cog):
             await ctx.trigger_typing()
             missing_perm = error.missing_perms[0].replace('_', ' ')
             title = f'Cannot set the map pool without {missing_perm} permission!'
-            embed = discord.Embed(title=title, color=self.color)
+            embed = discord.Embed(title=title, color=self.bot.color)
             await ctx.send(embed=embed)

@@ -10,15 +10,14 @@ GITHUB = 'https://github.com/csgo-league/csgo-queue-bot'  # TODO: Use git API to
 class HelpCog(commands.Cog):
     """ Handles everything related to the help menu. """
 
-    def __init__(self, bot, color):
+    def __init__(self, bot):
         """ Set attributes and remove default help command. """
         self.bot = bot
-        self.color = color
         self.logo = 'https://raw.githubusercontent.com/csgo-league/csgo-queue-bot/master/assets/logo/logo.png'
         self.bot.remove_command('help')
 
     def help_embed(self, title):
-        embed = discord.Embed(title=title, color=self.color)
+        embed = discord.Embed(title=title, color=self.bot.color)
         prefix = self.bot.command_prefix
         prefix = prefix[0] if prefix is not str else prefix
 
@@ -53,8 +52,8 @@ class HelpCog(commands.Cog):
 
             # Prep help message title
             embed_title = f'**```{ctx.message.content}```** is not valid!'
-            prefix = self.bot.command_prefix
-            prefix = prefix[0] if prefix is not str else prefix
+            prefixes = self.bot.command_prefix
+            prefix = prefixes[0] if prefixes is not str else prefixes  # Prefix can be string or iterable of strings
 
             # Make suggestion if lowest Levenshtein distance is under threshold
             if lev_min <= 0.5:
@@ -62,7 +61,7 @@ class HelpCog(commands.Cog):
             else:
                 embed_title += f' Use `{prefix}help` for a list of commands'
 
-            embed = discord.Embed(title=embed_title, color=self.color)
+            embed = discord.Embed(title=embed_title, color=self.bot.color)
             await ctx.send(embed=embed)
 
     @commands.command(brief='Display the help menu')  # TODO: Add 'or details of the specified command'
@@ -88,6 +87,6 @@ class HelpCog(commands.Cog):
             description += f'\nBe sure to upvote the bot on [top.gg]({dbl_cog.topgg_url})'
 
         description += f'\nSource code can be found [here]({GITHUB}) on GitHub'
-        embed = discord.Embed(title='__10-Man Queue Bot__', description=description, color=self.color)
+        embed = discord.Embed(title='__10-Man Queue Bot__', description=description, color=self.bot.color)
         embed.set_thumbnail(url=self.logo)
         await ctx.send(embed=embed)

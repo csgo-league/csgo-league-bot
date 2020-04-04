@@ -7,11 +7,10 @@ from discord.ext import commands, tasks
 class DblCog(commands.Cog):
     """ Handles interactions with the Discord Bot Library API. """
 
-    def __init__(self, bot, dbl_token):
+    def __init__(self, bot):
         """ Set attributes and get DBL client object. """
         self.bot = bot
-        self.dbl_token = dbl_token
-        self.dbl_client = dbl.DBLClient(self.bot, self.dbl_token)
+        self.dbl_client = dbl.DBLClient(self.bot, self.bot.dbl_token)
         self.topgg_url = 'https://top.gg/bot/{self.bot.user.id}'
         self.update_stats.start()
 
