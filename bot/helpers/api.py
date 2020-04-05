@@ -131,6 +131,8 @@ class ApiHelper:
         url = f'{self.base_url}/discord/generate/{user.id}'
 
         async with self.session.get(url=url, headers=self.headers) as resp:
+            resp.raise_for_status()
+
             if resp.status == 200:
                 resp_json = await resp.json()
 
@@ -142,6 +144,8 @@ class ApiHelper:
         url = f'{self.base_url}/discord/check/{user.id}'
 
         async with self.session.get(url=url, headers=self.headers) as resp:
+            resp.raise_for_status()
+
             if resp.status == 200:
                 resp_json = await resp.json()
 
@@ -154,6 +158,7 @@ class ApiHelper:
         data = {'discord_name': user.display_name}
 
         async with self.session.post(url=url, headers=self.headers, data=data) as resp:
+            resp.raise_for_status()
             return resp.status == 200
 
     async def get_player(self, user):
@@ -161,6 +166,8 @@ class ApiHelper:
         url = f'{self.base_url}/player/discord/{user.id}'
 
         async with self.session.get(url=url, headers=self.headers) as resp:
+            resp.raise_for_status()
+
             if resp.status == 200:
                 return Player(await resp.json())
 
@@ -170,6 +177,8 @@ class ApiHelper:
         discord_ids = {"discordIds": [user.id for user in users]}
 
         async with self.session.post(url=url, headers=self.headers, json=discord_ids) as resp:
+            resp.raise_for_status()
+
             if resp.status == 200:
                 players = await resp.json()
                 return [Player(player_data) for player_data in players]
@@ -183,5 +192,7 @@ class ApiHelper:
         }
 
         async with self.session.post(url=url, headers=self.headers, json=teams) as resp:
+            resp.raise_for_status()
+
             if resp.status == 200:
                 return MatchServer(await resp.json())
