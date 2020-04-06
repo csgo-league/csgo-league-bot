@@ -3,8 +3,8 @@
 from discord.ext import commands
 from helpers.api import ApiHelper
 
-import cogs
 import aiohttp
+import cogs
 
 
 class LeagueBot(commands.AutoShardedBot):
@@ -45,11 +45,11 @@ class LeagueBot(commands.AutoShardedBot):
         if self.donate_url:
             self.add_cog(cogs.DonateCog(self))
 
+    def run(self):
+        """ Override parent run to automatically include Discord token. """
+        super().run(self.discord_token)
+
     async def close(self):
         """ Override parent close to close the API session also. """
         await super().close()
         await self.session.close()
-
-    def run(self):
-        """ Override parent run to automatically include Discord token. """
-        super().run(self.discord_token)
