@@ -85,7 +85,7 @@ class CacherCog(commands.Cog):
                 continue
 
             if guild_mdraft and 'mdraft' in guild_data:
-                all_maps = mapdraft.ALL_MAPS
+                all_maps = mapdraft_cog.all_maps
                 guild_mdraft.map_pool = [m for m in all_maps if m.dev_name in guild_data['mdraft']['map_pool']]
 
     @tasks.loop(minutes=10)

@@ -65,6 +65,7 @@ class MapDraftCog(commands.Cog):
     """ Handles the map drafter. """
 
     footer = 'React to any of the map icons below to ban the corresponding map'
+    all_maps = ALL_MAPS
 
     def __init__(self, bot):
         """ Set attributes. """
