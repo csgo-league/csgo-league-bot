@@ -164,7 +164,7 @@ class QueueCog(commands.Cog):
         queue = self.guild_queues[ctx.guild]
 
         if not await self.bot.api_helper.is_linked(ctx.author):  # Message author isn't linked
-            title = f'Unable to add **{ctx.author.display_name}**: Their account not linked'
+            title = f'Unable to add **{ctx.author.display_name}**: Their account is not linked'
         else:  # Message author is linked
             player = await self.bot.api_helper.get_player(ctx.author)
 
