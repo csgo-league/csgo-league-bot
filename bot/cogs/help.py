@@ -3,6 +3,8 @@
 import discord
 from discord.ext import commands
 import Levenshtein as lev
+import sys
+import traceback
 
 GITHUB = 'https://github.com/csgo-league/csgo-league-bot'  # TODO: Use git API to get link to repo?
 SERVER_INV = 'https://discord.gg/b5MhANU'
@@ -64,6 +66,9 @@ class HelpCog(commands.Cog):
 
             embed = discord.Embed(title=embed_title, color=self.bot.color)
             await ctx.send(embed=embed)
+        else:
+            print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+            traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
     @commands.command(brief='Display the help menu')  # TODO: Add 'or details of the specified command'
     async def help(self, ctx):
@@ -81,13 +86,13 @@ class HelpCog(commands.Cog):
     async def about(self, ctx):
         """ Display the info embed. """
         description = '_CS:GO PUGs made easy so you can just play. End-to-end support from Discord to matches._\n'
-        description += f'\nJoin the support server [here]({SERVER_INV})'
+        description += f'\nJoin the [support server]({SERVER_INV})'
         dbl_cog = self.bot.get_cog('DblCog')
 
         if dbl_cog:
             description += f'\nBe sure to upvote the bot on [top.gg]({dbl_cog.topgg_url})'
 
-        description += f'\nSource code can be found [here]({GITHUB}) on GitHub'
+        description += f'\nSource code can be found on [GitHub]({GITHUB})'
         embed = discord.Embed(title='__CS:GO League Bot__', description=description, color=self.bot.color)
         embed.set_thumbnail(url=self.logo)
         await ctx.send(embed=embed)
