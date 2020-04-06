@@ -38,6 +38,7 @@ class LeagueBot(commands.AutoShardedBot):
         self.add_cog(cogs.QueueCog(self))
         self.add_cog(cogs.TeamDraftCog(self))
         self.add_cog(cogs.MapDraftCog(self))
+        self.add_cog(cogs.StatsCog(self))
 
         if self.dbl_token:
             self.add_cog(cogs.DblCog(self))
