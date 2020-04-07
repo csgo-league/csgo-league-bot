@@ -26,13 +26,13 @@ class StatsCog(commands.Cog):
             hs_percent_str = f'{player.hs_percent * 100:.2f}%'
             fb_percent_str = f'{player.first_blood_rate * 100:.2f}%'
             description = '```ml\n' \
-                          f'     RankMe Score: {player.score:<7}\n' \
-                          f'   Matches Played: {player.matches_played:<7}\n' \
-                          f'   Win Percentage: {win_percent_str:<7}\n' \
-                          f'         KD Ratio: {player.kd_ratio:<7.2f}\n' \
-                          f'              ADR: {player.adr:<7.2f}\n' \
-                          f'    HS Percentage: {hs_percent_str:<7}\n' \
-                          f' First Blood Rate: {fb_percent_str:<7}' \
+                          f' RankMe Score:      {player.score:>6} \n' \
+                          f' Matches Played:    {player.matches_played:>6} \n' \
+                          f' Win Percentage:    {win_percent_str:>6} \n' \
+                          f' KD Ratio:          {player.kd_ratio:>6.2f} \n' \
+                          f' ADR:               {player.adr:>6.2f} \n' \
+                          f' HS Percentage:     {hs_percent_str:>6} \n' \
+                          f' First Blood Rate:  {fb_percent_str:>6} ' \
                           '```'
             embed = discord.Embed(title='__CS:GO League Stats__', description=description, color=self.bot.color)
             embed.set_author(name=user.display_name, url=player.steam_profile, icon_url=user.avatar_url_as(size=128))
