@@ -16,7 +16,7 @@ class HelpCog(commands.Cog):
     def __init__(self, bot):
         """ Set attributes and remove default help command. """
         self.bot = bot
-        self.logo = 'https://raw.githubusercontent.com/csgo-league/csgo-league-bot/master/assets/logo/logo.png'
+        self.logo = 'https://raw.githubusercontent.com/csgo-league/csgo-league-bot/master/assets/logo/logo.jpg'
         self.bot.remove_command('help')
 
     def help_embed(self, title):
