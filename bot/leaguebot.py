@@ -5,6 +5,8 @@ from helpers.api import ApiHelper
 
 import aiohttp
 import cogs
+import sys
+import traceback
 
 
 class LeagueBot(commands.AutoShardedBot):
@@ -30,6 +32,13 @@ class LeagueBot(commands.AutoShardedBot):
         self.session = aiohttp.ClientSession(loop=self.loop)
         self.api_helper = ApiHelper(self.session, self.api_base_url, self.api_key)
 
+        # Initialize set of errors to ignore
+        self.ignore_error_types = set()
+
+        # Add check to not respond to DM'd commands
+        self.add_check(lambda ctx: ctx.guild is not None)
+        self.ignore_error_types.add(commands.errors.CheckFailure)
+
         # Add cogs
         self.add_cog(cogs.CacherCog(self))
         self.add_cog(cogs.ConsoleCog(self))
@@ -45,6 +54,13 @@ class LeagueBot(commands.AutoShardedBot):
 
         if self.donate_url:
             self.add_cog(cogs.DonateCog(self))
+
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx, error):
+        """ Send help message when a mis-entered command is received. """
+        if type(error) not in self.ignore_error_types:
+            print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+            traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
     def run(self):
         """ Override parent run to automatically include Discord token. """

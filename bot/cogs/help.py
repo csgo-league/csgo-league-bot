@@ -3,8 +3,6 @@
 import discord
 from discord.ext import commands
 import Levenshtein as lev
-import sys
-import traceback
 
 GITHUB = 'https://github.com/csgo-league/csgo-league-bot'  # TODO: Use git API to get link to repo?
 SERVER_INV = 'https://discord.gg/b5MhANU'
@@ -18,6 +16,7 @@ class HelpCog(commands.Cog):
         self.bot = bot
         self.logo = 'https://raw.githubusercontent.com/csgo-league/csgo-league-bot/master/assets/logo/logo.jpg'
         self.bot.remove_command('help')
+        self.bot.ignore_error_types.add(commands.CommandNotFound)
 
     def help_embed(self, title):
         embed = discord.Embed(title=title, color=self.bot.color)
@@ -66,9 +65,6 @@ class HelpCog(commands.Cog):
 
             embed = discord.Embed(title=embed_title, color=self.bot.color)
             await ctx.send(embed=embed)
-        else:
-            print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
-            traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
     @commands.command(brief='Display the help menu')  # TODO: Add 'or details of the specified command'
     async def help(self, ctx):
