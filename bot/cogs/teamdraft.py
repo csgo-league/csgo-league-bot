@@ -98,10 +98,8 @@ class TeamDraftCog(commands.Cog):
             # Check if the person picking is valid and they didn't pick themselves
             if reactor == teams[0][0]:  # Picker is team 0 captain
                 picking_team = teams[0]
-                new_team = False
             elif reactor == teams[1][0]:  # Picker is team 1 captain
                 picking_team = teams[1]
-                new_team = False
             elif reactor in users:  # Picker is in the player pool
                 if teams[0] == []:  # Team 1 empty
                     picking_team = teams[0]
