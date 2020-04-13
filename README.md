@@ -40,13 +40,13 @@ If you appreciate the project then please take the time to star our repository.
 5. Using your bot's Discord token, League web server URL, League API token and Discord Bot List token, run the bot like so...
 
 ```python
-import leaguebot
+import bot
 
 DISCORD_TOKEN = 'XXXXXXXX'
 API_BASE_URL = 'XXXXXXXX'
 API_KEY = 'XXXXXXXX'
 
-bot = leaguebot.LeagueBot(DISCORD_TOKEN, API_BASE_URL, API_KEY)
+bot = bot.LeagueBot(DISCORD_TOKEN, API_BASE_URL, API_KEY)
 bot.run()  # Blocking
 
 ```
