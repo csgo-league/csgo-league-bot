@@ -135,9 +135,7 @@ class MapDraftCog(commands.Cog):
 
         for m in mdraft_data.maps_left.copy():  # Iterate over copy to modify original w/o consequences
             if str(reaction.emoji) == m.emoji:
-                async for u in reaction.users():
-                    await reaction.remove(u)
-
+                await reaction.clear()
                 mdraft_data.maps_left.remove(m)
 
                 if len(mdraft_data.maps_left) == 1:
