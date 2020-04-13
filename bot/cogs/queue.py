@@ -4,6 +4,8 @@ import discord
 from discord.ext import commands
 import asyncio
 
+BALANCE_TEAMS = False
+
 
 class QQueue:
     """ Queue class for the bot. """
@@ -139,10 +141,18 @@ class QueueCog(commands.Cog):
         else:  # Everyone readied up
             # Attempt to make teams and start match
             await ready_message.clear_reactions()
-            title = 'All players ready'
+
+            if BALANCE_TEAMS:
+                team_one, team_two = await self.balance_teams(users)  # Get teams
+            else:
+                teamdraft_cog = self.bot.get_cog('TeamDraftCog')
+                team_one, team_two = await teamdraft_cog.draft_teams(ctx, ready_message, users)
+
+            await asyncio.sleep(5)  # Wait for users to see the final teams
+            title = ''
             burst_embed = discord.Embed(title=title, description='Fetching server...', color=self.bot.color)
             await ready_message.edit(embed=burst_embed)
-            team_one, team_two = await self.balance_teams(users)  # Get teams
+
             match = await self.bot.api_helper.start_match(team_one, team_two)  # Request match from API
 
             # Check if able to get a match server and edit message embed accordingly
