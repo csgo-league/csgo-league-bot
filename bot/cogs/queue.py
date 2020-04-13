@@ -71,7 +71,7 @@ class QueueCog(commands.Cog):
         """ Balance teams based on players' RankMe score. """
         # Only balance teams with even amounts of players
         if len(users) % 2 != 0:
-            return None
+            return
 
         # Get players and sort by RankMe score
         users_dict = dict(zip(await self.bot.api_helper.get_players(users), users))
@@ -122,7 +122,7 @@ class QueueCog(commands.Cog):
                 return False
 
         try:
-            reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=all_ready)
+            await self.bot.wait_for('reaction_add', timeout=60.0, check=all_ready)
         except asyncio.TimeoutError:  # Not everyone readied up
             await ready_message.clear_reactions()
             unreadied = set(users) - reactors
