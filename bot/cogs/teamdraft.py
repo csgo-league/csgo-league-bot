@@ -120,7 +120,7 @@ class TeamDraftCog(commands.Cog):
                 return False
 
             # Pick the player for the team
-            await reaction.clear():
+            await reaction.clear()
             player_pick = users_left_dict.pop(str(reaction.emoji))
             picking_team.append(player_pick)
 
