@@ -53,7 +53,7 @@ class TeamDraftCog(commands.Cog):
     def team_draft_embed(self, title, all_users, team_1, team_2):
         """ Return the player draft embed based on the title, users and teams. """
         embed = discord.Embed(title=title, color=self.bot.color)
-        embed.set_footer('React to any of the numbers below to pick the corresponding user')
+        embed.set_footer(text='React to any of the numbers below to pick the corresponding user')
         x_emoji = ':heavy_multiplication_x:'
         players_left_str = ''
 
