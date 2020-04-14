@@ -89,7 +89,7 @@ class TeamDraftCog(commands.Cog):
         for emoji in EMOJI_NUMBERS:
             await message.add_reaction(emoji)
 
-        def player_pick(reaction, reactor):
+        async def player_pick(reaction, reactor):
             """"""  # TODO
             # Check that the reaction is for the team draft
             if reaction.message.id != ctx.message.id or str(reaction.emoji) not in users_left_dict.keys():
