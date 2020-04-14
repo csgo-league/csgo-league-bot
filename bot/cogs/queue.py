@@ -169,6 +169,7 @@ class QueueCog(commands.Cog):
             return True  # Everyone readied up
 
     @commands.command(brief='Join the queue')
+    @commands.max_concurrency(1, per=commands.BucketType.guild, wait=True)  # Only process one command per guild at once
     async def join(self, ctx):
         """ Check if the member can be added to the guild queue and add them if so. """
         queue = self.guild_queues[ctx.guild]
