@@ -136,12 +136,12 @@ class TeamDraftCog(commands.Cog):
                 await message.edit(embed=embed)
                 return False
 
-            try:
-                self.bot.wait_for('reaction_add', timeout=600.0, check=player_pick)  # 10 minute timeout
-            except asyncio.TimeoutError:
-                return
+        try:
+            self.bot.wait_for('reaction_add', timeout=600.0, check=player_pick)  # 10 minute timeout
+        except asyncio.TimeoutError:
+            return
 
-            return teams[0], teams[1]
+        return teams[0], teams[1]
 
     # @commands.command(brief='Start (or restart) a player draft from the last popped queue')  # Omit command for now
     # async def tdraft(self, ctx):
