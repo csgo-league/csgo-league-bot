@@ -82,7 +82,7 @@ class TeamDraftCog(commands.Cog):
         """ Split the users into two teams from user input """
         users_left_dict = dict(zip(EMOJI_NUMBERS, users))  # Dict mapping the emojis to users
         teams = [[], []]
-        embed = self.team_draft_embed('Team draft has begun!', users_left_dict, *teams)  # FIXME?
+        embed = self.team_draft_embed('Team draft has begun!', users, *teams)  # FIXME?
         await message.edit(embed=embed)
         team_size = len(users) // 2
 
