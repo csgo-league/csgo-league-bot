@@ -37,7 +37,6 @@ class CacherCog(commands.Cog):
         # Save guild data for each guild
         for guild in self.bot.guilds:
             guild_queue = queue_cog.guild_queues.get(guild)
-            guild_mdraft = mapdraft_cog.guild_mdraft_data.get(guild)
             guild_data = {}
             guild_data['queue'] = {}
             guild_data['queue']['active'] = [user.id for user in guild_queue.active]
@@ -45,6 +44,7 @@ class CacherCog(commands.Cog):
             guild_data['queue']['capacity'] = guild_queue.capacity
 
             if mapdraft_cog:
+                guild_mdraft = mapdraft_cog.guild_mdraft_data.get(guild)
                 guild_data['mdraft'] = {}
                 guild_data['mdraft']['map_pool'] = [m.dev_name for m in guild_mdraft.map_pool]
 
