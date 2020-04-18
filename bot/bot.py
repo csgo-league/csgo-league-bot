@@ -56,6 +56,11 @@ class LeagueBot(commands.AutoShardedBot):
             self.add_cog(cogs.DonateCog(self))
 
     @commands.Cog.listener()
+    async def on_command(self, ctx):
+        """ Always trigger typing before a command. """
+        await ctx.trigger_typing()
+
+    @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         """ Send help message when a mis-entered command is received. """
         if type(error) not in self.ignore_error_types:

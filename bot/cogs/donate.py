@@ -11,10 +11,6 @@ class DonateCog(commands.Cog):
         """ Set attributes """
         self.bot = bot
 
-    async def cog_before_invoke(self, ctx):
-        """ Trigger typing at the start of every command. """
-        await ctx.trigger_typing()
-
     @commands.command(brief='Link the bot\'s donation link')
     async def donate(self, ctx):
         description = f'[Click here to donate]({self.bot.donate_url})'

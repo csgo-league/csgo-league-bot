@@ -11,10 +11,6 @@ class StatsCog(commands.Cog):
         """ Set attributes. """
         self.bot = bot
 
-    async def cog_before_invoke(self, ctx):
-        """ Trigger typing at the start of every command. """
-        await ctx.trigger_typing()
-
     @commands.command(brief='See your stats')
     async def stats(self, ctx):
         """ Send an embed containing stats data parsed from the player object returned from the API. """

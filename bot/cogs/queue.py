@@ -49,10 +49,6 @@ class QueueCog(commands.Cog):
         """ Remove queue list when a guild is removed. """
         self.guild_queues.pop(guild)
 
-    async def cog_before_invoke(self, ctx):
-        """ Trigger typing at the start of every command. """
-        await ctx.trigger_typing()
-
     def queue_embed(self, guild, title=None):
         """ Method to create the queue embed for a guild. """
         queue = self.guild_queues[guild]

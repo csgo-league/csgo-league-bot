@@ -46,10 +46,6 @@ class TeamDraftCog(commands.Cog):
         self.guild_teams.pop(guild, None)
         self.guild_msgs.pop(guild, None)
 
-    async def cog_before_invoke(self, ctx):
-        """ Trigger typing at the start of every command. """
-        await ctx.trigger_typing()
-
     def team_draft_embed(self, title, all_users, team_1, team_2):
         """ Return the player draft embed based on the title, users and teams. """
         embed = discord.Embed(title=title, color=self.bot.color)

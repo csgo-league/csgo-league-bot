@@ -11,10 +11,6 @@ class AuthCog(commands.Cog):
         """ Set attributes. """
         self.bot = bot
 
-    async def cog_before_invoke(self, ctx):
-        """ Trigger typing at the start of every command. """
-        await ctx.trigger_typing()
-
     @commands.command(brief='Link a player on the backend')
     async def link(self, ctx):
         """ Link a player by sending them a link to sign in with steam on the backend. """

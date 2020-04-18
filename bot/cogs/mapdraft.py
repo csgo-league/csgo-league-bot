@@ -89,10 +89,6 @@ class MapDraftCog(commands.Cog):
         """ Remove mdraft data when a guild is removed. """
         self.guild_mdraft_data.pop(guild)
 
-    async def cog_before_invoke(self, ctx):
-        """ Trigger typing at the start of every command. """
-        await ctx.trigger_typing()
-
     def maps_left_str(self, guild):
         """ Get the maps left string representation for a given giuld. """
         x_emoji = '✖️'

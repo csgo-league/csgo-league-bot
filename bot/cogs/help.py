@@ -38,10 +38,6 @@ class HelpCog(commands.Cog):
         activity = discord.Activity(type=discord.ActivityType.watching, name="noobs type q!help")
         await self.bot.change_presence(activity=activity)
 
-    async def cog_before_invoke(self, ctx):
-        """ Trigger typing at the start of every command. """
-        await ctx.trigger_typing()
-
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         """ Send help message when a mis-entered command is received. """
