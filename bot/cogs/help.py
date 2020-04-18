@@ -33,12 +33,6 @@ class HelpCog(commands.Cog):
         return embed
 
     @commands.Cog.listener()
-    async def on_ready(self):
-        """ Set presence to let users know the help command. """
-        activity = discord.Activity(type=discord.ActivityType.watching, name="noobs type q!help")
-        await self.bot.change_presence(activity=activity)
-
-    @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         """ Send help message when a mis-entered command is received. """
         if type(error) is commands.CommandNotFound:

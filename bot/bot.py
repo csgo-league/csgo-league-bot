@@ -1,6 +1,8 @@
 # leaguebot.py
 
+import discord
 from discord.ext import commands
+
 from helpers.api import ApiHelper
 
 import aiohttp
@@ -26,6 +28,7 @@ class LeagueBot(commands.AutoShardedBot):
 
         # Set constants
         self.color = 0x000000
+        self.activity = discord.Activity(type=discord.ActivityType.watching, name="noobs type q!help")
         self.guild_data_file = 'guild_data.json'
 
         # Create session for API
