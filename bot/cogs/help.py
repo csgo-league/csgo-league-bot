@@ -56,7 +56,7 @@ class HelpCog(commands.Cog):
             embed = discord.Embed(title=embed_title, color=self.bot.color)
             await ctx.send(embed=embed)
 
-    @commands.command(brief='Display the help menu')  # TODO: Add 'or details of the specified command'
+    @commands.command(brief='Display the help menu')
     async def help(self, ctx):
         """ Generate and send help embed based on the bot's commands. """
         embed = self.help_embed('__CS:GO League Bot Commands__')
