@@ -42,6 +42,9 @@ class LeagueBot(commands.AutoShardedBot):
         self.add_check(lambda ctx: ctx.guild is not None)
         self.ignore_error_types.add(commands.errors.CheckFailure)
 
+        # Trigger typing before every command
+        self.before_invoke(commands.Context.trigger_typing)
+
         # Add cogs
         self.add_cog(cogs.CacherCog(self))
         self.add_cog(cogs.ConsoleCog(self))
@@ -57,11 +60,6 @@ class LeagueBot(commands.AutoShardedBot):
 
         if self.donate_url:
             self.add_cog(cogs.DonateCog(self))
-
-    @commands.Cog.listener()
-    async def on_command(self, ctx):
-        """ Always trigger typing before a command. """
-        await ctx.trigger_typing()
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
