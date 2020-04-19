@@ -85,8 +85,8 @@ class TeamDraftCog(commands.Cog):
         for emoji in EMOJI_NUMBERS:
             await message.add_reaction(emoji)
 
-        async def player_pick(reaction, reactor):
-            """"""  # TODO
+        async def pick_player(reaction, reactor):
+            """ Check function to pick a player for a team based tdraft embed reaction. """
             # Check that the reaction is for the team draft
             if reaction.message.id != ctx.message.id or str(reaction.emoji) not in users_left_dict.keys():
                 return False
@@ -133,7 +133,7 @@ class TeamDraftCog(commands.Cog):
                 return False
 
         try:
-            self.bot.wait_for('reaction_add', timeout=600.0, check=player_pick)  # 10 minute timeout
+            self.bot.wait_for('reaction_add', timeout=600.0, check=pick_player)  # 10 minute timeout
         except asyncio.TimeoutError:
             return
 
