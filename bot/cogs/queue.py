@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 import asyncio
 
-BALANCE_TEAMS = False
+BALANCE_TEAMS = False  # TODO: Implement a way to decide if teams should be balanced
 
 
 class QQueue:
@@ -30,7 +30,7 @@ class QueueCog(commands.Cog):
     def __init__(self, bot):
         """ Set attributes. """
         self.bot = bot
-        self.guild_queues = {}  # Maps Guild -> QQueue
+        self.guild_queues = {}  # Maps Guild: QQueue
 
     @commands.Cog.listener()
     async def on_ready(self):
