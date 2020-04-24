@@ -94,7 +94,7 @@ class TeamDraftMenu(discord.Message):
 
     async def _update(self, title):
         """ Update the message to reflect the current status of the team draft. """
-        await self.edit(embed=self.picker_embed(title))
+        await self.edit(embed=self._picker_embed(title))
 
         for emoji, user in self.pick_emojis.items():
             if user not in self.users_left:
@@ -133,7 +133,7 @@ class TeamDraftMenu(discord.Message):
         self.users_left = self.users.copy()  # Copy users to edit players remaining in the player pool
         self.teams = [[], []]
 
-        await self.edit(embed=self.picker_embed('Team draft has begun!'))
+        await self.edit(embed=self._picker_embed('Team draft has begun!'))
 
         for emoji in self.pick_emojis.keys():
             await self.add_reaction(emoji)
