@@ -69,7 +69,7 @@ class QueueCog(commands.Cog):
         """ Balance teams based on players' RankMe score. """
         # Only balance teams with even amounts of players
         if len(users) % 2 != 0:
-            return
+            raise ValueError('Argument "users" must have even length')
 
         # Get players and sort by RankMe score
         users_dict = dict(zip(await self.bot.api_helper.get_players(users), users))
@@ -126,9 +126,12 @@ class QueueCog(commands.Cog):
             unreadied = set(users) - reactors
 
             for user in unreadied:
-                users.remove(user)  # Modifies users in the scope where this function is called
+                try:
+                    users.remove(user)  # Modifies users in the scope where this function is called
+                except ValueError:
+                    pass
 
-            description = '\n'.join('× ' + user.mention for user in unreadied)
+            description = '\n'.join(':heavy_multiplication_x:  ' + user.mention for user in unreadied)
             title = 'Not everyone was ready!'
             burst_embed = discord.Embed(title=title, description=description, color=self.bot.color)
             burst_embed.set_footer(text='The missing players have been removed from the queue')
