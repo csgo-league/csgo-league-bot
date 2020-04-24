@@ -69,20 +69,16 @@ class TeamDraftMenu(discord.Message):
 
     def _pick_player(self, picker, pickee):
         """ Process a team captain's player pick. """
-        if picker == self.teams[0][0]:
+        if any(team == [] for team in teams):
+            picking_team = self.teams[self.teams.index([])]  # Get the first empty team
+            self.users_left.remove(picker)
+            picking_team.append(picker)
+        elif picker == self.teams[0][0]:
             picking_team = self.teams[0]
         elif picker == self.teams[1][0]:
             picking_team = self.teams[1]
         elif picker in self.users:
-            if self.teams[0] == []:
-                picking_team = self.teams[0]
-            elif self.teams[1] == []:
-                picking_team = self.teams[1]
-            else:
-                raise PickError(f'Picker {picker} is not a team captain')
-
-            self.users_left.remove(picker)
-            picking_team.append(picker)
+            raise PickError(f'Picker {picker} is not a team captain')
         else:
             raise PickError(f'Picker {picker} is not a user in the team draft')
 
