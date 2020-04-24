@@ -24,15 +24,15 @@ class TeamDraftMenu(discord.Message):
         self.bot = bot
         self.users = users
         emoji_numbers = [u'\u0031\u20E3',
-                          u'\u0032\u20E3',
-                          u'\u0033\u20E3',
-                          u'\u0034\u20E3',
-                          u'\u0035\u20E3',
-                          u'\u0036\u20E3',
-                          u'\u0037\u20E3',
-                          u'\u0038\u20E3',
-                          u'\u0039\u20E3',
-                          u'\U0001F51F']
+                         u'\u0032\u20E3',
+                         u'\u0033\u20E3',
+                         u'\u0034\u20E3',
+                         u'\u0035\u20E3',
+                         u'\u0036\u20E3',
+                         u'\u0037\u20E3',
+                         u'\u0038\u20E3',
+                         u'\u0039\u20E3',
+                         u'\U0001F51F']
         self.pick_emojis = dict(zip(emoji_numbers, users))
         self.users_left = None
         self.teams = None
