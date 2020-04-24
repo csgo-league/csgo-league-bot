@@ -192,7 +192,10 @@ class QueueCog(commands.Cog):
 
                 # Check and burst queue if full
                 if len(queue.active) == queue.capacity:
-                    all_readied = await self.start_match(ctx, queue.active)
+                    try:
+                        all_readied = await self.start_match(ctx, queue.active)
+                    except asyncio.TimeoutError:
+                        return
 
                     if all_readied:
                         queue.bursted = queue.active  # Save bursted queue for player draft
