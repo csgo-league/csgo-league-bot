@@ -145,7 +145,7 @@ class QueueCog(commands.Cog):
                 team_one, team_two = await self.balance_teams(users)  # Get teams
             else:
                 teamdraft_cog = self.bot.get_cog('TeamDraftCog')
-                team_one, team_two = await teamdraft_cog.draft_teams(ctx, ready_message, users)
+                team_one, team_two = await teamdraft_cog.draft_teams(ready_message, users)
 
             await asyncio.sleep(5)  # Wait for users to see the final teams
             title = ''

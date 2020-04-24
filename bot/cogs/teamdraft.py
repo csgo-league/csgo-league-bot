@@ -4,16 +4,142 @@ import discord
 from discord.ext import commands
 import asyncio
 
-EMOJI_NUMBERS = [u'\u0031\u20E3',
-                 u'\u0032\u20E3',
-                 u'\u0033\u20E3',
-                 u'\u0034\u20E3',
-                 u'\u0035\u20E3',
-                 u'\u0036\u20E3',
-                 u'\u0037\u20E3',
-                 u'\u0038\u20E3',
-                 u'\u0039\u20E3',
-                 u'\U0001F51F']
+
+class PickError(ValueError):
+    """ Raised when a team draft pick is invalid for some reason. """
+
+    pass
+
+
+class TeamDraftMenu(discord.Message):
+    """"""
+
+    def __init__(self, message, bot, users):
+        """ Copy constructor from a message and specific team draft args. """
+        # Copy all attributes from message object
+        for attr_name in message.__slots__:
+            attr_val = getattr(message, attr_name)
+            setattr(self, attr_name, attr_val)
+
+        # Add custom attributes
+        self.bot = bot
+        self.users = users
+        emoji_numbers = [u'\u0031\u20E3',
+                          u'\u0032\u20E3',
+                          u'\u0033\u20E3',
+                          u'\u0034\u20E3',
+                          u'\u0035\u20E3',
+                          u'\u0036\u20E3',
+                          u'\u0037\u20E3',
+                          u'\u0038\u20E3',
+                          u'\u0039\u20E3',
+                          u'\U0001F51F']
+        self.pick_emojis = dict(zip(emoji_numbers, users))
+        self.users_left = None
+        self.teams = None
+
+    def _picker_embed(self, title):
+        """ Generate the menu embed based on the current status of the team draft. """
+        embed = discord.Embed(title=title, color=self.bot.color)
+        embed.set_footer(text='React to any of the numbers below to pick the corresponding user')
+
+        for team in self.teams:
+            team_name = '__Team__' if len(team) == 0 else f'__Team {team[0].display_name}__'
+
+            if len(team) == 0:
+                team_players = '_Empty_'
+            else:
+                team_players = '\n'.join(p.display_name for p in team)
+
+            embed.add_field(name=team_name, value=team_players)
+
+        users_left_str = ''
+
+        for emoji, user in self.pick_emojis.items():
+            if not any(user in team for team in self.teams):
+                users_left_str += f'{emoji}  {user.display_name}\n'
+            else:
+                users_left_str += f':heavy_multiplication_x:  ~~{user.display_name}~~\n'
+
+        embed.insert_field_at(1, name='__Players Left__', value=users_left_str)
+        return embed
+
+    def _pick_player(self, picker, pickee):
+        """ Process a team captain's player pick. """
+        if picker == self.teams[0][0]:
+            picking_team = self.teams[0]
+        elif picker == self.teams[1][0]:
+            picking_team = self.teams[1]
+        elif picker in self.users:
+            if teams[0] == []:
+                picking_team = self.teams[0]
+            elif teams[1] == []:
+                picking_team = self.teams[1]
+            else:
+                raise PickError(f'Picker {picker} is not a team captain')
+
+            self.users_left.remove(picker)
+            picking_team.append(picker)
+        else:
+            raise PickError(f'Picker {picker} is not a user in the team draft')
+
+        if len(picking_team) > len(users) // 2:  # Team is full
+            raise PickError(f'Picker {picker} is on a full team')
+
+        self.users_left.remove(pickee)
+        picking_team.append(pickee)
+
+    async def _update(self, title):
+        """ Update the message to reflect the current status of the team draft. """
+        await self.edit(embed=self.picker_embed(title))
+
+        for emoji, user in self.pick_emojis.items():
+            if user not in self.users_left:
+                await self.clear_reaction(emoji)
+
+    async def _process_pick(self, reaction, user):
+        """ Handler function for player pick reactions. """
+        # Check that reaction is on this message and user is in the team draft
+        if reaction.message.id != self.id or user not in self.users:
+            return
+
+        # Check that picked player is in the player pool
+        pick = self.pick_emojis.get(str(reaction.emoji), None)
+
+        if pick is None or pick not in self.users_left:
+            return
+
+        # Attempt to pick the player for the team
+        try:
+            self._pick_player(user, pick)
+        except PickError as e:  # Player not picked
+            title = e.message
+        else:  # Player picked
+            title = f'**Team {user.display_name}** picked {pick.display_name}'
+
+        if len(self.users_left) == 1:
+            fat_kid_team = self.teams[0] if len(self.teams[0]) <= len(self.teams[1]) else self.teams[1]
+            fat_kid_team.append(self.users_left.pop(0))
+            title = 'Teams are set!'
+
+        self._update(title)
+
+    async def draft(self):
+        """ Start the team draft and return the teams after it's finished. """
+        # Initialize draft
+        self.users_left = users.copy()  # Copy users to edit players remaining in the player pool
+        self.teams = [[], []]
+
+        await self.edit(embed=self.picker_embed('Team draft has begun!'))
+
+        for emoji in self.pick_emojis.keys():
+            await self.add_reaction(emoji)
+
+        # Add listener handlers and wait until there are no users left to pick
+        self.bot.add_listener(self._process_pick, name='on_reaction_add')
+        await self.bot.wait_for('reaction_add', check=lambda r, u: self.users_left == [], timeout=600.0)
+        self.bot.remove_listener(self._process_pick, name='on_reaction_add')
+        return self.teams
 
 
 class TeamDraftCog(commands.Cog):
@@ -46,97 +172,10 @@ class TeamDraftCog(commands.Cog):
         self.guild_teams.pop(guild, None)
         self.guild_msgs.pop(guild, None)
 
-    def team_draft_embed(self, title, all_users, team_1, team_2):
-        """ Return the player draft embed based on the title, users and teams. """
-        embed = discord.Embed(title=title, color=self.bot.color)
-        embed.set_footer(text='React to any of the numbers below to pick the corresponding user')
-        x_emoji = ':heavy_multiplication_x:'
-        players_left_str = ''
-
-        for num, user in zip(EMOJI_NUMBERS, all_users):
-            if user not in team_1 and user not in team_2:
-                players_left_str += f'{num}  {user.display_name}\n'
-            else:
-                players_left_str += f'{x_emoji}  ~~{user.display_name}~~\n'
-
-        def embed_team(team):
-            team_name = 'Team' if len(team) == 0 else f'Team {team[0].display_name}'
-
-            if len(team) == 0:
-                team_players = '_Empty_'
-            else:
-                team_players = '\n'.join(p.display_name for p in team)
-
-            embed.add_field(name=f'__{team_name}__', value=team_players)
-
-        embed_team(team_1)
-        embed.add_field(name='__Players Left__', value=players_left_str, inline=True)
-        embed_team(team_2)
-        return embed
-
-    async def draft_teams(self, ctx, message, users):
-        """ Split the users into two teams from user input """
-        users_left_dict = dict(zip(EMOJI_NUMBERS, users))  # Dict mapping the emojis to users
-        teams = [[], []]
-        embed = self.team_draft_embed('Team draft has begun!', users, *teams)  # FIXME?
-        await message.edit(embed=embed)
-        team_size = len(users) // 2
-
-        for emoji in EMOJI_NUMBERS:
-            await message.add_reaction(emoji)
-
-        async def pick_player(reaction, reactor):
-            """ Check function to pick a player for a team based tdraft embed reaction. """
-            # Check that the reaction is for the team draft
-            if reaction.message.id != ctx.message.id or str(reaction.emoji) not in users_left_dict.keys():
-                return False
-
-            # Check if the person picking is valid and they didn't pick themselves
-            if reactor == teams[0][0]:  # Picker is team 0 captain
-                picking_team = teams[0]
-            elif reactor == teams[1][0]:  # Picker is team 1 captain
-                picking_team = teams[1]
-            elif reactor in users:  # Picker is in the player pool
-                if teams[0] == []:  # Team 1 empty
-                    picking_team = teams[0]
-                if teams[1] == []:  # Team 2 empty
-                    picking_team = teams[1]
-                else:  # New team cannot be created
-                    return False
-
-                picker_emoji = next([key for key, val in users_left_dict.items() if val == reactor])  # Get picker emoji
-                await message.clear_reaction(picker_emoji)
-                picking_team.append(users_left_dict.pop(picker_emoji))
-            else:  # Picker isn't alowed to pick players
-                return False
-
-            if len(picking_team) >= team_size:  # Should never be greater than
-                return False
-
-            # Pick the player for the team
-            await reaction.clear()
-            player_pick = users_left_dict.pop(str(reaction.emoji))
-            picking_team.append(player_pick)
-
-            # Check if teams are picked
-            if len(users_left_dict) == 1:
-                await message.clear_reactions()
-                smaller_team = min(teams, key=len)
-                smaller_team.append(next(users_left_dict.values()))
-                embed = self.team_draft_embed(f'Teams are set!', users, *teams)  # FIXME?
-                await message.edit(embed=embed)
-                return True
-            else:
-                title = f'**Team {reactor.display_name}** picked **{player_pick.display_name}**'
-                embed = self.team_draft_embed(title, users, *teams)  # FIXME?
-                await message.edit(embed=embed)
-                return False
-
-        try:
-            self.bot.wait_for('reaction_add', timeout=600.0, check=pick_player)  # 10 minute timeout
-        except asyncio.TimeoutError:
-            return
-
+    async def draft_teams(self, message, users):
+        """ Create a TeamDraftMenu from an existing message and run the draft. """
+        menu = TeamDraftMenu(message, self.bot, users)
+        teams = await menu.draft()
         return teams[0], teams[1]
 
     # @commands.command(brief='Start (or restart) a player draft from the last popped queue')  # Omit command for now
