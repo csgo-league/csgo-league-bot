@@ -17,7 +17,11 @@ class TeamDraftMenu(discord.Message):
         """ Copy constructor from a message and specific team draft args. """
         # Copy all attributes from message object
         for attr_name in message.__slots__:
-            attr_val = getattr(message, attr_name)
+            try:
+                attr_val = getattr(message, attr_name)
+            except AttributeError:
+                continue
+
             setattr(self, attr_name, attr_val)
 
         # Add custom attributes
