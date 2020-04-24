@@ -12,7 +12,7 @@ class PickError(ValueError):
 
 
 class TeamDraftMenu(discord.Message):
-    """"""
+    """ Message containing the components for a team draft. """
 
     def __init__(self, message, bot, users):
         """ Copy constructor from a message and specific team draft args. """
