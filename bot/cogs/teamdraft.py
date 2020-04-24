@@ -70,9 +70,9 @@ class TeamDraftMenu(discord.Message):
         elif picker == self.teams[1][0]:
             picking_team = self.teams[1]
         elif picker in self.users:
-            if teams[0] == []:
+            if self.teams[0] == []:
                 picking_team = self.teams[0]
-            elif teams[1] == []:
+            elif self.teams[1] == []:
                 picking_team = self.teams[1]
             else:
                 raise PickError(f'Picker {picker} is not a team captain')
@@ -82,7 +82,7 @@ class TeamDraftMenu(discord.Message):
         else:
             raise PickError(f'Picker {picker} is not a user in the team draft')
 
-        if len(picking_team) > len(users) // 2:  # Team is full
+        if len(picking_team) > len(self.users) // 2:  # Team is full
             raise PickError(f'Picker {picker} is on a full team')
 
         self.users_left.remove(pickee)
@@ -126,7 +126,7 @@ class TeamDraftMenu(discord.Message):
     async def draft(self):
         """ Start the team draft and return the teams after it's finished. """
         # Initialize draft
-        self.users_left = users.copy()  # Copy users to edit players remaining in the player pool
+        self.users_left = self.users.copy()  # Copy users to edit players remaining in the player pool
         self.teams = [[], []]
 
         await self.edit(embed=self.picker_embed('Team draft has begun!'))
