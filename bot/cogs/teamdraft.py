@@ -69,7 +69,7 @@ class TeamDraftMenu(discord.Message):
 
     def _pick_player(self, picker, pickee):
         """ Process a team captain's player pick. """
-        if any(team == [] for team in self.teams):
+        if any(team == [] for team in self.teams) and picker in self.users:
             picking_team = self.teams[self.teams.index([])]  # Get the first empty team
             self.users_left.remove(picker)
             picking_team.append(picker)
