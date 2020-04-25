@@ -6,7 +6,6 @@ class Player:
 
     def __init__(self, player_data):
         """ Set attributes. """
-
         self.steam = player_data['steam']
         self.discord = player_data['discord']
         self.discord_name = player_data['discord_name']
