@@ -121,7 +121,7 @@ class TeamDraftMenu(discord.Message):
             fat_kid_team.append(self.users_left.pop(0))
             title = 'Teams are set!'
 
-        self._update(title)
+        await self._update(title)
 
     async def draft(self):
         """ Start the team draft and return the teams after it's finished. """
