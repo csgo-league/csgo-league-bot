@@ -112,7 +112,7 @@ class TeamDraftMenu(discord.Message):
         try:
             self._pick_player(user, pick)
         except PickError as e:  # Player not picked
-            title = e.message
+            title = e
         else:  # Player picked
             title = f'**Team {user.display_name}** picked {pick.display_name}'
 
