@@ -3,6 +3,7 @@
 import discord
 from discord.ext import commands
 import asyncio
+import aiohttp
 
 BALANCE_TEAMS = False  # TODO: Implement a way to decide if teams should be balanced
 
