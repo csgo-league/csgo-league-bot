@@ -78,12 +78,12 @@ class TeamDraftMenu(discord.Message):
         elif picker == self.teams[1][0]:
             picking_team = self.teams[1]
         elif picker in self.users:
-            raise PickError(message=f'Picker {picker.mention} is not a team captain')
+            raise PickError(f'Picker {picker.mention} is not a team captain')
         else:
-            raise PickError(message=f'Picker {picker.mention} is not a user in the team draft')
+            raise PickError(f'Picker {picker.mention} is not a user in the team draft')
 
         if len(picking_team) > len(self.users) // 2:  # Team is full
-            raise PickError(message=f'Team {picker.mention} is full')
+            raise PickError(f'Team {picker} is full')
 
         self.users_left.remove(pickee)
         picking_team.append(pickee)
