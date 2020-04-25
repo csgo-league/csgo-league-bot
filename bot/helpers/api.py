@@ -172,6 +172,7 @@ class ApiHelper:
     def __init__(self, session, base_url, api_key):
         """ Set attributes. """
         self.session = session
+        self.session.raise_for_status = True
         self.base_url = base_url
         self.api_key = api_key
 
@@ -185,26 +186,22 @@ class ApiHelper:
         url = f'{self.base_url}/discord/generate/{user.id}'
 
         async with self.session.get(url=url, headers=self.headers) as resp:
-            resp.raise_for_status()
+            resp_json = await resp.json()
 
-            if resp.status == 200:
-                resp_json = await resp.json()
-
-                if resp_json.get('discord') and resp_json.get('code'):
-                    return f'{self.base_url}/discord/{resp_json["discord"]}/{resp_json["code"]}'
+            if resp_json.get('discord') and resp_json.get('code'):
+                return f'{self.base_url}/discord/{resp_json["discord"]}/{resp_json["code"]}'
 
     async def is_linked(self, user):
         """ Check if a user has their account linked with the API. """
         url = f'{self.base_url}/discord/check/{user.id}'
 
         async with self.session.get(url=url, headers=self.headers) as resp:
-            resp.raise_for_status()
+            resp_json = await resp.json()
 
-            if resp.status == 200:
-                resp_json = await resp.json()
-
-                if resp_json.get('linked'):
-                    return resp_json['linked']
+            if resp_json.get('linked'):
+                return resp_json['linked']
+            else:
+                return False
 
     async def update_discord_name(self, user):
         """ Update a users API name to their current Discord display name. """
@@ -212,7 +209,6 @@ class ApiHelper:
         data = {'discord_name': user.display_name}
 
         async with self.session.post(url=url, headers=self.headers, data=data) as resp:
-            resp.raise_for_status()
             return resp.status == 200
 
     async def get_player(self, user):
@@ -220,10 +216,7 @@ class ApiHelper:
         url = f'{self.base_url}/player/discord/{user.id}'
 
         async with self.session.get(url=url, headers=self.headers) as resp:
-            resp.raise_for_status()
-
-            if resp.status == 200:
-                return Player(await resp.json())
+            return Player(await resp.json())
 
     async def get_players(self, users):
         """ Get multiple players' data from the API. """
@@ -231,11 +224,8 @@ class ApiHelper:
         discord_ids = {"discordIds": [user.id for user in users]}
 
         async with self.session.post(url=url, headers=self.headers, json=discord_ids) as resp:
-            resp.raise_for_status()
-
-            if resp.status == 200:
-                players = await resp.json()
-                return [Player(player_data) for player_data in players]
+            players = await resp.json()
+            return [Player(player_data) for player_data in players]
 
     async def start_match(self, team_one, team_two):
         """ Get a match server from the API. """
@@ -246,7 +236,4 @@ class ApiHelper:
         }
 
         async with self.session.post(url=url, headers=self.headers, json=teams) as resp:
-            resp.raise_for_status()
-
-            if resp.status == 200:
-                return MatchServer(await resp.json())
+            return MatchServer(await resp.json())

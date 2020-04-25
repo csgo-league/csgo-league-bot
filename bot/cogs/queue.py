@@ -152,17 +152,17 @@ class QueueCog(commands.Cog):
             burst_embed = discord.Embed(title=title, description='Fetching server...', color=self.bot.color)
             await ready_message.edit(embed=burst_embed)
 
-            match = await self.bot.api_helper.start_match(team_one, team_two)  # Request match from API
-
             # Check if able to get a match server and edit message embed accordingly
-            if match:
+            try:
+                match = await self.bot.api_helper.start_match(team_one, team_two)  # Request match from API
+            except aiohttp.ClientResponseError:
+                description = 'Sorry! Looks like there aren\'t any servers available at this time. ' \
+                              'Please try again later.'
+                burst_embed = discord.Embed(title='There was a problem!', description=description, color=self.bot.color)
+            else:
                 description = f'URL: {match.connect_url}\nCommand: `{match.connect_command}`'
                 burst_embed = discord.Embed(title='Server ready!', description=description, color=self.bot.color)
                 burst_embed.set_footer(text='Server will close after 5 minutes if anyone doesn\'t join')
-            else:
-                description = ('Sorry! Looks like there aren\'t any servers available at this time. ',
-                               'Please try again later.')
-                burst_embed = discord.Embed(title='There was a problem!', description=description, color=self.bot.color)
 
             await ready_message.edit(embed=burst_embed)
             return True  # Everyone readied up
