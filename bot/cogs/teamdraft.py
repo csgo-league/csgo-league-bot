@@ -88,7 +88,7 @@ class TeamDraftMenu(discord.Message):
         self.users_left.remove(pickee)
         picking_team.append(pickee)
 
-    async def _update(self, title):
+    async def _update_menu(self, title):
         """ Update the message to reflect the current status of the team draft. """
         await self.edit(embed=self._picker_embed(title))
 
@@ -121,7 +121,7 @@ class TeamDraftMenu(discord.Message):
             fat_kid_team.append(self.users_left.pop(0))
             title = 'Teams are set!'
 
-        await self._update(title)
+        await self._update_menu(title)
 
     async def draft(self):
         """ Start the team draft and return the teams after it's finished. """
