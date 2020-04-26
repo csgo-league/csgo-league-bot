@@ -133,9 +133,14 @@ class TeamDraftMenu(discord.Message):
         self.users_left = self.users.copy()  # Copy users to edit players remaining in the player pool
         self.teams = [[], []]
 
+        async def get_score(user):
+            """ Get the RankMe score of the user. """
+            player = await self.bot.api_helper.get_player()
+            return player.score
+
         if CAPTAINS == 'high score':
             for team in self.teams:
-                captain = max(self.users_left, key=lambda x: getattr(await self.bot.api_helper.get_player(), 'score'))
+                captain = max(self.users_left, key=await get_score)
                 self.users_left.remove(captain)
                 team.append(captain)
 
