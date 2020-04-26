@@ -3,6 +3,8 @@
 import discord
 from discord.ext import commands
 
+CAPTAINS = 'high score'
+
 
 class PickError(ValueError):
     """ Raised when a team draft pick is invalid for some reason. """
@@ -130,6 +132,12 @@ class TeamDraftMenu(discord.Message):
         # Initialize draft
         self.users_left = self.users.copy()  # Copy users to edit players remaining in the player pool
         self.teams = [[], []]
+
+        if CAPTAINS == 'high score':
+            for team in self.teams:
+                captain = max(self.users_left, key=lambda x: getattr(await self.bot.api_helper.get_player(), 'score'))
+                self.users_left.remove(captain)
+                team.append(captain)
 
         await self.edit(embed=self._picker_embed('Team draft has begun!'))
 
