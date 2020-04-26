@@ -7,7 +7,9 @@ from discord.ext import commands
 class PickError(ValueError):
     """ Raised when a team draft pick is invalid for some reason. """
 
-    pass
+    def __init__(self, message):
+        """ Set message parameter. """
+        self.message = message
 
 
 class TeamDraftMenu(discord.Message):
@@ -112,7 +114,7 @@ class TeamDraftMenu(discord.Message):
         try:
             self._pick_player(user, pick)
         except PickError as e:  # Player not picked
-            title = e
+            title = e.message
         else:  # Player picked
             title = f'**Team {user.display_name}** picked {pick.display_name}'
 
