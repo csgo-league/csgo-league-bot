@@ -85,8 +85,9 @@ class StatsCog(commands.Cog):
                 ['Played'] + [str(player.matches_played) for player in guild_players]]
         data[0] = [name if len(name) < 12 else name[:9] + '...' for name in data[0]]  # Shorten long names
         widths = list(map(lambda x: len(max(x, key=len)), data))
-        alignments = ['left', 'right', 'right', 'right']
-        formatted_data = [list(map(lambda x: align_text(x, width, align), col)) for col, width, align in zip(data, widths, alignments)]
+        aligns = ['left', 'right', 'right', 'right']
+        z = zip(data, widths, aligns)
+        formatted_data = [list(map(lambda x: align_text(x, width, align), col)) for col, width, align in z]
         formatted_data = list(map(list, zip(*formatted_data)))  # Transpose list for .format() string
         description = '```ml\n    {}  {}  {}  {} \n'.format(*formatted_data[0])
 
@@ -96,5 +97,6 @@ class StatsCog(commands.Cog):
         description += '```'
 
         # Send leaderboard
-        embed = discord.Embed(title='__CS:GO League Server Leaderboard__', description=description, color=self.bot.color)
+        title = '__CS:GO League Server Leaderboard__'
+        embed = discord.Embed(title=title, description=description, color=self.bot.color)
         await ctx.send(embed=embed)
