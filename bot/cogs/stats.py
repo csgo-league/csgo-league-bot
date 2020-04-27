@@ -3,6 +3,30 @@
 import discord
 from discord.ext import commands
 
+import math
+
+
+def align_text(text, length, align='center'):
+    """ Center the text within whitespace of input length. """
+    if length < len(text):
+        return text
+
+    whitespace = length - len(text)
+
+    if align == 'center':
+        pre = math.floor(whitespace / 2)
+        post = math.ceil(whitespace / 2)
+    elif align == 'left':
+        pre = 0
+        post = whitespace
+    elif align == 'right':
+        pre = whitespace
+        post = 0
+    else:
+        raise ValueError('Align argument must be "center", "left" or "right"')
+
+    return ' ' * pre + text + ' ' * post
+
 
 class StatsCog(commands.Cog):
     """ Cog to manage stat-related functionality. """
@@ -36,4 +60,41 @@ class StatsCog(commands.Cog):
             title = f'Unable to get **{ctx.author.display_name}**\'s stats: Their account not linked'
             embed = discord.Embed(title=title, color=self.bot.color)
 
+        await ctx.send(embed=embed)
+
+    @commands.command(brief='See the top players in the server')
+    async def leaders(self, ctx):
+        """ Send an embed containing the leaderboard data parsed from the player objects returned from the API. """
+        num = 5  # Easily modfiy the number of players on the leaderboard
+        guild_players = await self.bot.api_helper.get_players(ctx.guild.members)
+
+        if len(guild_players) == 0:
+            embed = discord.Embed(title='Nobody on this server is ranked!', color=self.bot.color)
+            await ctx.send(embed=embed)
+
+        guild_players.sort(key=lambda u: (u.score, u.matches_played), reverse=True)
+
+        # Select the top players only
+        if len(guild_players) > num:
+            guild_players = guild_players[:num]
+
+        # Generate leaderboard text
+        data = [['Player'] + [self.bot.get_user(player.discord).display_name for player in guild_players],
+                ['Score'] + [str(player.score) for player in guild_players],
+                ['Winrate'] + [f'{player.win_percent * 100:.2f}%' for player in guild_players],
+                ['Played'] + [str(player.matches_played) for player in guild_players]]
+        data[0] = [name if len(name) < 12 else name[:9] + '...' for name in data[0]]  # Shorten long names
+        widths = list(map(lambda x: len(max(x, key=len)), data))
+        alignments = ['left', 'right', 'right', 'right']
+        formatted_data = [list(map(lambda x: align_text(x, width, align), col)) for col, width, align in zip(data, widths, alignments)]
+        formatted_data = list(map(list, zip(*formatted_data)))  # Transpose list for .format() string
+        description = '```ml\n    {}  {}  {}  {} \n'.format(*formatted_data[0])
+
+        for rank, player_row in enumerate(formatted_data[1:], start=1):
+            description += ' {}. {}  {}  {}  {} \n'.format(rank, *player_row)
+
+        description += '```'
+
+        # Send leaderboard
+        embed = discord.Embed(title='__CS:GO League Server Leaderboard__', description=description, color=self.bot.color)
         await ctx.send(embed=embed)
