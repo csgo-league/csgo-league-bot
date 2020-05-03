@@ -19,7 +19,7 @@ class HelpCog(commands.Cog):
         self.bot.ignore_error_types.add(commands.CommandNotFound)
 
     def help_embed(self, title):
-        embed = discord.Embed(title=title, color=self.bot.color)
+        embed = self.bot.embed_template(title=title)
         prefix = self.bot.command_prefix
         prefix = prefix[0] if prefix is not str else prefix
 
@@ -53,7 +53,7 @@ class HelpCog(commands.Cog):
             else:
                 embed_title += f' Use `{prefix}help` for a list of commands'
 
-            embed = discord.Embed(title=embed_title, color=self.bot.color)
+            embed = self.bot.embed_template(title=embed_title)
             await ctx.send(embed=embed)
 
     @commands.command(brief='Display the help menu')
@@ -79,6 +79,6 @@ class HelpCog(commands.Cog):
             description += f'\nBe sure to upvote the bot on [top.gg]({dbl_cog.topgg_url})'
 
         description += f'\nSource code can be found on [GitHub]({GITHUB})'
-        embed = discord.Embed(title='__CS:GO League Bot__', description=description, color=self.bot.color)
+        embed = self.bot.embed_template(title='__CS:GO League Bot__', description=description)
         embed.set_thumbnail(url=self.logo)
         await ctx.send(embed=embed)

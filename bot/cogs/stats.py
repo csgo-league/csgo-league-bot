@@ -54,11 +54,11 @@ class StatsCog(commands.Cog):
                           f' HS Percentage:     {hs_percent_str:>6} \n' \
                           f' First Blood Rate:  {fb_percent_str:>6} ' \
                           '```'
-            embed = discord.Embed(title='__CS:GO League Stats__', description=description, color=self.bot.color)
+            embed = self.bot.embed_template(title='__CS:GO League Stats__', description=description)
             embed.set_author(name=user.display_name, url=player.steam_profile, icon_url=user.avatar_url_as(size=128))
         else:
             title = f'Unable to get **{ctx.author.display_name}**\'s stats: Their account not linked'
-            embed = discord.Embed(title=title, color=self.bot.color)
+            embed = self.bot.embed_template(title=title)
 
         await ctx.send(embed=embed)
 
@@ -69,7 +69,7 @@ class StatsCog(commands.Cog):
         guild_players = await self.bot.api_helper.get_players(ctx.guild.members)
 
         if len(guild_players) == 0:
-            embed = discord.Embed(title='Nobody on this server is ranked!', color=self.bot.color)
+            embed = self.bot.embed_template(title='Nobody on this server is ranked!')
             await ctx.send(embed=embed)
 
         guild_players.sort(key=lambda u: (u.score, u.matches_played), reverse=True)
@@ -98,5 +98,5 @@ class StatsCog(commands.Cog):
 
         # Send leaderboard
         title = '__CS:GO League Server Leaderboard__'
-        embed = discord.Embed(title=title, description=description, color=self.bot.color)
+        embed = self.bot.embed_template(title=title, description=description)
         await ctx.send(embed=embed)

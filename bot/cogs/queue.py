@@ -62,7 +62,7 @@ class QueueCog(commands.Cog):
         else:  # No users in queue
             queue_str = '_The queue is empty..._'
 
-        embed = discord.Embed(title=title, description=queue_str, color=self.bot.color)
+        embed = self.bot.embed_template(title=title, description=queue_str)
         embed.set_footer(text='Players will receive a notification when the queue fills up')
         return embed
 
@@ -100,7 +100,7 @@ class QueueCog(commands.Cog):
         user_mentions = ''.join(user.mention for user in users)
         ready_emoji = '✅'
         description = f'React with the {ready_emoji} below to ready up (1 min)'
-        burst_embed = discord.Embed(title='Queue has filled up!', description=description, color=self.bot.color)
+        burst_embed = self.bot.embed_template(title='Queue has filled up!', description=description)
         ready_message = await ctx.send(user_mentions, embed=burst_embed)
         await ready_message.add_reaction(ready_emoji)
 
@@ -134,7 +134,7 @@ class QueueCog(commands.Cog):
 
             description = '\n'.join(':heavy_multiplication_x:  ' + user.mention for user in unreadied)
             title = 'Not everyone was ready!'
-            burst_embed = discord.Embed(title=title, description=description, color=self.bot.color)
+            burst_embed = self.bot.embed_template(title=title, description=description)
             burst_embed.set_footer(text='The missing players have been removed from the queue')
             await ready_message.edit(embed=burst_embed)
             return False  # Not everyone readied up
@@ -150,7 +150,7 @@ class QueueCog(commands.Cog):
 
             await asyncio.sleep(5)  # Wait for users to see the final teams
             title = ''
-            burst_embed = discord.Embed(title=title, description='Fetching server...', color=self.bot.color)
+            burst_embed = self.bot.embed_template(title=title, description='Fetching server...')
             await ready_message.edit(embed=burst_embed)
 
             # Check if able to get a match server and edit message embed accordingly
@@ -159,10 +159,10 @@ class QueueCog(commands.Cog):
             except aiohttp.ClientResponseError:
                 description = 'Sorry! Looks like there aren\'t any servers available at this time. ' \
                               'Please try again later.'
-                burst_embed = discord.Embed(title='There was a problem!', description=description, color=self.bot.color)
+                burst_embed = self.bot.embed_template(title='There was a problem!', description=description)
             else:
                 description = f'URL: {match.connect_url}\nCommand: `{match.connect_command}`'
-                burst_embed = discord.Embed(title='Server ready!', description=description, color=self.bot.color)
+                burst_embed = self.bot.embed_template(title='Server ready!', description=description)
                 burst_embed.set_footer(text='Server will close after 5 minutes if anyone doesn\'t join')
 
             await ready_message.edit(embed=burst_embed)

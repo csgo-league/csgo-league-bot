@@ -14,5 +14,5 @@ class DonateCog(commands.Cog):
     @commands.command(brief='Link the bot\'s donation link')
     async def donate(self, ctx):
         description = f'[Click here to donate]({self.bot.donate_url})'
-        embed = discord.Embed(title="Donations are greatly appreciated!", description=description, color=self.bot.color)
+        embed = self.bot.embed_template(title="Donations are greatly appreciated!", description=description)
         await ctx.send(embed=embed)

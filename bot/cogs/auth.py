@@ -28,5 +28,5 @@ class AuthCog(commands.Cog):
             else:
                 title = f'Unable to link **{ctx.author.display_name}**: Unknown error'
 
-        embed = discord.Embed(title=title, color=self.bot.color)
+        embed = self.bot.embed_template(title=title)
         await ctx.send(embed=embed)

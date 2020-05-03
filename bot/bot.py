@@ -61,6 +61,12 @@ class LeagueBot(commands.AutoShardedBot):
         if self.donate_url:
             self.add_cog(cogs.DonateCog(self))
 
+    @staticmethod
+    def embed_template(**kwargs):
+        """ Implement the bot's default-style embed. """
+        kwargs['color'] = self.bot.color
+        return discord.Embed(**kwargs)
+
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         """ Send help message when a mis-entered command is received. """

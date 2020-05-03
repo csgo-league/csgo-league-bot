@@ -47,7 +47,7 @@ class TeamDraftMenu(discord.Message):
 
     def _picker_embed(self, title):
         """ Generate the menu embed based on the current status of the team draft. """
-        embed = discord.Embed(title=title, color=self.bot.color)
+        embed = self.bot.embed_template(title=title)
         embed.set_footer(text='React to any of the numbers below to pick the corresponding user')
 
         for team in self.teams:
@@ -202,7 +202,7 @@ class TeamDraftCog(commands.Cog):
 
     #     if len(queue.active) < queue.capacity:
     #         embed_title = f'Cannot start player draft until the queue is full ({len(queue.active)}/{queue.capacity})'
-    #         embed = discord.Embed(title=embed_title, color=self.bot.color)
+    #         embed = self.bot.embed_template(title=embed_title)
     #         await ctx.send(embed=embed)
     #         return
 
