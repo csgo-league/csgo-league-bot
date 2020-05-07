@@ -73,7 +73,7 @@ class QueueCog(commands.Cog):
             raise ValueError('Argument "users" must have even length')
 
         # Get players and sort by RankMe score
-        users_dict = dict(zip(await self.bot.api_helper.get_players(users), users))
+        users_dict = dict(zip(await self.bot.api.get_players(users), users))
         players = list(users_dict.keys())
         players.sort(key=lambda x: x.score)
 
@@ -155,7 +155,7 @@ class QueueCog(commands.Cog):
 
             # Check if able to get a match server and edit message embed accordingly
             try:
-                match = await self.bot.api_helper.start_match(team_one, team_two)  # Request match from API
+                match = await self.bot.api.start_match(team_one, team_two)  # Request match from API
             except aiohttp.ClientResponseError:
                 description = 'Sorry! Looks like there aren\'t any servers available at this time. ' \
                               'Please try again later.'
@@ -174,10 +174,10 @@ class QueueCog(commands.Cog):
         """ Check if the member can be added to the guild queue and add them if so. """
         queue = self.guild_queues[ctx.guild]
 
-        if not await self.bot.api_helper.is_linked(ctx.author):  # Message author isn't linked
+        if not await self.bot.api.is_linked(ctx.author):  # Message author isn't linked
             title = f'Unable to add **{ctx.author.display_name}**: Their account is not linked'
         else:  # Message author is linked
-            player = await self.bot.api_helper.get_player(ctx.author)
+            player = await self.bot.api.get_player(ctx.author)
 
             if ctx.author in queue.active:  # Author already in queue
                 title = f'**{ctx.author.display_name}** is already in the queue'
