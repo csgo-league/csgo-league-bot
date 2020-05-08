@@ -3,10 +3,10 @@
 import discord
 from discord.ext import commands
 
-from helpers.api import ApiHelper
+from . import cogs
+from .helpers.api import ApiHelper
 
 import aiohttp
-import cogs
 import sys
 import traceback
 
@@ -14,7 +14,7 @@ import traceback
 class LeagueBot(commands.AutoShardedBot):
     """ Sub-classed AutoShardedBot modified to fit the needs of the application. """
 
-    def __init__(self, discord_token, api_base_url, api_key, dbl_token=None, donate_url=None):
+    def __init__(self, discord_token, api_base_url, api_token, db, dbl_token=None, donate_url=None):
         """ Set attributes and configure bot. """
         # Call parent init
         super().__init__(command_prefix=('q!', 'Q!'), case_insensitive=True)
@@ -22,18 +22,20 @@ class LeagueBot(commands.AutoShardedBot):
         # Set argument attributes
         self.discord_token = discord_token
         self.api_base_url = api_base_url
-        self.api_key = api_key
+        self.api_token = api_token
+        self.db = db
         self.dbl_token = dbl_token
         self.donate_url = donate_url
 
         # Set constants
+        self.description = 'An easy to use, fully automated system to set up and play CS:GO pickup games'
         self.color = 0x000000
         self.activity = discord.Activity(type=discord.ActivityType.watching, name="noobs type q!help")
         self.guild_data_file = 'guild_data.json'
 
         # Create session for API
         self.session = aiohttp.ClientSession(loop=self.loop)
-        self.api_helper = ApiHelper(self.session, self.api_base_url, self.api_key)
+        self.api_helper = ApiHelper(self.session, self.api_base_url, self.api_token)
 
         # Initialize set of errors to ignore
         self.ignore_error_types = set()
@@ -82,3 +84,4 @@ class LeagueBot(commands.AutoShardedBot):
         """ Override parent close to close the API session also. """
         await super().close()
         await self.session.close()
+        await self.db.close()
