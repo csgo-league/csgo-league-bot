@@ -134,7 +134,7 @@ class TeamDraftMenu(discord.Message):
         self.teams = [[], []]
 
         if CAPTAINS == 'high score':
-            players = await self.bot.api_helper.get_players(self.users_left)
+            players = await self.bot.api.get_players(self.users_left)
             players.sort(reverse=True, key=lambda x: x.score)
 
             for team in self.teams:
