@@ -10,6 +10,7 @@ class Player:
         self.discord = player_data['discord']
         self.discord_name = player_data['discord_name']
         self.id = player_data['id']
+        self.is_banned = player_data['isBanned']
         self.score = player_data['score']
         self.kills = player_data['kills']
         self.deaths = player_data['deaths']
@@ -226,6 +227,20 @@ class ApiHelper:
         async with self.session.post(url=url, headers=self.headers, json=discord_ids) as resp:
             players = await resp.json()
             return [Player(player_data) for player_data in players]
+
+    async def ban_player(self, user):
+        """ Ban a player from the service. """
+        url = f'{self.base_url}/player/discord/{user.id}/ban'
+
+        async with self.session.get(url=url, headers=self.headers) as resp:
+            pass
+
+    async def unban_player(self, user):
+        """ Unban a player from the service. """
+        url = f'{self.base_url}/player/discord/{user.id}/unban'
+
+        async with self.session.get(url=url, headers=self.headers) as resp:
+            pass
 
     async def start_match(self, team_one, team_two):
         """ Get a match server from the API. """

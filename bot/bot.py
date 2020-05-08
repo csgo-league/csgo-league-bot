@@ -46,6 +46,7 @@ class LeagueBot(commands.AutoShardedBot):
         self.before_invoke(commands.Context.trigger_typing)
 
         # Add cogs
+        self.add_cog(cogs.AdminCog(self))
         self.add_cog(cogs.CacherCog(self))
         self.add_cog(cogs.ConsoleCog(self))
         self.add_cog(cogs.HelpCog(self))
