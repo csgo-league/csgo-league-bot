@@ -4,7 +4,6 @@ from bot.bot import LeagueBot
 from bot.helpers.migrations import get_db
 
 import asyncio
-import asyncpg
 import configparser
 import os.path
 import sys
