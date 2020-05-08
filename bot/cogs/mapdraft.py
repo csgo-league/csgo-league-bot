@@ -1,6 +1,5 @@
 # mapdraft.py
 
-import discord
 from discord.ext import commands
 
 
@@ -146,7 +145,7 @@ class MapDraftCog(commands.Cog):
                 else:
                     embed_title = f'**{user.name}** has banned **{m.name}**'
                     embed = self.bot.embed_template(title=embed_title, description=self.maps_left_str(guild),
-                                          color=self.bot.color)
+                                                    color=self.bot.color)
                     embed.set_thumbnail(url=m.image_url)
                     embed.set_footer(text=MapDraftCog.footer)
                     await mdraft_data.message.edit(embed=embed)

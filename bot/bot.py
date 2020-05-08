@@ -62,10 +62,9 @@ class LeagueBot(commands.AutoShardedBot):
         if self.donate_url:
             self.add_cog(cogs.DonateCog(self))
 
-    @staticmethod
-    def embed_template(**kwargs):
+    def embed_template(self, **kwargs):
         """ Implement the bot's default-style embed. """
-        kwargs['color'] = self.bot.color
+        kwargs['color'] = self.color
         return discord.Embed(**kwargs)
 
     @commands.Cog.listener()
