@@ -189,4 +189,3 @@ class AdminCog(commands.Cog):
             title = f'Cannot change queue capacity without {missing_perm} permission!'
             embed = self.bot.embed_template(title=title)
             await ctx.send(embed=embed)
-

@@ -233,14 +233,14 @@ class ApiHelper:
         url = f'{self.base_url}/player/discord/{user.id}/ban'
 
         async with self.session.get(url=url, headers=self.headers) as resp:
-            pass
+            return resp  # Placeholder for return value, if any
 
     async def unban_player(self, user):
         """ Unban a player from the service. """
         url = f'{self.base_url}/player/discord/{user.id}/unban'
 
         async with self.session.get(url=url, headers=self.headers) as resp:
-            pass
+            return resp  # Placeholder for return value, if any
 
     async def start_match(self, team_one, team_two):
         """ Get a match server from the API. """
