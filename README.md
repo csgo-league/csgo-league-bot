@@ -37,31 +37,30 @@ If you appreciate the project then please take the time to star our repository.
 
 4. Install PostgreSQL (X.X or higher) and create a database by running the following command with the psql tool...
 
-```sql
-CREATE ROLE csgoleague WITH LOGIN PASSWORD 'yourpassword';
-CREATE DATABASE csgoleague OWNER csgoleague;
-```
+    ```sql
+    CREATE ROLE csgoleague WITH LOGIN PASSWORD 'yourpassword';
+    CREATE DATABASE csgoleague OWNER csgoleague;
+    ```
 
-Replacing 'yourpassword' with your own password
+    Be sure to replace `'yourpassword'` with your own password.
 
-5. Create a config file named `config.ini` with in the repository's root directory. Fill it with the
- using the following templatesing your bot's Discord token, League web server URL, League API token and Discord Bot List token, run the bot like so...
+5. Create a config file named `config.ini` with in the repository's root directory. Fill this template with the requisite information you've gathered...
 
-```ini
-[Discord API]
-discord_token=
+    ```ini
+    [Discord API]
+    discord_token=
 
-[CS:GO League API]
-api_base_url=
-api_token=
+    [CS:GO League API]
+    api_base_url=
+    api_token=
 
-[PostgreSQL Database]
-user=
-password=
-database=
-host=
+    [PostgreSQL Database]
+    user=
+    password=
+    database=
+    host=
 
-```
+    ```
 
 6. Run the launcher Python script, `launcher.py`
 
