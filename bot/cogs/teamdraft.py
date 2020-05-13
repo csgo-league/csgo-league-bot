@@ -2,6 +2,7 @@
 
 import discord
 from discord.ext import commands
+import random
 
 CAPTAINS = 'high score'
 
@@ -140,6 +141,14 @@ class TeamDraftMenu(discord.Message):
             for team in self.teams:
                 captain = self.bot.get_user(players.pop(0).discord)
                 self.users_left.remove(captain)
+                team.append(captain)
+        elif CAPTAINS == 'random':
+            rand_users = self.users_left.copy()  # Create new list to preserve original order
+            random.shuffle(rand_users)
+
+            for team in self.teams:
+                captain = rand_users.pop()
+                self.users_left.remote(captain)
                 team.append(captain)
 
         await self.edit(embed=self._picker_embed('Team draft has begun!'))
