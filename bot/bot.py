@@ -33,7 +33,7 @@ class LeagueBot(commands.AutoShardedBot):
 
         # Create session for API
         self.session = aiohttp.ClientSession(loop=self.loop)
-        self.api = ApiHelper(self.session, self.api_base_url, self.api_key)
+        self.api_helper = ApiHelper(self.session, self.api_base_url, self.api_key)
 
         # Initialize set of errors to ignore
         self.ignore_error_types = set()

@@ -38,7 +38,7 @@ class StatsCog(commands.Cog):
     async def stats(self, ctx):
         """ Send an embed containing stats data parsed from the player object returned from the API. """
         user = ctx.author
-        player = await self.bot.api.get_player(user)
+        player = await self.bot.api_helper.get_player(user)
 
         if player:
             win_percent_str = f'{player.win_percent * 100:.2f}%'
@@ -65,7 +65,7 @@ class StatsCog(commands.Cog):
     async def leaders(self, ctx):
         """ Send an embed containing the leaderboard data parsed from the player objects returned from the API. """
         num = 5  # Easily modfiy the number of players on the leaderboard
-        guild_players = await self.bot.api.get_players(ctx.guild.members)
+        guild_players = await self.bot.api_helper.get_players(ctx.guild.members)
 
         if len(guild_players) == 0:
             embed = self.bot.embed_template(title='Nobody on this server is ranked!')
