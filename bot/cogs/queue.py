@@ -70,7 +70,7 @@ class QueueCog(commands.Cog):
         """ Balance teams based on players' RankMe score. """
         # Only balance teams with even amounts of players
         if len(users) % 2 != 0:
-            raise ValueError('Argument "users" must have even length')
+            raise ValueError('Users argument must have even length')
 
         # Get players and sort by RankMe score
         users_dict = dict(zip(await self.bot.api_helper.get_players(users), users))
