@@ -292,7 +292,7 @@ class QueueCog(commands.Cog):
                     embed = discord.Embed(title='Capacity is outside of valid range', color=self.bot.color)
                 else:
                     await self.bot.db_helper.delete_all_queued_users(ctx.guild)
-                    await self.bot.db_helper.update_capacity(ctx.guild, new_cap)
+                    await self.bot.db_helper.update_guild(ctx.guild, capacity=new_cap)
                     embed = discord.Embed(title=f'Queue capacity set to {new_cap}', color=self.bot.color)
                     embed.set_footer(text='The queue has been emptied because of the capacity change')
 

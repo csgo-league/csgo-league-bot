@@ -158,10 +158,10 @@ class DBHelper:
 
         return self._get_record_ids(deleted, key='user_id')
 
-    async def _update_row(self, table, obj, **kwargs):
+    async def _update_row(self, table, obj, **data):
         """ Update row with matching ID in the specified table. """
-        col_vals = ',\n    '.join(f'{col} = {val}' for col, val in kwargs.items())
-        ret_vals = ',\n    '.join(kwargs)
+        col_vals = ',\n    '.join(f'{col} = {val}' for col, val in data.items())
+        ret_vals = ',\n    '.join(data)
         statement = (
             f'UPDATE {table}\n'
             f'SET {col_vals}\n'
@@ -193,6 +193,6 @@ class DBHelper:
         """"""
         return await self._get_row('guilds', guild)
 
-    async def update_capacity(self, guild, capacity):
-        """ Update guild's capacity value. """
-        return await self._update_row('guilds', guild, capacity=capacity)
+    async def update_guild(self, guild, **data):
+        """"""
+        return await self._update_row('guilds', guild, **data)
