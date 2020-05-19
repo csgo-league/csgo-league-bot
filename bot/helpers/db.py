@@ -1,0 +1,198 @@
+# db.py
+
+
+class DBHelper:
+    """ Class to contain database query wrapper functions. """
+
+    def __init__(self, pool):
+        """ Set attributes. """
+        self.pool = pool
+
+    @staticmethod
+    def _get_record_ids(records, key='id'):
+        """"""
+        return list(map(lambda r: r[key], records))
+
+    async def insert_guilds(self, *guilds):  # TODO: Need to check IDs already in the guilds table
+        """ Add a list of guilds into the guilds table and return the ones successfully added. """
+        rows = [(guild.id, None, None, None) for guild in guilds]
+        statement = (
+            'INSERT INTO guilds (id)\n'
+            '    (SELECT id FROM unnest($1::guilds[]))\n'
+            '    ON CONFLICT (id) DO NOTHING\n'
+            '    RETURNING id;'
+        )
+
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                inserted = await connection.fetch(statement, rows)
+
+        return self._get_record_ids(inserted)
+
+    async def delete_guilds(self, *guilds):  # TODO: Need to test with IDs that aren't in the guilds table
+        """ Remove a list of guilds from the guilds table and return the ones successfully removed. """
+        delete_ids = [guild.id for guild in guilds]
+        statement = (
+            'DELETE FROM guilds\n'
+            '    WHERE id::BIGINT = ANY($1::BIGINT[])\n'
+            '    RETURNING id;'
+        )
+
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                deleted = await connection.fetch(statement, delete_ids)
+
+        return self._get_record_ids(deleted)
+
+    async def sync_guilds(self, *guilds):
+        """ Synchronizes the guilds table with the guilds in the bot. """
+        insert_rows = [(guild.id, None, None, None) for guild in guilds]
+        not_delete_ids = [guild.id for guild in guilds]
+        insert_statement = (
+            'INSERT INTO guilds (id)\n'
+            '    (SELECT id FROM unnest($1::guilds[]))\n'
+            '    ON CONFLICT (id) DO NOTHING\n'
+            '    RETURNING id;'
+        )
+        delete_statement = (
+            'DELETE FROM guilds\n'
+            '    WHERE id::BIGINT != ALL($1::BIGINT[])\n'
+            '    RETURNING id;'
+        )
+
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                inserted = await connection.fetch(insert_statement, insert_rows)
+                deleted = await connection.fetch(delete_statement, not_delete_ids)
+
+        return self._get_record_ids(inserted), self._get_record_ids(deleted)
+
+    async def insert_users(self, *users):
+        """"""
+        rows = [(user.id,) for user in users]
+        statement = (
+            'INSERT INTO users (id)\n'
+            '    (SELECT id FROM unnest($1::users[]))\n'
+            '    ON CONFLICT (id) DO NOTHING\n'
+            '    RETURNING id;'
+        )
+
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                inserted = await connection.fetch(statement, rows)
+
+        return self._get_record_ids(inserted)
+
+    async def delete_users(self, *users):
+        """"""
+        delete_ids = [user.id for user in users]
+        statement = (
+            'DELETE FROM users\n'
+            '    WHERE id::BIGINT = ANY($1::BIGINT[])\n'
+            '    RETURNING id;'
+        )
+
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                deleted = await connection.fetch(statement, delete_ids)
+
+        return self._get_record_ids(deleted)
+
+    async def sync_users(self, *users):
+        """"""
+        pass
+
+    async def get_queued_users(self, guild):
+        statement = (
+            'SELECT\n'
+            '    user_id\n'
+            'FROM\n'
+            '    queued_users\n'
+            'WHERE\n'
+            '    guild_id = $1;'
+        )
+
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                queue = await connection.fetch(statement, guild.id)
+
+        return self._get_record_ids(queue, key='user_id')
+
+    async def insert_queued_users(self, guild, *users):
+        """"""
+        statement = (
+            'INSERT INTO queued_users (guild_id, user_id)\n'
+            '    (SELECT * FROM unnest($1::queued_users[]));\n'
+        )
+
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                await connection.execute(statement, [(guild.id, user.id) for user in users])
+
+    async def delete_queued_users(self, guild, *users):
+        """"""
+        delete_ids = [user.id for user in users]
+        statement = (
+            'DELETE FROM queued_users\n'
+            '    WHERE guild_id = $1 AND user_id = ANY($2::BIGINT[])'
+            '    RETURNING user_id;'
+        )
+
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                deleted = await connection.fetch(statement, guild.id, delete_ids)
+
+        return self._get_record_ids(deleted, key='user_id')
+
+    async def delete_all_queued_users(self, guild):
+        """"""
+        statement = (
+            'DELETE FROM queued_users\n'
+            '    WHERE guild_id = $1'
+            '    RETURNING user_id;'
+        )
+
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                deleted = await connection.fetch(statement, guild.id)
+
+        return self._get_record_ids(deleted, key='user_id')
+
+    async def _update_row(self, table, obj, **kwargs):
+        """ Update row with matching ID in the specified table. """
+        col_vals = ',\n    '.join(f'{col} = {val}' for col, val in kwargs.items())
+        ret_vals = ',\n    '.join(kwargs)
+        statement = (
+            f'UPDATE {table}\n'
+            f'SET {col_vals}\n'
+            'WHERE\n'
+            '    id = $1\n'
+            f'RETURNING {ret_vals};'
+        )
+
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                updated_vals = await connection.fetch(statement, obj.id)
+
+        return {col: val for rec in updated_vals for col, val in rec.items()}
+
+    async def _get_row(self, table, obj):
+        """"""
+        statement = (
+            f'SELECT * FROM {table}\n'
+            '   WHERE id = $1'
+        )
+
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                row = await connection.fetchrow(statement, obj.id)
+
+        return {col: val for col, val in row.items()}
+
+    async def get_guild(self, guild):
+        """"""
+        return await self._get_row('guilds', guild)
+
+    async def update_capacity(self, guild, capacity):
+        """ Update guild's capacity value. """
+        return await self._update_row('guilds', guild, capacity=capacity)
