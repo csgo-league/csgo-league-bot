@@ -1,6 +1,3 @@
 __pycache__/
 *.pyc
-config.ini
-bot/guild_data.json
-bot/run.py
 .env

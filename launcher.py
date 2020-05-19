@@ -1,41 +1,28 @@
 # launcher.py
 
 from bot.bot import LeagueBot
-from bot.helpers.migrations import get_db
 
 import asyncio
-import configparser
-import os.path
-import sys
-
-
-def get_config(filename):
-    """"""
-    config = configparser.ConfigParser()
-
-    if os.path.isfile(filename):
-        config.read(filename)
-        return config
-    else:
-        return None
+import asyncpg
+from dotenv import load_dotenv
+from operator import itemgetter
+from os import environ
 
 
 def run_bot():
-    """"""
-    # Get config from file
-    config_file = 'config.ini'
-    config = get_config(config_file)
+    """ Parse the config file and run the bot. """
+    # Load the environment variables in the local .env file
+    load_dotenv()
 
-    if config is None:
-        sys.exit(f'Could not find "{config_file}" config file. Check the README for instructions on creating a config.')
-
-    # Get database object
+    # Get database object for bot
+    connect_url = 'postgresql://{POSTGRESQL_USER}:{POSTGRESQL_PASSWORD}@{POSTGRESQL_HOST}/{POSTGRESQL_DB}'
     loop = asyncio.get_event_loop()
-    db = loop.run_until_complete(get_db(**config['PostgreSQL Database']))
+    db_pool = loop.run_until_complete(asyncpg.create_pool(connect_url.format(**environ)))
 
     # Instantiate bot and run
-    dbl_token = config.get('DBL API', 'dbl_token', fallback=None)
-    bot = LeagueBot(**config['Discord API'], **config['CS:GO League API'], db=db, dbl_token=dbl_token)
+    dbl_token = environ.get('DBL_API_KEY', None)
+    env_varnames = ['DISCORD_BOT_TOKEN', 'CSGO_LEAGUE_API_URL', 'CSGO_LEAGUE_API_KEY']
+    bot = LeagueBot(*itemgetter(*env_varnames)(environ), db_pool=db_pool, dbl_token=dbl_token)
     bot.run()
 
 

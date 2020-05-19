@@ -2,8 +2,7 @@
 
 import discord
 from discord.ext import commands
-
-CAPTAINS = 'high score'
+import random
 
 
 class PickError(ValueError):
@@ -130,10 +129,12 @@ class TeamDraftMenu(discord.Message):
     async def draft(self):
         """ Start the team draft and return the teams after it's finished. """
         # Initialize draft
+        guild_data = await self.bot.db_helper.get_guild(self.message.guild)
         self.users_left = self.users.copy()  # Copy users to edit players remaining in the player pool
         self.teams = [[], []]
+        captain_method = guild_data['captain_method']
 
-        if CAPTAINS == 'high score':
+        if captain_method == 'rank':
             players = await self.bot.api.get_players(self.users_left)
             players.sort(reverse=True, key=lambda x: x.score)
 
@@ -141,6 +142,18 @@ class TeamDraftMenu(discord.Message):
                 captain = self.bot.get_user(players.pop(0).discord)
                 self.users_left.remove(captain)
                 team.append(captain)
+        elif captain_method == 'random':
+            temp_users = self.users_left.copy()
+            random.shuffle(temp_users)
+
+            for team in self.teams:
+                captain = temp_users.pop()
+                self.users_left.remove(captain)
+                team.append(captain)
+        elif captain_method == 'volunteer':
+            pass
+        else:
+            raise ValueError(f'Captain method {captain_method} isn\'t valid')
 
         await self.edit(embed=self._picker_embed('Team draft has begun!'))
 
