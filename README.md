@@ -31,38 +31,48 @@ If you appreciate the project then please take the time to star our repository.
 
 2. Setup and get an API token for the CS:GO League [web API](https://github.com/csgo-league/csgo-league-web) along with the host base URL.
 
+3. Install libpq-dev (Linux only?). This is needed to install the psycopg2 Python package.
+
+    * Linux command is `sudo apt-get install libpq-dev`.
+
 3. Run `pip3 install -r requirements.txt` in the repository's root directory to get the necessary libraries.
 
     * Note that python-Levenshtein requires your system to have a C++ compiler (Visual Studio C++ compiler for Windows or g++ for Linux). This library may be replaced in the future to eliminate this requirement.
 
-4. Install PostgreSQL (X.X or higher) and create a database by running the following command with the psql tool...
+4. Install PostgreSQL 9.5 or higher.
+
+    * Linux command is `sudo apt-get install postgresql`.
+    * Windows users can download [here](https://www.postgresql.org/download/windows).
+
+5. Create a database by running the following commands with the psql tool...
 
     ```sql
     CREATE ROLE csgoleague WITH LOGIN PASSWORD 'yourpassword';
     CREATE DATABASE csgoleague OWNER csgoleague;
     ```
 
-    Be sure to replace `'yourpassword'` with your own password.
+    Be sure to replace `'yourpassword'` with your own desired password.
 
-5. Create a config file named `config.ini` with in the repository's root directory. Fill this template with the requisite information you've gathered...
+5. Create an environment file named `.env` with in the repository's root directory. Fill this template with the requisite information you've gathered...
 
-    ```ini
-    [Discord API]
-    discord_token=
+    ```env
+    DISCORD_BOT_TOKEN=
 
-    [CS:GO League API]
-    api_base_url=
-    api_token=
+    CSGO_LEAGUE_API_KEY=
+    CSGO_LEAGUE_API_URL=
 
-    [PostgreSQL Database]
-    user=
-    password=
-    database=
-    host=
-
+    POSTGRESQL_USER=
+    POSTGRESQL_PASSWORD=
+    POSTGRESQL_DB=
+    POSTGRESQL_HOST=
     ```
 
-6. Run the launcher Python script, `launcher.py`
+    Optionally you may set these environment variables another way.
+
+
+6. Apply the database migrations by running the migration script `migrate.py`.
+
+7. Run the launcher Python script, `launcher.py`.
 
 *Note that currently the `mdraft` command depends on custom emojis to be used as buttons which are hardcoded [here](https://github.com/csgo-league/csgo-league-bot/blob/abb06e1876546bb3948094faa795e90184642882/qbot/cogs/mapdraft.py#L20). As of right now you will need to make the emojis yourself and replace the emoji code in the map objects there.*
 
