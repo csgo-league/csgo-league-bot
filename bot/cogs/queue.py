@@ -115,7 +115,7 @@ class QueueCog(commands.Cog):
                 except ValueError:
                     pass
 
-            description = '\n'.join(f':heavy_multiplication_x:  ' + user.mention for user in unreadied)
+            description = '\n'.join(':heavy_multiplication_x:  ' + user.mention for user in unreadied)
             title = 'Not everyone was ready!'
             burst_embed = self.bot.embed_template(title=title, description=description)
             burst_embed.set_footer(text='The missing players have been removed from the queue')
