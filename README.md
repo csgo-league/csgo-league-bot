@@ -70,7 +70,7 @@ If you appreciate the project then please take the time to star our repository.
     Optionally you may set these environment variables another way.
 
 
-6. Apply the database migrations by running the migration script `migrate.py`.
+6. Apply the database migrations by running `python3 migrate.py up`.
 
 7. Run the launcher Python script, `launcher.py`.
 
