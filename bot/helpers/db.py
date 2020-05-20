@@ -13,7 +13,7 @@ class DBHelper:
         """ Get key list of attributes from list of Record objects. """
         return list(map(lambda r: r[key], records))
 
-    async def insert_guilds(self, *guilds):  # TODO: Need to check IDs already in the guilds table
+    async def insert_guilds(self, *guilds):
         """ Add a list of guilds into the guilds table and return the ones successfully added. """
         rows = [(guild.id, None, None, None) for guild in guilds]
         statement = (
@@ -29,7 +29,7 @@ class DBHelper:
 
         return self._get_record_ids(inserted)
 
-    async def delete_guilds(self, *guilds):  # TODO: Need to test with IDs that aren't in the guilds table
+    async def delete_guilds(self, *guilds):
         """ Remove a list of guilds from the guilds table and return the ones successfully removed. """
         delete_ids = [guild.id for guild in guilds]
         statement = (
