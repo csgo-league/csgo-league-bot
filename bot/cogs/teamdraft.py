@@ -90,8 +90,9 @@ class TeamDraftMenu(discord.Message):
         if len(picking_team) > len(self.users) // 2:  # Team is full
             raise PickError(f'Team {picker.mention} is full')
 
-        self.users_left.remove(pickee)
-        picking_team.append(pickee)
+        if not picker == pickee:
+            self.users_left.remove(pickee)
+            picking_team.append(pickee)
 
     async def _update_menu(self, title):
         """ Update the message to reflect the current status of the team draft. """
