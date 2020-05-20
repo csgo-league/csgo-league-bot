@@ -150,7 +150,7 @@ class DBHelper:
         """ Insert multiple users of a guild into the queued_users table. """
         statement = (
             'INSERT INTO queued_users (guild_id, user_id)\n'
-            '    (SELECT * FROM unnest($1::queued_users[]));\n'
+            '    (SELECT * FROM unnest($1::queued_users[]));'
         )
 
         async with self.pool.acquire() as connection:
@@ -162,7 +162,7 @@ class DBHelper:
         delete_ids = [user.id for user in users]
         statement = (
             'DELETE FROM queued_users\n'
-            '    WHERE guild_id = $1 AND user_id = ANY($2::BIGINT[])'
+            '    WHERE guild_id = $1 AND user_id = ANY($2::BIGINT[])\n'
             '    RETURNING user_id;'
         )
 
@@ -176,7 +176,7 @@ class DBHelper:
         """ Delete all users of a guild from the queued_users table. """
         statement = (
             'DELETE FROM queued_users\n'
-            '    WHERE guild_id = $1'
+            '    WHERE guild_id = $1\n'
             '    RETURNING user_id;'
         )
 
