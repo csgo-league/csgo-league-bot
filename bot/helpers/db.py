@@ -98,10 +98,6 @@ class DBHelper:
 
         return self._get_record_ids(deleted)
 
-    async def sync_users(self, *users):
-        """"""
-        pass
-
     async def get_queued_users(self, guild):
         """ Get all the queued users of the guild from the queued_users table. """
         statement = (
