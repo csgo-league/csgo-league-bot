@@ -203,9 +203,9 @@ class QueueCog(commands.Cog):
         removed = await self.bot.db_helper.delete_queued_users(ctx.guild, ctx.author)
 
         if ctx.author.id in removed:
-            title = f'**{ctx.author.display_name}** has been removed from the queue '
+            title = f'**{ctx.author.display_name}** has been removed from the queue'
         else:
-            title = f'**{ctx.author.display_name}** isn\'t in the queue '
+            title = f'**{ctx.author.display_name}** isn\'t in the queue'
 
         embed = await self.queue_embed(ctx.guild, title)
 
