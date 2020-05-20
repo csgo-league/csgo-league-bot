@@ -230,7 +230,7 @@ class QueueCog(commands.Cog):
             embed = discord.Embed(title='Mention a player in the command to remove them', color=self.bot.color)
             await ctx.send(embed=embed)
         else:
-            removed = await self.bot.db_helper.delete_queued_users(ctx.guild, ctx.author)
+            removed = await self.bot.db_helper.delete_queued_users(ctx.guild, removee)
 
             if removee.id in removed:
                 title = f'**{removee.display_name}** has been removed from the queue'
