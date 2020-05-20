@@ -129,7 +129,7 @@ class TeamDraftMenu(discord.Message):
     async def draft(self):
         """ Start the team draft and return the teams after it's finished. """
         # Initialize draft
-        guild_data = await self.bot.db_helper.get_guild(self.message.guild)
+        guild_data = await self.bot.db_helper.get_guild(self.guild)
         self.users_left = self.users.copy()  # Copy users to edit players remaining in the player pool
         self.teams = [[], []]
         captain_method = guild_data['captain_method']
