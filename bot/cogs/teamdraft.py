@@ -153,7 +153,7 @@ class TeamDraftMenu(discord.Message):
         elif captain_method == 'volunteer':
             pass
         else:
-            raise ValueError(f'Captain method {captain_method} isn\'t valid')
+            raise ValueError(f'Captain method "{captain_method}" isn\'t valid')
 
         await self.edit(embed=self._picker_embed('Team draft has begun!'))
 
