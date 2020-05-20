@@ -35,7 +35,7 @@ class QueueCog(commands.Cog):
         return embed
 
     async def update_last_msg(self, ctx, embed):
-        """"""
+        """ Send embed message and delete the last one sent. """
         msg = self.last_queue_msgs.get(ctx.guild)
 
         if msg is not None:
@@ -72,7 +72,7 @@ class QueueCog(commands.Cog):
         return map(users_dict.get, team_one), map(users_dict.get, team_two)
 
     async def randomize_teams(self, users):
-        """"""
+        """ Randomly split a list of users in half. """
         random.shuffle(users)
         team_size = len(users) // 2
         return users[:team_size], users[team_size:]

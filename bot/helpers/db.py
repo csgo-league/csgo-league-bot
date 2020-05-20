@@ -10,7 +10,7 @@ class DBHelper:
 
     @staticmethod
     def _get_record_ids(records, key='id'):
-        """"""
+        """ Get key list of attributes from list of Record objects. """
         return list(map(lambda r: r[key], records))
 
     async def insert_guilds(self, *guilds):  # TODO: Need to check IDs already in the guilds table
@@ -68,7 +68,7 @@ class DBHelper:
         return self._get_record_ids(inserted), self._get_record_ids(deleted)
 
     async def insert_users(self, *users):
-        """"""
+        """ Insert multiple users into the users table. """
         rows = [(user.id,) for user in users]
         statement = (
             'INSERT INTO users (id)\n'
@@ -84,7 +84,7 @@ class DBHelper:
         return self._get_record_ids(inserted)
 
     async def delete_users(self, *users):
-        """"""
+        """ Delete multiple users from the users table. """
         delete_ids = [user.id for user in users]
         statement = (
             'DELETE FROM users\n'
@@ -103,6 +103,7 @@ class DBHelper:
         pass
 
     async def get_queued_users(self, guild):
+        """ Get all the queued users of the guild from the queued_users table. """
         statement = (
             'SELECT\n'
             '    user_id\n'
@@ -119,7 +120,7 @@ class DBHelper:
         return self._get_record_ids(queue, key='user_id')
 
     async def insert_queued_users(self, guild, *users):
-        """"""
+        """ Insert multiple users of a guild into the queued_users table. """
         statement = (
             'INSERT INTO queued_users (guild_id, user_id)\n'
             '    (SELECT * FROM unnest($1::queued_users[]));\n'
@@ -130,7 +131,7 @@ class DBHelper:
                 await connection.execute(statement, [(guild.id, user.id) for user in users])
 
     async def delete_queued_users(self, guild, *users):
-        """"""
+        """ Delete multiple users of a guild from the queued_users table. """
         delete_ids = [user.id for user in users]
         statement = (
             'DELETE FROM queued_users\n'
@@ -145,7 +146,7 @@ class DBHelper:
         return self._get_record_ids(deleted, key='user_id')
 
     async def delete_all_queued_users(self, guild):
-        """"""
+        """ Delete all users of a guild from the queued_users table. """
         statement = (
             'DELETE FROM queued_users\n'
             '    WHERE guild_id = $1'
@@ -190,9 +191,9 @@ class DBHelper:
         return {col: val for col, val in row.items()}
 
     async def get_guild(self, guild):
-        """"""
+        """ Get a guild's row from the guilds table. """
         return await self._get_row('guilds', guild)
 
     async def update_guild(self, guild, **data):
-        """"""
+        """ Update a guild's row in the guilds table. """
         return await self._update_row('guilds', guild, **data)
