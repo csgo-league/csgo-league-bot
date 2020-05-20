@@ -73,20 +73,17 @@ class LeagueBot(commands.AutoShardedBot):
     @commands.Cog.listener()
     async def on_ready(self):
         """ Synchronize the guilds the bot is in with the guilds table. """
-        inserted, deleted = await self.db_helper.sync_guilds(*self.guilds)
-        print(f'Inserted guilds: {inserted}\nDeleted guilds: {deleted}')
+        await self.db_helper.sync_guilds(*self.guilds)
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
         """ Insert the newly added guild to the guilds table. """
-        inserted = await self.db_helper.insert_guilds(guild)
-        print(f'Inserted guilds: {inserted}')
+        await self.db_helper.insert_guilds(guild)
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
         """ Delete the recently removed guild from the guilds table. """
-        deleted = await self.db_helper.delete_guilds(guild)
-        print(f'Deleted guilds: {deleted}')
+        await self.db_helper.delete_guilds(guild)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
