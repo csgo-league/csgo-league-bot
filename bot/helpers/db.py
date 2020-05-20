@@ -13,6 +13,37 @@ class DBHelper:
         """ Get key list of attributes from list of Record objects. """
         return list(map(lambda r: r[key], records))
 
+    async def _get_row(self, table, obj):
+        """ Generic method to get table row by object id. """
+        statement = (
+            f'SELECT * FROM {table}\n'
+            '   WHERE id = $1'
+        )
+
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                row = await connection.fetchrow(statement, obj.id)
+
+        return {col: val for col, val in row.items()}
+
+    async def _update_row(self, table, obj, **data):
+        """ Generic method to update table row by object id. """
+        col_vals = ',\n    '.join(f'{col} = {val}' for col, val in data.items())
+        ret_vals = ',\n    '.join(data)
+        statement = (
+            f'UPDATE {table}\n'
+            f'SET {col_vals}\n'
+            'WHERE\n'
+            '    id = $1\n'
+            f'RETURNING {ret_vals};'
+        )
+
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                updated_vals = await connection.fetch(statement, obj.id)
+
+        return {col: val for rec in updated_vals for col, val in rec.items()}
+
     async def insert_guilds(self, *guilds):
         """ Add a list of guilds into the guilds table and return the ones successfully added. """
         rows = [(guild.id, None, None, None) for guild in guilds]
@@ -154,37 +185,6 @@ class DBHelper:
                 deleted = await connection.fetch(statement, guild.id)
 
         return self._get_record_ids(deleted, key='user_id')
-
-    async def _update_row(self, table, obj, **data):
-        """ Update row with matching ID in the specified table. """
-        col_vals = ',\n    '.join(f'{col} = {val}' for col, val in data.items())
-        ret_vals = ',\n    '.join(data)
-        statement = (
-            f'UPDATE {table}\n'
-            f'SET {col_vals}\n'
-            'WHERE\n'
-            '    id = $1\n'
-            f'RETURNING {ret_vals};'
-        )
-
-        async with self.pool.acquire() as connection:
-            async with connection.transaction():
-                updated_vals = await connection.fetch(statement, obj.id)
-
-        return {col: val for rec in updated_vals for col, val in rec.items()}
-
-    async def _get_row(self, table, obj):
-        """"""
-        statement = (
-            f'SELECT * FROM {table}\n'
-            '   WHERE id = $1'
-        )
-
-        async with self.pool.acquire() as connection:
-            async with connection.transaction():
-                row = await connection.fetchrow(statement, obj.id)
-
-        return {col: val for col, val in row.items()}
 
     async def get_guild(self, guild):
         """ Get a guild's row from the guilds table. """
