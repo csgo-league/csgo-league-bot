@@ -9,7 +9,7 @@ class DBHelper:
         self.pool = pool
 
     @staticmethod
-    def _get_record_ids(records, key='id'):
+    def _get_record_attrs(records, key='id'):
         """ Get key list of attributes from list of Record objects. """
         return list(map(lambda r: r[key], records))
 
@@ -58,7 +58,7 @@ class DBHelper:
             async with connection.transaction():
                 inserted = await connection.fetch(statement, rows)
 
-        return self._get_record_ids(inserted)
+        return self._get_record_attrs(inserted, 'id')
 
     async def delete_guilds(self, *guilds):
         """ Remove a list of guilds from the guilds table and return the ones successfully removed. """
@@ -73,7 +73,7 @@ class DBHelper:
             async with connection.transaction():
                 deleted = await connection.fetch(statement, delete_ids)
 
-        return self._get_record_ids(deleted)
+        return self._get_record_attrs(deleted, 'id')
 
     async def sync_guilds(self, *guilds):
         """ Synchronizes the guilds table with the guilds in the bot. """
@@ -96,7 +96,7 @@ class DBHelper:
                 inserted = await connection.fetch(insert_statement, insert_rows)
                 deleted = await connection.fetch(delete_statement, not_delete_ids)
 
-        return self._get_record_ids(inserted), self._get_record_ids(deleted)
+        return self._get_record_attrs(inserted, 'id'), self._get_record_attrs(deleted, 'id')
 
     async def insert_users(self, *users):
         """ Insert multiple users into the users table. """
@@ -112,7 +112,7 @@ class DBHelper:
             async with connection.transaction():
                 inserted = await connection.fetch(statement, rows)
 
-        return self._get_record_ids(inserted)
+        return self._get_record_attrs(inserted, 'id')
 
     async def delete_users(self, *users):
         """ Delete multiple users from the users table. """
@@ -127,7 +127,7 @@ class DBHelper:
             async with connection.transaction():
                 deleted = await connection.fetch(statement, delete_ids)
 
-        return self._get_record_ids(deleted)
+        return self._get_record_attrs(deleted, 'id')
 
     async def get_queued_users(self, guild):
         """ Get all the queued users of the guild from the queued_users table. """
@@ -144,7 +144,7 @@ class DBHelper:
             async with connection.transaction():
                 queue = await connection.fetch(statement, guild.id)
 
-        return self._get_record_ids(queue, key='user_id')
+        return self._get_record_attrs(queue, 'user_id')
 
     async def insert_queued_users(self, guild, *users):
         """ Insert multiple users of a guild into the queued_users table. """
@@ -170,7 +170,7 @@ class DBHelper:
             async with connection.transaction():
                 deleted = await connection.fetch(statement, guild.id, delete_ids)
 
-        return self._get_record_ids(deleted, key='user_id')
+        return self._get_record_attrs(deleted, 'user_id')
 
     async def delete_all_queued_users(self, guild):
         """ Delete all users of a guild from the queued_users table. """
@@ -184,7 +184,7 @@ class DBHelper:
             async with connection.transaction():
                 deleted = await connection.fetch(statement, guild.id)
 
-        return self._get_record_ids(deleted, key='user_id')
+        return self._get_record_attrs(deleted, 'user_id')
 
     async def get_guild(self, guild):
         """ Get a guild's row from the guilds table. """
