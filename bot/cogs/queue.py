@@ -25,9 +25,9 @@ class QueueCog(commands.Cog):
         if title:
             title += f' ({len(queued_ids)}/{capacity})'
 
-        if len(queued_ids) == 0:  # If there are users in the queue
+        if len(queued_ids) == 0:  # If there are no users in the queue
             queue_str = '_The queue is empty..._'
-        else:  # No users in queue
+        else:  # Users still in queue
             queue_str = ''.join(f'{num}. <@{user_id}>\n' for num, user_id in enumerate(queued_ids, start=1))
 
         embed = self.bot.embed_template(title=title, description=queue_str)
