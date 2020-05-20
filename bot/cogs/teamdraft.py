@@ -88,8 +88,9 @@ class TeamDraftMenu(discord.Message):
         if len(picking_team) > len(self.users) // 2:  # Team is full
             raise PickError(f'Team {picker.mention} is full')
 
-        self.users_left.remove(pickee)
-        picking_team.append(pickee)
+        if not picker == pickee:
+            self.users_left.remove(pickee)
+            picking_team.append(pickee)
 
     async def _update_menu(self, title):
         """ Update the message to reflect the current status of the team draft. """
@@ -135,7 +136,7 @@ class TeamDraftMenu(discord.Message):
         captain_method = guild_data['captain_method']
 
         if captain_method == 'rank':
-            players = await self.bot.api.get_players(self.users_left)
+            players = await self.bot.api_helper.get_players(self.users_left)
             players.sort(reverse=True, key=lambda x: x.score)
 
             for team in self.teams:

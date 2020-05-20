@@ -47,10 +47,10 @@ class QueueCog(commands.Cog):
         """ Balance teams based on players' RankMe score. """
         # Only balance teams with even amounts of players
         if len(users) % 2 != 0:
-            raise ValueError('Argument "users" must have even length')
+            raise ValueError('Users argument must have even length')
 
         # Get players and sort by RankMe score
-        users_dict = dict(zip(await self.bot.api.get_players(users), users))
+        users_dict = dict(zip(await self.bot.api_helper.get_players(users), users))
         players = list(users_dict.keys())
         players.sort(key=lambda x: x.score)
 
@@ -138,7 +138,7 @@ class QueueCog(commands.Cog):
 
             # Check if able to get a match server and edit message embed accordingly
             try:
-                match = await self.bot.api.start_match(team_one, team_two)  # Request match from API
+                match = await self.bot.api_helper.start_match(team_one, team_two)  # Request match from API
             except aiohttp.ClientResponseError:
                 description = 'Sorry! Looks like there aren\'t any servers available at this time. ' \
                               'Please try again later.'
@@ -155,10 +155,12 @@ class QueueCog(commands.Cog):
     @commands.max_concurrency(1, per=commands.BucketType.guild, wait=True)  # Only process one command per guild at once
     async def join(self, ctx):
         """ Check if the member can be added to the guild queue and add them if so. """
-        if not await self.bot.api.is_linked(ctx.author):  # Message author isn't linked
+        queue = self.guild_queues[ctx.guild]
+
+        if not await self.bot.api_helper.is_linked(ctx.author):  # Message author isn't linked
             title = f'Unable to add **{ctx.author.display_name}**: Their account is not linked'
         else:  # Message author is linked
-            player = await self.bot.api.get_player(ctx.author)
+            player = await self.bot.api_helper.get_player(ctx.author)
             await self.bot.db_helper.insert_users(ctx.author)
             queue_ids = await self.bot.db_helper.get_queued_users(ctx.guild)
             queue = [self.bot.get_user(user_id) for user_id in queue_ids]
