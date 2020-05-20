@@ -108,13 +108,7 @@ class QueueCog(commands.Cog):
         except asyncio.TimeoutError:  # Not everyone readied up
             await ready_message.clear_reactions()
             unreadied = set(users) - reactors
-
-            for user in unreadied:
-                try:
-                    users.remove(user)  # Modifies users in the scope where this function is called
-                except ValueError:
-                    pass
-
+            await self.bot.db_helper.delete_queued_users(ctx.guild, *unreadied)
             description = '\n'.join(':heavy_multiplication_x:  ' + user.mention for user in unreadied)
             title = 'Not everyone was ready!'
             burst_embed = self.bot.embed_template(title=title, description=description)
