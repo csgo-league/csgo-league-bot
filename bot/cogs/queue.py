@@ -105,9 +105,12 @@ class QueueCog(commands.Cog):
         try:
             await self.bot.wait_for('reaction_add', timeout=60.0, check=all_ready)
         except asyncio.TimeoutError:  # Not everyone readied up
-            await ready_message.clear_reactions()
             unreadied = set(users) - reactors
-            await self.bot.db_helper.delete_queued_users(ctx.guild, *unreadied)
+            awaitables = [
+                ready_message.clear_reactions(),
+                self.bot.db_helper.delete_queued_users(ctx.guild, *unreadied)
+            ]
+            asyncio.gather(*awaitables, loop=self.bot.loop)
             description = '\n'.join(':heavy_multiplication_x:  ' + user.mention for user in unreadied)
             title = 'Not everyone was ready!'
             burst_embed = self.bot.embed_template(title=title, description=description)
@@ -157,12 +160,17 @@ class QueueCog(commands.Cog):
         if not await self.bot.api_helper.is_linked(ctx.author):  # Message author isn't linked
             title = f'Unable to add **{ctx.author.display_name}**: Their account is not linked'
         else:  # Message author is linked
-            player = await self.bot.api_helper.get_player(ctx.author)
-            await self.bot.db_helper.insert_users(ctx.author)
-            queue_ids = await self.bot.db_helper.get_queued_users(ctx.guild)
+            awaitables = [
+                self.bot.api_helper.get_player(ctx.author),
+                self.bot.db_helper.insert_users(ctx.author),
+                self.bot.db_helper.get_queued_users(ctx.guild),
+                self.bot.db_helper.get_guild(ctx.guild)
+            ]
+            results = await asyncio.gather(*awaitables, loop=self.bot.loop)
+            player = results[0]
+            queue_ids = results[2]
+            capacity = results[3]['capacity']
             queue = [self.bot.get_user(user_id) for user_id in queue_ids]
-            guild_data = await self.bot.db_helper.get_guild(ctx.guild)
-            capacity = guild_data['capacity']
 
             if ctx.author in queue:  # Author already in queue
                 title = f'**{ctx.author.display_name}** is already in the queue'

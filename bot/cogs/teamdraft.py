@@ -1,5 +1,6 @@
 # teamdraft.py
 
+import asyncio
 import discord
 from discord.ext import commands
 import random
@@ -95,10 +96,9 @@ class TeamDraftMenu(discord.Message):
     async def _update_menu(self, title):
         """ Update the message to reflect the current status of the team draft. """
         await self.edit(embed=self._picker_embed(title))
-
-        for emoji, user in self.pick_emojis.items():
-            if user not in self.users_left:
-                await self.clear_reaction(emoji)
+        items = self.pick_emojis.items()
+        awaitables = [self.clear_reaction(emoji) for emoji, user in items if user not in self.users_left]
+        asyncio.gather(*awaitables, loop=self.bot.loop)
 
     async def _process_pick(self, reaction, user):
         """ Handler function for player pick reactions. """
