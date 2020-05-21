@@ -13,7 +13,6 @@ class QueueCog(commands.Cog):
     def __init__(self, bot):
         """ Set attributes. """
         self.bot = bot
-        self.guild_queues = {}  # Maps Guild: QQueue
         self.last_queue_msgs = {}
 
     async def queue_embed(self, guild, title=None):
@@ -155,8 +154,6 @@ class QueueCog(commands.Cog):
     @commands.max_concurrency(1, per=commands.BucketType.guild, wait=True)  # Only process one command per guild at once
     async def join(self, ctx):
         """ Check if the member can be added to the guild queue and add them if so. """
-        queue = self.guild_queues[ctx.guild]
-
         if not await self.bot.api_helper.is_linked(ctx.author):  # Message author isn't linked
             title = f'Unable to add **{ctx.author.display_name}**: Their account is not linked'
         else:  # Message author is linked
