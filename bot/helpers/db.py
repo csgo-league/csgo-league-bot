@@ -17,7 +17,7 @@ class DBHelper:
         """ Generic method to get table row by object id. """
         statement = (
             f'SELECT * FROM {table}\n'
-            '   WHERE id = $1'
+            '    WHERE id = $1'
         )
 
         async with self.pool.acquire() as connection:
@@ -32,10 +32,9 @@ class DBHelper:
         ret_vals = ',\n    '.join(data)
         statement = (
             f'UPDATE {table}\n'
-            f'SET {col_vals}\n'
-            'WHERE\n'
-            '    id = $1\n'
-            f'RETURNING {ret_vals};'
+            f'    SET {col_vals}\n'
+            '    WHERE id = $1\n'
+            f'    RETURNING {ret_vals};'
         )
 
         async with self.pool.acquire() as connection:
@@ -132,12 +131,8 @@ class DBHelper:
     async def get_queued_users(self, guild):
         """ Get all the queued users of the guild from the queued_users table. """
         statement = (
-            'SELECT\n'
-            '    user_id\n'
-            'FROM\n'
-            '    queued_users\n'
-            'WHERE\n'
-            '    guild_id = $1;'
+            'SELECT user_id FROM queued_users\n'
+            '    WHERE guild_id = $1;'
         )
 
         async with self.pool.acquire() as connection:
