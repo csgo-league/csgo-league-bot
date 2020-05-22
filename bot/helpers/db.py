@@ -9,7 +9,7 @@ class DBHelper:
         self.pool = pool
 
     @staticmethod
-    def _get_record_attrs(records, key='id'):
+    def _get_record_attrs(records, key):
         """ Get key list of attributes from list of Record objects. """
         return list(map(lambda r: r[key], records))
 
