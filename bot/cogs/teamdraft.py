@@ -44,6 +44,7 @@ class TeamDraftMenu(discord.Message):
         self.pick_emojis = dict(zip(emoji_numbers, users))
         self.users_left = None
         self.teams = None
+        self.future = None
 
     def _picker_embed(self, title):
         """ Generate the menu embed based on the current status of the team draft. """
@@ -125,6 +126,9 @@ class TeamDraftMenu(discord.Message):
             fat_kid_team.append(self.users_left.pop(0))
             title = 'Teams are set!'
 
+            if self.future is not None:
+                self.future.set_result(None)
+
         await self._update_menu(title)
 
     async def draft(self):
@@ -162,9 +166,11 @@ class TeamDraftMenu(discord.Message):
             await self.add_reaction(emoji)
 
         # Add listener handlers and wait until there are no users left to pick
+        self.future = self.bot.loop.create_future()
         self.bot.add_listener(self._process_pick, name='on_reaction_add')
-        await self.bot.wait_for('reaction_add', check=lambda r, u: self.users_left == [], timeout=600.0)
+        await asyncio.wait_for(self.future, 600)
         self.bot.remove_listener(self._process_pick, name='on_reaction_add')
+
         return self.teams
 
 
