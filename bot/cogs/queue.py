@@ -175,7 +175,7 @@ class QueueCog(commands.Cog):
             queue = [self.bot.get_user(user_id) for user_id in queue_ids]
 
             if ctx.author in queue:  # Author already in queue
-                title = f'**{ctx.author.display_name}** is already in the queue'
+                title = f'Unable to add **{ctx.author.display_name}** Already in the queue'
             elif len(queue) >= capacity:  # Queue full
                 title = f'Unable to add **{ctx.author.display_name}**: Queue is full'
             elif not player:  # ApiHelper couldn't get player
