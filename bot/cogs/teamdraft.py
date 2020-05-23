@@ -1,10 +1,9 @@
 # teamdraft.py
 
+import asyncio
 import discord
 from discord.ext import commands
 import random
-
-CAPTAINS = 'high score'
 
 
 class PickError(ValueError):
@@ -97,10 +96,9 @@ class TeamDraftMenu(discord.Message):
     async def _update_menu(self, title):
         """ Update the message to reflect the current status of the team draft. """
         await self.edit(embed=self._picker_embed(title))
-
-        for emoji, user in self.pick_emojis.items():
-            if user not in self.users_left:
-                await self.clear_reaction(emoji)
+        items = self.pick_emojis.items()
+        awaitables = [self.clear_reaction(emoji) for emoji, user in items if user not in self.users_left]
+        asyncio.gather(*awaitables, loop=self.bot.loop)
 
     async def _process_pick(self, reaction, user):
         """ Handler function for player pick reactions. """
@@ -132,10 +130,12 @@ class TeamDraftMenu(discord.Message):
     async def draft(self):
         """ Start the team draft and return the teams after it's finished. """
         # Initialize draft
+        guild_data = await self.bot.db_helper.get_guild(self.guild)
         self.users_left = self.users.copy()  # Copy users to edit players remaining in the player pool
         self.teams = [[], []]
+        captain_method = guild_data['captain_method']
 
-        if CAPTAINS == 'high score':
+        if captain_method == 'rank':
             players = await self.bot.api_helper.get_players(self.users_left)
             players.sort(reverse=True, key=lambda x: x.score)
 
@@ -143,14 +143,18 @@ class TeamDraftMenu(discord.Message):
                 captain = self.bot.get_user(players.pop(0).discord)
                 self.users_left.remove(captain)
                 team.append(captain)
-        elif CAPTAINS == 'random':
-            rand_users = self.users_left.copy()  # Create new list to preserve original order
-            random.shuffle(rand_users)
+        elif captain_method == 'random':
+            temp_users = self.users_left.copy()
+            random.shuffle(temp_users)
 
             for team in self.teams:
-                captain = rand_users.pop()
-                self.users_left.remote(captain)
+                captain = temp_users.pop()
+                self.users_left.remove(captain)
                 team.append(captain)
+        elif captain_method == 'volunteer':
+            pass
+        else:
+            raise ValueError(f'Captain method "{captain_method}" isn\'t valid')
 
         await self.edit(embed=self._picker_embed('Team draft has begun!'))
 

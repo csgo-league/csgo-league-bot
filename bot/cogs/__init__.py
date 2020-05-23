@@ -1,7 +1,6 @@
 # __init__.py
 
 from .auth import AuthCog
-from .cacher import CacherCog
 from .console import ConsoleCog
 from .dbl import DblCog
 from .donate import DonateCog
@@ -13,7 +12,6 @@ from .teamdraft import TeamDraftCog
 
 __all__ = [
     AuthCog,
-    CacherCog,
     ConsoleCog,
     DblCog,
     DonateCog,

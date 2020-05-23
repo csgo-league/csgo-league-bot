@@ -29,29 +29,50 @@ If you appreciate the project then please take the time to star our repository.
 
    * The permissions integer necessary is `17067072`.
 
-2. Get an API token for the CS:GO League [web API](https://github.com/csgo-league/csgo-league-web) along with the host URL.
+2. Setup and get an API token for the CS:GO League [web API](https://github.com/csgo-league/csgo-league-web) along with the host base URL.
+
+3. Install libpq-dev (Linux only?). This is needed to install the psycopg2 Python package.
+
+    * Linux command is `sudo apt-get install libpq-dev`.
 
 3. Run `pip3 install -r requirements.txt` in the repository's root directory to get the necessary libraries.
 
     * Note that python-Levenshtein requires your system to have a C++ compiler (Visual Studio C++ compiler for Windows or g++ for Linux). This library may be replaced in the future to eliminate this requirement.
 
-4. Add the `/bot` path to your `PYTHONPATH` environment variable to be able to import it from anywhere.
+4. Install PostgreSQL 9.5 or higher.
 
-5. Using your bot's Discord token, League web server URL, League API token and Discord Bot List token, run the bot like so...
+    * Linux command is `sudo apt-get install postgresql`.
+    * Windows users can download [here](https://www.postgresql.org/download/windows).
 
-```python
-import bot
+5. Create a database by running the following commands with the psql tool...
 
-DISCORD_TOKEN = 'XXXXXXXX'
-API_BASE_URL = 'XXXXXXXX'
-API_KEY = 'XXXXXXXX'
+    ```sql
+    CREATE ROLE csgoleague WITH LOGIN PASSWORD 'yourpassword';
+    CREATE DATABASE csgoleague OWNER csgoleague;
+    ```
 
-bot = bot.LeagueBot(DISCORD_TOKEN, API_BASE_URL, API_KEY)
-bot.run()  # Blocking
+    Be sure to replace `'yourpassword'` with your own desired password.
 
-```
+5. Create an environment file named `.env` with in the repository's root directory. Fill this template with the requisite information you've gathered...
 
-Now you are ready to start using the CS:GO League Bot! Try out some of the commands to make sure it works.
+    ```env
+    DISCORD_BOT_TOKEN=
+
+    CSGO_LEAGUE_API_KEY=
+    CSGO_LEAGUE_API_URL=
+
+    POSTGRESQL_USER=
+    POSTGRESQL_PASSWORD=
+    POSTGRESQL_DB=
+    POSTGRESQL_HOST=
+    ```
+
+    Optionally you may set these environment variables another way.
+
+
+6. Apply the database migrations by running `python3 migrate.py up`.
+
+7. Run the launcher Python script, `launcher.py`.
 
 *Note that currently the `mdraft` command depends on custom emojis to be used as buttons which are hardcoded [here](https://github.com/csgo-league/csgo-league-bot/blob/abb06e1876546bb3948094faa795e90184642882/qbot/cogs/mapdraft.py#L20). As of right now you will need to make the emojis yourself and replace the emoji code in the map objects there.*
 
@@ -72,13 +93,13 @@ Now you are ready to start using the CS:GO League Bot! Try out some of the comma
 
 `q!cap <integer>` **-** Set the capacity of the queue to the specified value (must have admin perms)<br>
 
-`q!tdraft` **-** Start (or restart) a team draft from the last popped queue<br>
-
-`q!mdraft` **-** Start (or restart) a map draft<br>
-
 `q!setmp {+|-}<map name> ...` **-** Add or remove maps from the mdraft map pool (Must have admin perms)<br>
 
 `q!donate` **-** Link the bot's donation link<br>
+
+`q!stats` **-** See your stats<br>
+
+`q!leaders` **-** See the top players in the server <br>
 
 ## Contributions
 
