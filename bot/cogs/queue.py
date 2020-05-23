@@ -125,15 +125,17 @@ class QueueCog(commands.Cog):
 
             if team_method == 'autobalance':
                 team_one, team_two = await self.autobalance_teams(users)
+                await asyncio.sleep(8)
             elif team_method == 'captains':
                 teamdraft_cog = self.bot.get_cog('TeamDraftCog')
                 team_one, team_two = await teamdraft_cog.draft_teams(ready_message, users)
+                await asyncio.sleep(3)
             elif team_method == 'random':
                 team_one, team_two = self.randomize_teams(users)
+                await asyncio.sleep(8)
             else:
                 raise ValueError(f'Team method "{team_method}" isn\'t valid')
 
-            await asyncio.sleep(5)  # Wait for users to see the final teams
             title = ''
             burst_embed = self.bot.embed_template(title=title, description='Fetching server...')
             await ready_message.edit(embed=burst_embed)
