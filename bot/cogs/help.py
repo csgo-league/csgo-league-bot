@@ -70,9 +70,11 @@ class HelpCog(commands.Cog):
     @commands.command(brief='Display basic info about this bot')
     async def about(self, ctx):
         """ Display the info embed. """
-        description = '_CS:GO PUGs made easy so you can just play. End-to-end support from Discord to matches._\n'
-        description += f'\nJoin the [support server]({SERVER_INV})'
-        description += f'\nSource code can be found on [GitHub]({GITHUB})'
+        description = (
+            '_CS:GO PUGs made easy so you can just play. End-to-end support from Discord to matches._\n\n'
+            f'Join the [support server]({SERVER_INV})\n'
+            f'Source code can be found on [GitHub]({GITHUB})'
+        )
         embed = self.bot.embed_template(title='__CS:GO League Bot__', description=description)
         embed.set_thumbnail(url=self.logo)
         await ctx.send(embed=embed)
