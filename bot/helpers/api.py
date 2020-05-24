@@ -181,9 +181,9 @@ class ApiHelper:
         """ Default authentication header the API needs. """
         return {'authentication': self.api_key}
 
-    async def generate_link_url(self, user):
+    async def generate_link_url(self, user_id):
         """ Get custom URL from API for user to link accounts. """
-        url = f'{self.base_url}/discord/generate/{user.id}'
+        url = f'{self.base_url}/discord/generate/{user_id}'
 
         async with self.session.get(url=url, headers=self.headers) as resp:
             resp_json = await resp.json()
@@ -191,9 +191,9 @@ class ApiHelper:
             if resp_json.get('discord') and resp_json.get('code'):
                 return f'{self.base_url}/discord/{resp_json["discord"]}/{resp_json["code"]}'
 
-    async def is_linked(self, user):
+    async def is_linked(self, user_id):
         """ Check if a user has their account linked with the API. """
-        url = f'{self.base_url}/discord/check/{user.id}'
+        url = f'{self.base_url}/discord/check/{user_id}'
 
         async with self.session.get(url=url, headers=self.headers) as resp:
             resp_json = await resp.json()
@@ -211,17 +211,17 @@ class ApiHelper:
         async with self.session.post(url=url, headers=self.headers, data=data) as resp:
             return resp.status == 200
 
-    async def get_player(self, user):
+    async def get_player(self, user_id):
         """ Get player data from the API. """
-        url = f'{self.base_url}/player/discord/{user.id}'
+        url = f'{self.base_url}/player/discord/{user_id}'
 
         async with self.session.get(url=url, headers=self.headers) as resp:
             return Player(await resp.json())
 
-    async def get_players(self, users):
+    async def get_players(self, user_ids):
         """ Get multiple players' data from the API. """
         url = f'{self.base_url}/players/discord'
-        discord_ids = {"discordIds": [user.id for user in users]}
+        discord_ids = {"discordIds": user_ids}
 
         async with self.session.post(url=url, headers=self.headers, json=discord_ids) as resp:
             players = await resp.json()

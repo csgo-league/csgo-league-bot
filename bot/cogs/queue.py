@@ -17,8 +17,8 @@ class QueueCog(commands.Cog):
 
     async def queue_embed(self, guild, title=None):
         """ Method to create the queue embed for a guild. """
-        queued_ids = await self.bot.db_helper.get_queued_users(guild)
-        guild_data = await self.bot.db_helper.get_guild(guild)
+        queued_ids = await self.bot.db_helper.get_queued_users(guild.id)
+        guild_data = await self.bot.db_helper.get_guild(guild.id)
         capacity = guild_data['capacity']
 
         if title:
@@ -42,14 +42,14 @@ class QueueCog(commands.Cog):
 
         self.last_queue_msgs[ctx.guild] = await ctx.send(embed=embed)
 
-    async def autobalance_teams(self, users):
+    async def autobalance_teams(self, user_ids):
         """ Balance teams based on players' RankMe score. """
         # Only balance teams with even amounts of players
-        if len(users) % 2 != 0:
+        if len(user_ids) % 2 != 0:
             raise ValueError('Users argument must have even length')
 
         # Get players and sort by RankMe score
-        users_dict = dict(zip(await self.bot.api_helper.get_players(users), users))
+        users_dict = dict(zip(await self.bot.api_helper.get_players(user_ids), user_ids))
         players = list(users_dict.keys())
         players.sort(key=lambda x: x.score)
 
@@ -108,7 +108,7 @@ class QueueCog(commands.Cog):
             unreadied = set(users) - reactors
             awaitables = [
                 ready_message.clear_reactions(),
-                self.bot.db_helper.delete_queued_users(ctx.guild, *unreadied)
+                self.bot.db_helper.delete_queued_users(ctx.guild.id, *(user.id for user in unreadied))
             ]
             asyncio.gather(*awaitables, loop=self.bot.loop)
             description = '\n'.join(':heavy_multiplication_x:  ' + user.mention for user in unreadied)
@@ -120,11 +120,11 @@ class QueueCog(commands.Cog):
         else:  # Everyone readied up
             # Attempt to make teams and start match
             await ready_message.clear_reactions()
-            guild_data = await self.bot.db_helper.get_guild(ctx.guild)
+            guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
             team_method = guild_data['team_method']
 
             if team_method == 'autobalance':
-                team_one, team_two = await self.autobalance_teams(users)
+                team_one, team_two = await self.autobalance_teams([user.id for user in users])
                 await asyncio.sleep(8)
             elif team_method == 'captains':
                 teamdraft_cog = self.bot.get_cog('TeamDraftCog')
@@ -159,43 +159,44 @@ class QueueCog(commands.Cog):
     @commands.max_concurrency(1, per=commands.BucketType.guild, wait=True)  # Only process one command per guild at once
     async def join(self, ctx):
         """ Check if the member can be added to the guild queue and add them if so. """
-        if not await self.bot.api_helper.is_linked(ctx.author):  # Message author isn't linked
             title = f'Unable to add **{ctx.author.display_name}**: Their account is not linked'
+        if not await self.bot.api_helper.is_linked(ctx.author.id):  # Message author isn't linked
         else:  # Message author is linked
             awaitables = [
-                self.bot.api_helper.get_player(ctx.author),
-                self.bot.db_helper.insert_users(ctx.author),
-                self.bot.db_helper.get_queued_users(ctx.guild),
-                self.bot.db_helper.get_guild(ctx.guild)
+                self.bot.api_helper.get_player(ctx.author.id),
+                self.bot.db_helper.insert_users(ctx.author.id),
+                self.bot.db_helper.get_queued_users(ctx.guild.id),
+                self.bot.db_helper.get_guild(ctx.guild.id)
             ]
             results = await asyncio.gather(*awaitables, loop=self.bot.loop)
             player = results[0]
             queue_ids = results[2]
             capacity = results[3]['capacity']
-            queue = [self.bot.get_user(user_id) for user_id in queue_ids]
 
-            if ctx.author in queue:  # Author already in queue
+            if ctx.author.id in queue_ids:  # Author already in queue
                 title = f'Unable to add **{ctx.author.display_name}**: Already in the queue'
-            elif len(queue) >= capacity:  # Queue full
+            elif len(queue_ids) >= capacity:  # Queue full
                 title = f'Unable to add **{ctx.author.display_name}**: Queue is full'
             elif not player:  # ApiHelper couldn't get player
                 title = f'Unable to add **{ctx.author.display_name}**: Cannot verify match status'
             elif player.in_match:  # User is already in a match
                 title = f'Unable to add **{ctx.author.display_name}**: They are already in a match'
             else:  # User can be added
-                await self.bot.db_helper.insert_queued_users(ctx.guild, ctx.author)
-                queue += [ctx.author]
                 title = f'**{ctx.author.display_name}** has been added to the queue'
+                await self.bot.db_helper.insert_queued_users(ctx.guild.id, ctx.author.id)
+                queue_ids += [ctx.author.id]
 
                 # Check and burst queue if full
-                if len(queue) == capacity:
+                if len(queue_ids) == capacity:
+                    queue_users = [self.bot.get_user(user_id) for user_id in queue_ids]
+
                     try:
-                        all_readied = await self.start_match(ctx, queue)
+                        all_readied = await self.start_match(ctx, queue_users)
                     except asyncio.TimeoutError:
                         return
 
                     if all_readied:
-                        await self.bot.db_helper.delete_queued_users(ctx.guild, *queue)
+                        await self.bot.db_helper.delete_queued_users(ctx.guild.id, *queue_ids)
 
                     return
 
@@ -207,7 +208,7 @@ class QueueCog(commands.Cog):
     @commands.command(brief='Leave the queue (or the bursted queue)')
     async def leave(self, ctx):
         """ Check if the member can be remobed from the guild and remove them if so. """
-        removed = await self.bot.db_helper.delete_queued_users(ctx.guild, ctx.author)
+        removed = await self.bot.db_helper.delete_queued_users(ctx.guild.id, ctx.author.id)
 
         if ctx.author.id in removed:
             title = f'**{ctx.author.display_name}** has been removed from the queue'
@@ -239,7 +240,7 @@ class QueueCog(commands.Cog):
             embed = discord.Embed(title='Mention a player in the command to remove them', color=self.bot.color)
             await ctx.send(embed=embed)
         else:
-            removed = await self.bot.db_helper.delete_queued_users(ctx.guild, removee)
+            removed = await self.bot.db_helper.delete_queued_users(ctx.guild.id, removee.id)
 
             if removee.id in removed:
                 title = f'**{removee.display_name}** has been removed from the queue'
@@ -255,7 +256,7 @@ class QueueCog(commands.Cog):
     @commands.has_permissions(kick_members=True)
     async def empty(self, ctx):
         """ Reset the guild queue list to empty. """
-        await self.bot.db_helper.delete_all_queued_users(ctx.guild)
+        await self.bot.db_helper.delete_all_queued_users(ctx.guild.id)
         embed = await self.queue_embed(ctx.guild, 'The queue has been emptied')
 
         # Update queue display message
@@ -276,7 +277,7 @@ class QueueCog(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def cap(self, ctx, *args):
         """ Set the queue capacity. """
-        guild_data = await self.bot.db_helper.get_guild(ctx.guild)
+        guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
         capacity = guild_data['capacity']
 
         if len(args) == 0:  # No size argument specified
@@ -294,8 +295,8 @@ class QueueCog(commands.Cog):
                 elif new_cap < 2 or new_cap > 100:
                     embed = discord.Embed(title='Capacity is outside of valid range', color=self.bot.color)
                 else:
-                    await self.bot.db_helper.delete_all_queued_users(ctx.guild)
-                    await self.bot.db_helper.update_guild(ctx.guild, capacity=new_cap)
+                    await self.bot.db_helper.delete_all_queued_users(ctx.guild.id)
+                    await self.bot.db_helper.update_guild(ctx.guild.id, capacity=new_cap)
                     embed = discord.Embed(title=f'Queue capacity set to {new_cap}', color=self.bot.color)
                     embed.set_footer(text='The queue has been emptied because of the capacity change')
 

@@ -13,7 +13,7 @@ class DBHelper:
         """ Get key list of attributes from list of Record objects. """
         return list(map(lambda r: r[key], records))
 
-    async def _get_row(self, table, obj):
+    async def _get_row(self, table, row_id):
         """ Generic method to get table row by object id. """
         statement = (
             f'SELECT * FROM {table}\n'
@@ -22,11 +22,11 @@ class DBHelper:
 
         async with self.pool.acquire() as connection:
             async with connection.transaction():
-                row = await connection.fetchrow(statement, obj.id)
+                row = await connection.fetchrow(statement, row_id)
 
         return {col: val for col, val in row.items()}
 
-    async def _update_row(self, table, obj, **data):
+    async def _update_row(self, table, row_id, **data):
         """ Generic method to update table row by object id. """
         col_vals = ',\n    '.join(f'{col} = {val}' for col, val in data.items())
         ret_vals = ',\n    '.join(data)
@@ -39,13 +39,13 @@ class DBHelper:
 
         async with self.pool.acquire() as connection:
             async with connection.transaction():
-                updated_vals = await connection.fetch(statement, obj.id)
+                updated_vals = await connection.fetch(statement, row_id)
 
         return {col: val for rec in updated_vals for col, val in rec.items()}
 
-    async def insert_guilds(self, *guilds):
+    async def insert_guilds(self, *guild_ids):
         """ Add a list of guilds into the guilds table and return the ones successfully added. """
-        rows = [(guild.id, None, None, None) for guild in guilds]
+        rows = [(guild_id, None, None, None) for guild_id in guild_ids]
         statement = (
             'INSERT INTO guilds (id)\n'
             '    (SELECT id FROM unnest($1::guilds[]))\n'
@@ -59,9 +59,8 @@ class DBHelper:
 
         return self._get_record_attrs(inserted, 'id')
 
-    async def delete_guilds(self, *guilds):
+    async def delete_guilds(self, *guild_ids):
         """ Remove a list of guilds from the guilds table and return the ones successfully removed. """
-        delete_ids = [guild.id for guild in guilds]
         statement = (
             'DELETE FROM guilds\n'
             '    WHERE id::BIGINT = ANY($1::BIGINT[])\n'
@@ -70,14 +69,13 @@ class DBHelper:
 
         async with self.pool.acquire() as connection:
             async with connection.transaction():
-                deleted = await connection.fetch(statement, delete_ids)
+                deleted = await connection.fetch(statement, guild_ids)
 
         return self._get_record_attrs(deleted, 'id')
 
-    async def sync_guilds(self, *guilds):
+    async def sync_guilds(self, *guild_ids):
         """ Synchronizes the guilds table with the guilds in the bot. """
-        insert_rows = [(guild.id, None, None, None) for guild in guilds]
-        not_delete_ids = [guild.id for guild in guilds]
+        insert_rows = [(guild_id, None, None, None) for guild_id in guild_ids]
         insert_statement = (
             'INSERT INTO guilds (id)\n'
             '    (SELECT id FROM unnest($1::guilds[]))\n'
@@ -93,13 +91,13 @@ class DBHelper:
         async with self.pool.acquire() as connection:
             async with connection.transaction():
                 inserted = await connection.fetch(insert_statement, insert_rows)
-                deleted = await connection.fetch(delete_statement, not_delete_ids)
+                deleted = await connection.fetch(delete_statement, guild_ids)
 
         return self._get_record_attrs(inserted, 'id'), self._get_record_attrs(deleted, 'id')
 
-    async def insert_users(self, *users):
+    async def insert_users(self, *user_ids):
         """ Insert multiple users into the users table. """
-        rows = [(user.id,) for user in users]
+        rows = [(user_id,) for user_id in user_ids]
         statement = (
             'INSERT INTO users (id)\n'
             '    (SELECT id FROM unnest($1::users[]))\n'
@@ -113,9 +111,8 @@ class DBHelper:
 
         return self._get_record_attrs(inserted, 'id')
 
-    async def delete_users(self, *users):
+    async def delete_users(self, *user_ids):
         """ Delete multiple users from the users table. """
-        delete_ids = [user.id for user in users]
         statement = (
             'DELETE FROM users\n'
             '    WHERE id::BIGINT = ANY($1::BIGINT[])\n'
@@ -124,11 +121,11 @@ class DBHelper:
 
         async with self.pool.acquire() as connection:
             async with connection.transaction():
-                deleted = await connection.fetch(statement, delete_ids)
+                deleted = await connection.fetch(statement, user_ids)
 
         return self._get_record_attrs(deleted, 'id')
 
-    async def get_queued_users(self, guild):
+    async def get_queued_users(self, guild_id):
         """ Get all the queued users of the guild from the queued_users table. """
         statement = (
             'SELECT user_id FROM queued_users\n'
@@ -137,11 +134,11 @@ class DBHelper:
 
         async with self.pool.acquire() as connection:
             async with connection.transaction():
-                queue = await connection.fetch(statement, guild.id)
+                queue = await connection.fetch(statement, guild_id)
 
         return self._get_record_attrs(queue, 'user_id')
 
-    async def insert_queued_users(self, guild, *users):
+    async def insert_queued_users(self, guild_id, *user_ids):
         """ Insert multiple users of a guild into the queued_users table. """
         statement = (
             'INSERT INTO queued_users (guild_id, user_id)\n'
@@ -150,11 +147,10 @@ class DBHelper:
 
         async with self.pool.acquire() as connection:
             async with connection.transaction():
-                await connection.execute(statement, [(guild.id, user.id) for user in users])
+                await connection.execute(statement, [(guild_id, user_id) for user_id in user_ids])
 
-    async def delete_queued_users(self, guild, *users):
+    async def delete_queued_users(self, guild_id, *user_ids):
         """ Delete multiple users of a guild from the queued_users table. """
-        delete_ids = [user.id for user in users]
         statement = (
             'DELETE FROM queued_users\n'
             '    WHERE guild_id = $1 AND user_id = ANY($2::BIGINT[])\n'
@@ -163,11 +159,11 @@ class DBHelper:
 
         async with self.pool.acquire() as connection:
             async with connection.transaction():
-                deleted = await connection.fetch(statement, guild.id, delete_ids)
+                deleted = await connection.fetch(statement, guild_id, user_ids)
 
         return self._get_record_attrs(deleted, 'user_id')
 
-    async def delete_all_queued_users(self, guild):
+    async def delete_all_queued_users(self, guild_id):
         """ Delete all users of a guild from the queued_users table. """
         statement = (
             'DELETE FROM queued_users\n'
@@ -177,14 +173,14 @@ class DBHelper:
 
         async with self.pool.acquire() as connection:
             async with connection.transaction():
-                deleted = await connection.fetch(statement, guild.id)
+                deleted = await connection.fetch(statement, guild_id)
 
         return self._get_record_attrs(deleted, 'user_id')
 
-    async def get_guild(self, guild):
+    async def get_guild(self, guild_id):
         """ Get a guild's row from the guilds table. """
-        return await self._get_row('guilds', guild)
+        return await self._get_row('guilds', guild_id)
 
-    async def update_guild(self, guild, **data):
+    async def update_guild(self, guild_id, **data):
         """ Update a guild's row in the guilds table. """
-        return await self._update_row('guilds', guild, **data)
+        return await self._update_row('guilds', guild_id, **data)
