@@ -1,5 +1,6 @@
-# teamdraft.py
+# match.py
 
+import aiohttp
 import asyncio
 import discord
 from discord.ext import commands
@@ -174,35 +175,12 @@ class TeamDraftMenu(discord.Message):
         return self.teams
 
 
-class TeamDraftCog(commands.Cog):
-    """ Handles the player drafter command. """
+class MatchCog(commands.Cog):
+    """ Handles everything needed to create matches. """
 
     def __init__(self, bot):
-        """ Set attributes and initialize empty draft teams. """
+        """ Set attributes. """
         self.bot = bot
-        self.guild_player_pool = {}  # Players participating in the draft for each guild
-        self.guild_teams = {}  # Teams for each guild
-        self.guild_msgs = {}  # Last team draft embed message sent for each guild
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        """ Initialize an empty list for each giuld the bot is in. """
-        for guild in self.bot.guilds:
-            self.guild_player_pool[guild] = []
-            self.guild_teams[guild] = [[], []]
-
-    @commands.Cog.listener()
-    async def on_guild_join(self, guild):
-        """ Initialize an empty list for guilds that are added. """
-        self.guild_player_pool[guild] = []
-        self.guild_teams[guild] = [[], []]
-
-    @commands.Cog.listener()
-    async def on_guild_remove(self, guild):
-        """ Remove queue list when a guild is removed. """
-        self.guild_player_pool.pop(guild, None)
-        self.guild_teams.pop(guild, None)
-        self.guild_msgs.pop(guild, None)
 
     async def draft_teams(self, message, users):
         """ Create a TeamDraftMenu from an existing message and run the draft. """
@@ -210,25 +188,116 @@ class TeamDraftCog(commands.Cog):
         teams = await menu.draft()
         return teams[0], teams[1]
 
-    # @commands.command(brief='Start (or restart) a player draft from the last popped queue')  # Omit command for now
-    # async def tdraft(self, ctx):
-    #     """ Start a player draft by sending a player draft embed panel. """
-    #     queue_cog = self.bot.get_cog('QueueCog')
+    async def autobalance_teams(self, user_ids):
+        """ Balance teams based on players' RankMe score. """
+        # Only balance teams with even amounts of players
+        if len(user_ids) % 2 != 0:
+            raise ValueError('Users argument must have even length')
 
-    #     if not queue_cog:
-    #         return
+        # Get players and sort by RankMe score
+        users_dict = dict(zip(await self.bot.api_helper.get_players(user_ids), user_ids))
+        players = list(users_dict.keys())
+        players.sort(key=lambda x: x.score)
 
-    #     queue = queue_cog.guild_queues.get(ctx.guild)
+        # Balance teams
+        team_size = len(players) // 2
+        team_one = [players.pop()]
+        team_two = [players.pop()]
 
-    #     if len(queue.active) < queue.capacity:
-    #         embed_title = f'Cannot start player draft until the queue is full ({len(queue.active)}/{queue.capacity})'
-    #         embed = self.bot.embed_template(title=embed_title)
-    #         await ctx.send(embed=embed)
-    #         return
+        while players:
+            if len(team_one) >= team_size:
+                team_two.append(players.pop())
+            elif len(team_two) >= team_size:
+                team_one.append(players.pop())
+            elif sum(p.score for p in team_one) < sum(p.score for p in team_two):
+                team_one.append(players.pop())
+            else:
+                team_two.append(players.pop())
 
-    #     teams = await self.draft_teams(ctx, queue.active)
+        return map(users_dict.get, team_one), map(users_dict.get, team_two)
 
-    #     if not teams:
-    #         return
+    @staticmethod
+    async def randomize_teams(users):
+        """ Randomly split a list of users in half. """
+        temp_users = users.copy()
+        random.shuffle(temp_users)
+        team_size = len(temp_users) // 2
+        return temp_users[:team_size], temp_users[team_size:]
 
-    #     # FINISH HERE
+    async def start_match(self, ctx, users):
+        """ Ready all the users up and start a match. """
+        # Notify everyone to ready up
+        user_mentions = ''.join(user.mention for user in users)
+        ready_emoji = '✅'
+        description = f'React with the {ready_emoji} below to ready up (1 min)'
+        burst_embed = self.bot.embed_template(title='Queue has filled up!', description=description)
+        ready_message = await ctx.send(user_mentions, embed=burst_embed)
+        await ready_message.add_reaction(ready_emoji)
+
+        # Wait for everyone to ready up
+        reactors = set()  # Track who has readied up
+
+        def all_ready(reaction, user):
+            """ Check if all players in the queue have readied up. """
+            # Check if this is a reaction we care about
+            if reaction.message.id != ready_message.id or user not in users or reaction.emoji != ready_emoji:
+                return False
+
+            reactors.add(user)
+
+            if reactors.issuperset(users):  # All queued users have reacted
+                return True
+            else:
+                return False
+
+        try:
+            await self.bot.wait_for('reaction_add', timeout=60.0, check=all_ready)
+        except asyncio.TimeoutError:  # Not everyone readied up
+            unreadied = set(users) - reactors
+            awaitables = [
+                ready_message.clear_reactions(),
+                self.bot.db_helper.delete_queued_users(ctx.guild.id, *(user.id for user in unreadied))
+            ]
+            asyncio.gather(*awaitables, loop=self.bot.loop)
+            description = '\n'.join(':heavy_multiplication_x:  ' + user.mention for user in unreadied)
+            title = 'Not everyone was ready!'
+            burst_embed = self.bot.embed_template(title=title, description=description)
+            burst_embed.set_footer(text='The missing players have been removed from the queue')
+            await ready_message.edit(embed=burst_embed)
+            return False  # Not everyone readied up
+        else:  # Everyone readied up
+            # Attempt to make teams and start match
+            await ready_message.clear_reactions()
+            guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
+            team_method = guild_data['team_method']
+
+            if team_method == 'autobalance':
+                team_one, team_two = await self.autobalance_teams([user.id for user in users])
+                await asyncio.sleep(8)
+            elif team_method == 'captains':
+                team_one, team_two = await self.draft_teams(ready_message, users)
+                await asyncio.sleep(3)
+            elif team_method == 'random':
+                team_one, team_two = self.randomize_teams(users)
+                await asyncio.sleep(8)
+            else:
+                raise ValueError(f'Team method "{team_method}" isn\'t valid')
+
+            title = ''
+            burst_embed = self.bot.embed_template(title=title, description='Fetching server...')
+            await ready_message.edit(embed=burst_embed)
+
+            # Check if able to get a match server and edit message embed accordingly
+            try:
+                match = await self.bot.api_helper.start_match(team_one, team_two)  # Request match from API
+            except aiohttp.ClientResponseError:
+                description = 'Sorry! Looks like there aren\'t any servers available at this time. ' \
+                              'Please try again later.'
+                burst_embed = self.bot.embed_template(title='There was a problem!', description=description)
+            else:
+                description = f'URL: {match.connect_url}\nCommand: `{match.connect_command}`'
+                burst_embed = self.bot.embed_template(title='Server ready!', description=description)
+                burst_embed.set_footer(text='Server will close after 5 minutes if anyone doesn\'t join')
+
+            await ready_message.edit(embed=burst_embed)
+            return True  # Everyone readied up

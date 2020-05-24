@@ -7,7 +7,7 @@ from .help import HelpCog
 from .mapdraft import MapDraftCog
 from .queue import QueueCog
 from .stats import StatsCog
-from .teamdraft import TeamDraftCog
+from .match import MatchCog
 
 __all__ = [
     AuthCog,
@@ -17,5 +17,5 @@ __all__ = [
     MapDraftCog,
     QueueCog,
     StatsCog,
-    TeamDraftCog
+    MatchCog
 ]

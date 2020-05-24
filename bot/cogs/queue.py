@@ -3,8 +3,6 @@
 import discord
 from discord.ext import commands
 import asyncio
-import aiohttp
-import random
 
 
 class QueueCog(commands.Cog):
@@ -42,119 +40,6 @@ class QueueCog(commands.Cog):
 
         self.last_queue_msgs[ctx.guild] = await ctx.send(embed=embed)
 
-    async def autobalance_teams(self, user_ids):
-        """ Balance teams based on players' RankMe score. """
-        # Only balance teams with even amounts of players
-        if len(user_ids) % 2 != 0:
-            raise ValueError('Users argument must have even length')
-
-        # Get players and sort by RankMe score
-        users_dict = dict(zip(await self.bot.api_helper.get_players(user_ids), user_ids))
-        players = list(users_dict.keys())
-        players.sort(key=lambda x: x.score)
-
-        # Balance teams
-        team_size = len(players) // 2
-        team_one = [players.pop()]
-        team_two = [players.pop()]
-
-        while players:
-            if len(team_one) >= team_size:
-                team_two.append(players.pop())
-            elif len(team_two) >= team_size:
-                team_one.append(players.pop())
-            elif sum(p.score for p in team_one) < sum(p.score for p in team_two):
-                team_one.append(players.pop())
-            else:
-                team_two.append(players.pop())
-
-        return map(users_dict.get, team_one), map(users_dict.get, team_two)
-
-    async def randomize_teams(self, users):
-        """ Randomly split a list of users in half. """
-        random.shuffle(users)
-        team_size = len(users) // 2
-        return users[:team_size], users[team_size:]
-
-    async def start_match(self, ctx, users):
-        """ Ready all the users up and start a match. """
-        # Notify everyone to ready up
-        user_mentions = ''.join(user.mention for user in users)
-        ready_emoji = '✅'
-        description = f'React with the {ready_emoji} below to ready up (1 min)'
-        burst_embed = self.bot.embed_template(title='Queue has filled up!', description=description)
-        ready_message = await ctx.send(user_mentions, embed=burst_embed)
-        await ready_message.add_reaction(ready_emoji)
-
-        # Wait for everyone to ready up
-        reactors = set()  # Track who has readied up
-
-        def all_ready(reaction, user):
-            """ Check if all players in the queue have readied up. """
-            # Check if this is a reaction we care about
-            if reaction.message.id != ready_message.id or user not in users or reaction.emoji != ready_emoji:
-                return False
-
-            reactors.add(user)
-
-            if reactors.issuperset(users):  # All queued users have reacted
-                return True
-            else:
-                return False
-
-        try:
-            await self.bot.wait_for('reaction_add', timeout=60.0, check=all_ready)
-        except asyncio.TimeoutError:  # Not everyone readied up
-            unreadied = set(users) - reactors
-            awaitables = [
-                ready_message.clear_reactions(),
-                self.bot.db_helper.delete_queued_users(ctx.guild.id, *(user.id for user in unreadied))
-            ]
-            asyncio.gather(*awaitables, loop=self.bot.loop)
-            description = '\n'.join(':heavy_multiplication_x:  ' + user.mention for user in unreadied)
-            title = 'Not everyone was ready!'
-            burst_embed = self.bot.embed_template(title=title, description=description)
-            burst_embed.set_footer(text='The missing players have been removed from the queue')
-            await ready_message.edit(embed=burst_embed)
-            return False  # Not everyone readied up
-        else:  # Everyone readied up
-            # Attempt to make teams and start match
-            await ready_message.clear_reactions()
-            guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
-            team_method = guild_data['team_method']
-
-            if team_method == 'autobalance':
-                team_one, team_two = await self.autobalance_teams([user.id for user in users])
-                await asyncio.sleep(8)
-            elif team_method == 'captains':
-                teamdraft_cog = self.bot.get_cog('TeamDraftCog')
-                team_one, team_two = await teamdraft_cog.draft_teams(ready_message, users)
-                await asyncio.sleep(3)
-            elif team_method == 'random':
-                team_one, team_two = self.randomize_teams(users)
-                await asyncio.sleep(8)
-            else:
-                raise ValueError(f'Team method "{team_method}" isn\'t valid')
-
-            title = ''
-            burst_embed = self.bot.embed_template(title=title, description='Fetching server...')
-            await ready_message.edit(embed=burst_embed)
-
-            # Check if able to get a match server and edit message embed accordingly
-            try:
-                match = await self.bot.api_helper.start_match(team_one, team_two)  # Request match from API
-            except aiohttp.ClientResponseError:
-                description = 'Sorry! Looks like there aren\'t any servers available at this time. ' \
-                              'Please try again later.'
-                burst_embed = self.bot.embed_template(title='There was a problem!', description=description)
-            else:
-                description = f'URL: {match.connect_url}\nCommand: `{match.connect_command}`'
-                burst_embed = self.bot.embed_template(title='Server ready!', description=description)
-                burst_embed.set_footer(text='Server will close after 5 minutes if anyone doesn\'t join')
-
-            await ready_message.edit(embed=burst_embed)
-            return True  # Everyone readied up
-
     @commands.command(brief='Join the queue')
     @commands.max_concurrency(1, per=commands.BucketType.guild, wait=True)  # Only process one command per guild at once
     async def join(self, ctx):
@@ -191,9 +76,10 @@ class QueueCog(commands.Cog):
                 # Check and burst queue if full
                 if len(queue_ids) == capacity:
                     queue_users = [self.bot.get_user(user_id) for user_id in queue_ids]
+                    match_cog = self.bot.get_cog('MatchCog')
 
                     try:
-                        all_readied = await self.start_match(ctx, queue_users)
+                        all_readied = await match_cog.start_match(ctx, queue_users)
                     except asyncio.TimeoutError:
                         return
 
