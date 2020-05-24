@@ -183,7 +183,7 @@ class QueueCog(commands.Cog):
                 if new_cap == capacity:
                     embed = discord.Embed(title=f'Capacity is already set to {capacity}', color=self.bot.color)
                 elif new_cap < 2 or new_cap > 100:
-                    embed = discord.Embed(title='Capacity is outside of valid range', color=self.bot.color)
+                    embed = discord.Embed(title='Capacity is outside of valid range (2-100)', color=self.bot.color)
                 else:
                     await self.bot.db_helper.delete_all_queued_users(ctx.guild.id)
                     await self.bot.db_helper.update_guild(ctx.guild.id, capacity=new_cap)
