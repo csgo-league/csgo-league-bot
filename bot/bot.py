@@ -14,7 +14,7 @@ import traceback
 class LeagueBot(commands.AutoShardedBot):
     """ Sub-classed AutoShardedBot modified to fit the needs of the application. """
 
-    def __init__(self, discord_token, api_base_url, api_key, db_pool, dbl_token=None, donate_url=None):
+    def __init__(self, discord_token, api_base_url, api_key, db_pool, donate_url=None):
         """ Set attributes and configure bot. """
         # Call parent init
         super().__init__(command_prefix=('q!', 'Q!'), case_insensitive=True)
@@ -24,7 +24,6 @@ class LeagueBot(commands.AutoShardedBot):
         self.api_base_url = api_base_url
         self.api_key = api_key
         self.db_pool = db_pool
-        self.dbl_token = dbl_token
         self.donate_url = donate_url
 
         # Set constants
@@ -58,9 +57,6 @@ class LeagueBot(commands.AutoShardedBot):
         self.add_cog(cogs.TeamDraftCog(self))
         # self.add_cog(cogs.MapDraftCog(self))  # Map drafting done in-game for now
         self.add_cog(cogs.StatsCog(self))
-
-        if self.dbl_token:
-            self.add_cog(cogs.DblCog(self))
 
         if self.donate_url:
             self.add_cog(cogs.DonateCog(self))

@@ -72,11 +72,6 @@ class HelpCog(commands.Cog):
         """ Display the info embed. """
         description = '_CS:GO PUGs made easy so you can just play. End-to-end support from Discord to matches._\n'
         description += f'\nJoin the [support server]({SERVER_INV})'
-        dbl_cog = self.bot.get_cog('DblCog')
-
-        if dbl_cog:
-            description += f'\nBe sure to upvote the bot on [top.gg]({dbl_cog.topgg_url})'
-
         description += f'\nSource code can be found on [GitHub]({GITHUB})'
         embed = self.bot.embed_template(title='__CS:GO League Bot__', description=description)
         embed.set_thumbnail(url=self.logo)

@@ -20,9 +20,8 @@ def run_bot():
     db_pool = loop.run_until_complete(asyncpg.create_pool(connect_url.format(**environ)))
 
     # Instantiate bot and run
-    dbl_token = environ.get('DBL_API_KEY', None)
     env_varnames = ['DISCORD_BOT_TOKEN', 'CSGO_LEAGUE_API_URL', 'CSGO_LEAGUE_API_KEY']
-    bot = LeagueBot(*itemgetter(*env_varnames)(environ), db_pool=db_pool, dbl_token=dbl_token)
+    bot = LeagueBot(*itemgetter(*env_varnames)(environ), db_pool=db_pool)
     bot.run()
 
 
