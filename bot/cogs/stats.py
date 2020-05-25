@@ -53,7 +53,7 @@ class StatsCog(commands.Cog):
                           f' HS Percentage:     {hs_percent_str:>6} \n' \
                           f' First Blood Rate:  {fb_percent_str:>6} ' \
                           '```'
-            embed = self.bot.embed_template(title='__CS:GO League Stats__', description=description)
+            embed = self.bot.embed_template(description=description)
             embed.set_author(name=user.display_name, url=player.steam_profile, icon_url=user.avatar_url_as(size=128))
         else:
             title = f'Unable to get **{ctx.author.display_name}**\'s stats: Their account not linked'
