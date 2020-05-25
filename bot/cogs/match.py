@@ -46,6 +46,10 @@ class TeamDraftMenu(discord.Message):
         self.users_left = None
         self.teams = None
         self.future = None
+        self.captain_one = None
+        self.captain_two = None
+        self.current_picker = 'team1'
+        
 
     def _picker_embed(self, title):
         """ Generate the menu embed based on the current status of the team draft. """
@@ -73,16 +77,24 @@ class TeamDraftMenu(discord.Message):
         embed.insert_field_at(1, name='__Players Left__', value=users_left_str)
         return embed
 
-    def _pick_player(self, picker, pickee):
+   def _pick_player(self, picker, pickee):
         """ Process a team captain's player pick. """
         if any(team == [] for team in self.teams) and picker in self.users:
             picking_team = self.teams[self.teams.index([])]  # Get the first empty team
             self.users_left.remove(picker)
             picking_team.append(picker)
         elif picker == self.teams[0][0]:
-            picking_team = self.teams[0]
+            self.captain_one = picker
+            if self.current_picker == 'team1':
+                picking_team = self.teams[0]
+            else:
+                raise PickError(f'Picker {picker.mention} is not your turn to pick')
         elif picker == self.teams[1][0]:
-            picking_team = self.teams[1]
+            self.captain_two = picker
+            if self.current_picker == 'team2':
+                picking_team = self.teams[1]
+            else:
+                raise PickError(f'Picker {picker.mention} is not your turn to pick')
         elif picker in self.users:
             raise PickError(f'Picker {picker.mention} is not a team captain')
         else:
@@ -92,6 +104,10 @@ class TeamDraftMenu(discord.Message):
             raise PickError(f'Team {picker.mention} is full')
 
         if not picker == pickee:
+            if picker == self.captain_one:
+                self.current_picker = 'team2'
+            else:
+                self.current_picker = 'team1'
             self.users_left.remove(pickee)
             picking_team.append(pickee)
 
