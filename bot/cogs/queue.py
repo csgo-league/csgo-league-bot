@@ -163,7 +163,8 @@ class QueueCog(commands.Cog):
             embed = discord.Embed(title=title, color=self.bot.color)
             await ctx.send(embed=embed)
 
-    @commands.command(brief='Set the capacity of the queue (Must have admin perms)')
+    @commands.command(usage='cap [new capacity]',
+                      brief='Set the capacity of the queue (Must have admin perms)')
     @commands.has_permissions(administrator=True)
     async def cap(self, ctx, *args):
         """ Set the queue capacity. """
