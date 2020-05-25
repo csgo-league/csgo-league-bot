@@ -28,8 +28,9 @@ class DBHelper:
 
     async def _update_row(self, table, row_id, **data):
         """ Generic method to update table row by object id. """
-        col_vals = ',\n    '.join(f'{col} = {val}' for col, val in data.items())
-        ret_vals = ',\n    '.join(data)
+        cols = list(data.keys())
+        col_vals = ',\n    '.join(f'{col} = ${num}' for num, col in enumerate(cols, start=2))
+        ret_vals = ',\n    '.join(cols)
         statement = (
             f'UPDATE {table}\n'
             f'    SET {col_vals}\n'
@@ -39,7 +40,7 @@ class DBHelper:
 
         async with self.pool.acquire() as connection:
             async with connection.transaction():
-                updated_vals = await connection.fetch(statement, row_id)
+                updated_vals = await connection.fetch(statement, row_id, *[data[col] for col in cols])
 
         return {col: val for rec in updated_vals for col, val in rec.items()}
 
