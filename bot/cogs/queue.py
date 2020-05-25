@@ -1,6 +1,5 @@
 # queue.py
 
-import discord
 from discord.ext import commands
 import asyncio
 
@@ -126,7 +125,7 @@ class QueueCog(commands.Cog):
         try:
             removee = ctx.message.mentions[0]
         except IndexError:
-            embed = discord.Embed(title='Mention a player in the command to remove them', color=self.bot.color)
+            embed = self.bot.embed_template(title='Mention a player in the command to remove them')
             await ctx.send(embed=embed)
         else:
             removed = await self.bot.db_helper.delete_queued_users(ctx.guild.id, removee.id)
@@ -159,8 +158,7 @@ class QueueCog(commands.Cog):
         if isinstance(error, commands.MissingPermissions):
             await ctx.trigger_typing()
             missing_perm = error.missing_perms[0].replace('_', ' ')
-            title = f'Cannot remove players without {missing_perm} permission!'
-            embed = discord.Embed(title=title, color=self.bot.color)
+            embed = self.bot.embed_template(title=f'Cannot remove players without {missing_perm} permission!')
             await ctx.send(embed=embed)
 
     @commands.command(usage='cap [new capacity]',
@@ -172,23 +170,23 @@ class QueueCog(commands.Cog):
         capacity = guild_data['capacity']
 
         if len(args) == 0:  # No size argument specified
-            embed = discord.Embed(title=f'The current queue capacity is {capacity}', color=self.bot.color)
+            embed = self.bot.embed_template(title=f'The current queue capacity is {capacity}')
         else:
             new_cap = args[0]
 
             try:
                 new_cap = int(new_cap)
             except ValueError:
-                embed = discord.Embed(title=f'{new_cap} is not an integer', color=self.bot.color)
+                embed = self.bot.embed_template(title=f'{new_cap} is not an integer')
             else:
                 if new_cap == capacity:
-                    embed = discord.Embed(title=f'Capacity is already set to {capacity}', color=self.bot.color)
+                    embed = self.bot.embed_template(title=f'Capacity is already set to {capacity}')
                 elif new_cap < 2 or new_cap > 100:
-                    embed = discord.Embed(title='Capacity is outside of valid range (2-100)', color=self.bot.color)
+                    embed = self.bot.embed_template(title='Capacity is outside of valid range (2-100)')
                 else:
                     await self.bot.db_helper.delete_all_queued_users(ctx.guild.id)
                     await self.bot.db_helper.update_guild(ctx.guild.id, capacity=new_cap)
-                    embed = discord.Embed(title=f'Queue capacity set to {new_cap}', color=self.bot.color)
+                    embed = self.bot.embed_template(title=f'Queue capacity set to {new_cap}')
                     embed.set_footer(text='The queue has been emptied because of the capacity change')
 
         await ctx.send(embed=embed)
@@ -199,6 +197,5 @@ class QueueCog(commands.Cog):
         if isinstance(error, commands.MissingPermissions):
             await ctx.trigger_typing()
             missing_perm = error.missing_perms[0].replace('_', ' ')
-            title = f'Cannot change queue capacity without {missing_perm} permission!'
-            embed = discord.Embed(title=title, color=self.bot.color)
+            embed = self.bot.embed_template(title=f'Cannot change queue capacity without {missing_perm} permission!')
             await ctx.send(embed=embed)
