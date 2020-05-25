@@ -301,3 +301,64 @@ class MatchCog(commands.Cog):
 
             await ready_message.edit(embed=burst_embed)
             return True  # Everyone readied up
+
+    @commands.command(usage='teams {captains|autobalance|random}',
+                      brief='Set or view the team creation method (Must have admin perms)')
+    @commands.has_permissions(administrator=True)
+    async def teams(self, ctx, method=None):
+        """ Set or display the method by which teams are created. """
+        guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
+        team_method = guild_data['team_method']
+        valid_methods = ['captains', 'autobalance', 'random']
+
+        if method is None:
+            title = f'The current team creation method is {team_method}'
+        else:
+            method = method.lower()
+
+            if method == team_method:
+                title = f'The current team creation method is already set to {team_method}'
+            elif method in valid_methods:
+                title = f'Team creation method set to {method}'
+                await self.bot.db_helper.update_guild(ctx.guild.id, team_method=method)
+            else:
+                title = f'Team creation method must be {valid_methods[0]}, {valid_methods[1]} or {valid_methods[2]}'
+
+        embed = self.bot.embed_template(title=title)
+        await ctx.send(embed=embed)
+
+    @commands.command(usage='captains {volunteer|rank|random}',
+                      brief='Set or view the captain selection method (Must have admin perms)')
+    @commands.has_permissions(administrator=True)
+    async def captains(self, ctx, method=None):
+        """ Set or display the method by which captains are selected. """
+        guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
+        captain_method = guild_data['captain_method']
+        valid_methods = ['volunteer', 'rank', 'random']
+
+        if method is None:
+            title = f'The current captain selection method is {captain_method}'
+        else:
+            method = method.lower()
+
+            if method == captain_method:
+                title = f'The current captain selection method is already set to {captain_method}'
+            elif method in valid_methods:
+                title = f'Captain selection method set to {method}'
+                await self.bot.db_helper.update_guild(ctx.guild.id, captain_method=method)
+            else:
+                title = f'Captain selection method must be {valid_methods[0]}, {valid_methods[1]} or {valid_methods[2]}'
+
+        embed = self.bot.embed_template(title=title)
+        await ctx.send(embed=embed)
+
+    @teams.error
+    @captains.error
+    async def config_error(self, ctx, error):
+        """ Respond to a permissions error with an explanation message. """
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.trigger_typing()
+            missing_perm = error.missing_perms[0].replace('_', ' ')
+            title = f'Cannot set {ctx.command.name} method without {missing_perm} permission!'
+            embed = self.bot.embed_template(title=title)
+            await ctx.send(embed=embed)
