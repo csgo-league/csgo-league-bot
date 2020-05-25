@@ -44,7 +44,7 @@ If you appreciate the project then please take the time to star our repository.
     * Linux command is `sudo apt-get install postgresql`.
     * Windows users can download [here](https://www.postgresql.org/download/windows).
 
-5. Create a database by running the following commands with the psql tool...
+5. Run the psql tool (`sudo -u postgres psql` on Linux) and create a database by running the following commands:
 
     ```sql
     CREATE ROLE csgoleague WITH LOGIN PASSWORD 'yourpassword';
@@ -53,7 +53,7 @@ If you appreciate the project then please take the time to star our repository.
 
     Be sure to replace `'yourpassword'` with your own desired password.
 
-5. Create an environment file named `.env` with in the repository's root directory. Fill this template with the requisite information you've gathered...
+5. Create an environment file named `.env` with in the repository's root directory. Fill this template with the requisite information you've gathered:
 
     ```env
     DISCORD_BOT_TOKEN=
@@ -68,7 +68,6 @@ If you appreciate the project then please take the time to star our repository.
     ```
 
     Optionally you may set these environment variables another way.
-
 
 6. Apply the database migrations by running `python3 migrate.py up`.
 
