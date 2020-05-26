@@ -84,7 +84,6 @@ class TeamDraftMenu(discord.Message):
             self.users_left.remove(picker)
             picking_team.append(picker)
         elif picker == self.teams[0][0]:
-            self.captain_one = picker
             if self.current_picker == 'team1':
                 picking_team = self.teams[0]
             else:
