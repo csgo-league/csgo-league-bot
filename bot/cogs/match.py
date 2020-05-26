@@ -86,7 +86,14 @@ class TeamDraftMenu(discord.Message):
         """ Process a team captain's player pick. """
         if any(team == [] for team in self.teams) and picker in self.users:
             picking_team = self.teams[self.teams.index([])]  # Get the first empty team
-            self.users_left.remove(picker)
+            if picker == pickee:
+                raise PickError(f'Picker {picker.mention} you can\'t pick yourself')
+            elif len(self.teams[0]) == 2 and len(self.teams[1]) == 0 and picker == self.teams[0][0]:
+                raise PickError(f'Picker {picker.mention} is not your turn to pick')
+            elif len(self.teams[0]) == 2 and picker == self.teams[0][1]:
+                raise PickError(f'Picker {picker.mention} is not a team captain')
+            else:
+                self.users_left.remove(picker)
             picking_team.append(picker)
         elif picker == self.teams[0][0]:
             if self.current_picker == 'capt1':
@@ -110,12 +117,18 @@ class TeamDraftMenu(discord.Message):
             self.users_left.remove(pickee)
             picking_team.append(pickee)
             if self.picking_method == 'ABBAA':
-                if len(self.teams[0]) > 1: # pass captains 
+                if len(self.teams[0]) > 1:  # for rank & random captains method
                     if not self.next_picker:
                         self.next_picker = True
                         self.current_picker = self.next_capt(self.current_picker)
                     else:
                         self.next_picker = False
+                elif len(self.teams[0]) == 1 and len(self.teams[1]) == 0:  # for volunteer captains method
+                    self.current_picker = self.next_capt(self.current_picker)
+                    self.next_picker = True
+                elif len(self.teams[0]) == 1 and len(self.teams[1]) == 1:  # for volunteer captains method
+                    self.current_picker = self.next_capt(self.current_picker)
+                    self.next_picker = False
                 else:
                     self.current_picker = self.next_capt(self.current_picker)
             elif self.picking_method == 'ABABA':
