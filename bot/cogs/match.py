@@ -77,7 +77,7 @@ class TeamDraftMenu(discord.Message):
         embed.insert_field_at(1, name='__Players Left__', value=users_left_str)
         return embed
 
-   def _pick_player(self, picker, pickee):
+    def _pick_player(self, picker, pickee):
         """ Process a team captain's player pick. """
         if any(team == [] for team in self.teams) and picker in self.users:
             picking_team = self.teams[self.teams.index([])]  # Get the first empty team
