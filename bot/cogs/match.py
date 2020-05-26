@@ -102,7 +102,7 @@ class TeamDraftMenu(discord.Message):
             raise PickError(f'Team {picker.mention} is full')
 
         if not picker == pickee:
-            if picker == self.captain_one:
+            if picker == self.teams[0][0]:
                 self.current_picker = 'team2'
             else:
                 self.current_picker = 'team1'
