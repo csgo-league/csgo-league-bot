@@ -46,6 +46,9 @@ class TeamDraftMenu(discord.Message):
         self.users_left = None
         self.teams = None
         self.future = None
+        self.current_picker = 'capt1'
+        self.next_picker = False
+        self.picking_method = 'ABBAA'
 
     def _picker_embed(self, title):
         """ Generate the menu embed based on the current status of the team draft. """
@@ -73,6 +76,12 @@ class TeamDraftMenu(discord.Message):
         embed.insert_field_at(1, name='__Players Left__', value=users_left_str)
         return embed
 
+    def next_capt(self, capt):
+        if capt == 'capt1':
+            return 'capt2'
+        else:
+            return 'capt1'
+
     def _pick_player(self, picker, pickee):
         """ Process a team captain's player pick. """
         if any(team == [] for team in self.teams) and picker in self.users:
@@ -80,9 +89,15 @@ class TeamDraftMenu(discord.Message):
             self.users_left.remove(picker)
             picking_team.append(picker)
         elif picker == self.teams[0][0]:
-            picking_team = self.teams[0]
+            if self.current_picker == 'capt1':
+                picking_team = self.teams[0]
+            else:
+                raise PickError(f'Picker {picker.mention} is not your turn to pick')
         elif picker == self.teams[1][0]:
-            picking_team = self.teams[1]
+            if self.current_picker == 'capt2':
+                picking_team = self.teams[1]
+            else:
+                raise PickError(f'Picker {picker.mention} is not your turn to pick')
         elif picker in self.users:
             raise PickError(f'Picker {picker.mention} is not a team captain')
         else:
@@ -94,6 +109,17 @@ class TeamDraftMenu(discord.Message):
         if not picker == pickee:
             self.users_left.remove(pickee)
             picking_team.append(pickee)
+            if self.picking_method == 'ABBAA':
+                if len(self.teams[0]) > 1: # pass captains 
+                    if not self.next_picker:
+                        self.next_picker = True
+                        self.current_picker = self.next_capt(self.current_picker)
+                    else:
+                        self.next_picker = False
+                else:
+                    self.current_picker = self.next_capt(self.current_picker)
+            elif self.picking_method == 'ABABA':
+                self.current_picker = 'capt2' if picker is self.teams[0][0] else 'capt1'
 
     async def _update_menu(self, title):
         """ Update the message to reflect the current status of the team draft. """
