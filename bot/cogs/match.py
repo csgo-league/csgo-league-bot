@@ -89,7 +89,6 @@ class TeamDraftMenu(discord.Message):
             else:
                 raise PickError(f'Picker {picker.mention} is not your turn to pick')
         elif picker == self.teams[1][0]:
-            self.captain_two = picker
             if self.current_picker == 'team2':
                 picking_team = self.teams[1]
             else:
