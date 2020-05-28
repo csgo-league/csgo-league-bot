@@ -43,6 +43,12 @@ class QueueCog(commands.Cog):
     @commands.max_concurrency(1, per=commands.BucketType.guild, wait=True)  # Only process one command per guild at once
     async def join(self, ctx):
         """ Check if the member can be added to the guild queue and add them if so. """
+        if ctx.message.channel.id != 705391032891867166:
+            text_channel = ctx.bot.get_channel(705391032891867166)
+            msg = 'Wrong channel! Use {0.mention}'.format(text_channel)
+            embed = discord.Embed(description=msg, color = self.bot.color)
+            await ctx.send(embed=embed)
+            return        
         name = ctx.author.nick if ctx.author.nick is not None else ctx.author.display_name
 
         if not await self.bot.api_helper.is_linked(ctx.author.id):  # Message author isn't linked
@@ -74,7 +80,7 @@ class QueueCog(commands.Cog):
 
                 # Check and burst queue if full
                 if len(queue_ids) == capacity:
-                    queue_users = [self.bot.get_user(user_id) for user_id in queue_ids]
+                    queue_users = [ctx.guild.get_member(user_id) for user_id in queue_ids]
                     match_cog = self.bot.get_cog('MatchCog')
 
                     try:
@@ -95,6 +101,12 @@ class QueueCog(commands.Cog):
     @commands.command(brief='Leave the queue (or the bursted queue)')
     async def leave(self, ctx):
         """ Check if the member can be remobed from the guild and remove them if so. """
+        if ctx.message.channel.id != 705391032891867166:
+            text_channel = ctx.bot.get_channel(705391032891867166)
+            msg = 'Wrong channel! Use {0.mention}'.format(text_channel)
+            embed = discord.Embed(description=msg, color = self.bot.color)
+            await ctx.send(embed=embed)
+            return        
         removed = await self.bot.db_helper.delete_queued_users(ctx.guild.id, ctx.author.id)
         name = ctx.author.nick if ctx.author.nick is not None else ctx.author.display_name
 
@@ -111,6 +123,12 @@ class QueueCog(commands.Cog):
     @commands.command(brief='Display who is currently in the queue')
     async def view(self, ctx):
         """ Display the queue as an embed list of mentioned names. """
+        if ctx.message.channel.id != 705391032891867166:
+            text_channel = ctx.bot.get_channel(705391032891867166)
+            msg = 'Wrong channel! Use {0.mention}'.format(text_channel)
+            embed = discord.Embed(description=msg, color = self.bot.color)
+            await ctx.send(embed=embed)
+            return        
         title = 'Players in queue for 10-mans'
         embed = await self.queue_embed(ctx.guild, title)
 
@@ -122,6 +140,12 @@ class QueueCog(commands.Cog):
     @commands.has_permissions(kick_members=True)
     async def remove(self, ctx):
         """ Remove the specified user from the queue. """
+        if ctx.message.channel.id != 705391032891867166:
+            text_channel = ctx.bot.get_channel(705391032891867166)
+            msg = 'Wrong channel! Use {0.mention}'.format(text_channel)
+            embed = discord.Embed(description=msg, color = self.bot.color)
+            await ctx.send(embed=embed)
+            return        
         try:
             removee = ctx.message.mentions[0]
         except IndexError:
@@ -145,6 +169,12 @@ class QueueCog(commands.Cog):
     @commands.has_permissions(kick_members=True)
     async def empty(self, ctx):
         """ Reset the guild queue list to empty. """
+        if ctx.message.channel.id != 705391032891867166:
+            text_channel = ctx.bot.get_channel(705391032891867166)
+            msg = 'Wrong channel! Use {0.mention}'.format(text_channel)
+            embed = discord.Embed(description=msg, color = self.bot.color)
+            await ctx.send(embed=embed)
+            return        
         await self.bot.db_helper.delete_all_queued_users(ctx.guild.id)
         embed = await self.queue_embed(ctx.guild, 'The queue has been emptied')
 
@@ -166,6 +196,12 @@ class QueueCog(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def cap(self, ctx, *args):
         """ Set the queue capacity. """
+        if ctx.message.channel.id != 705391032891867166:
+            text_channel = ctx.bot.get_channel(705391032891867166)
+            msg = 'Wrong channel! Use {0.mention}'.format(text_channel)
+            embed = discord.Embed(description=msg, color = self.bot.color)
+            await ctx.send(embed=embed)
+            return        
         guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
         capacity = guild_data['capacity']
 
