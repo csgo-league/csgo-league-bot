@@ -46,9 +46,9 @@ class TeamDraftMenu(discord.Message):
         self.users_left = None
         self.teams = None
         self.future = None
-        self.current_picker = 'capt1'
-        self.next_picker = False
-        self.picking_method = 'ABBAA'
+        self.picking_count = 0
+        self.picking_order = 'ABBAABBAAB'
+
 
     def _picker_embed(self, title):
         """ Generate the menu embed based on the current status of the team draft. """
@@ -76,63 +76,41 @@ class TeamDraftMenu(discord.Message):
         embed.insert_field_at(1, name='__Players Left__', value=users_left_str)
         return embed
 
-    def next_capt(self, capt):
-        if capt == 'capt1':
-            return 'capt2'
-        else:
-            return 'capt1'
-
     def _pick_player(self, picker, pickee):
         """ Process a team captain's player pick. """
         if any(team == [] for team in self.teams) and picker in self.users:
             picking_team = self.teams[self.teams.index([])]  # Get the first empty team
             if picker == pickee:
-                raise PickError(f'Picker {picker.mention} you can\'t pick yourself')
+                raise PickError(f'Picker \"{picker.display_name}\" you can\'t pick yourself')
             elif len(self.teams[0]) == 2 and len(self.teams[1]) == 0 and picker == self.teams[0][0]:
-                raise PickError(f'Picker {picker.mention} is not your turn to pick')
-            elif len(self.teams[0]) == 2 and picker == self.teams[0][1]:
-                raise PickError(f'Picker {picker.mention} is not a team captain')
+                raise PickError(f'Picker \"{picker.display_name}\" is not your turn to pick')
+            elif picker not in self.users_left:
+                raise PickError(f'Picker \"{picker.display_name}\" is not a team captain')
             else:
                 self.users_left.remove(picker)
             picking_team.append(picker)
         elif picker == self.teams[0][0]:
-            if self.current_picker == 'capt1':
+            if self.picking_order[self.picking_count] == 'A':
                 picking_team = self.teams[0]
             else:
-                raise PickError(f'Picker {picker.mention} is not your turn to pick')
+                raise PickError(f'Picker \"{picker.display_name}\" is not your turn to pick')
         elif picker == self.teams[1][0]:
-            if self.current_picker == 'capt2':
+            if self.picking_order[self.picking_count] == 'B':
                 picking_team = self.teams[1]
             else:
-                raise PickError(f'Picker {picker.mention} is not your turn to pick')
+                raise PickError(f'Picker \"{picker.display_name}\" is not your turn to pick')
         elif picker in self.users:
-            raise PickError(f'Picker {picker.mention} is not a team captain')
+            raise PickError(f'Picker \"{picker.display_name}\" is not a team captain')
         else:
-            raise PickError(f'Picker {picker.mention} is not a user in the team draft')
+            raise PickError(f'Picker \"{picker.display_name}\" is not a user in the team draft')
 
         if len(picking_team) > len(self.users) // 2:  # Team is full
-            raise PickError(f'Team {picker.mention} is full')
+            raise PickError(f'Team \"{picker.display_name}\" is full')
 
         if not picker == pickee:
             self.users_left.remove(pickee)
             picking_team.append(pickee)
-            if self.picking_method == 'ABBAA':
-                if len(self.teams[0]) > 1:  # for rank & random captains method
-                    if not self.next_picker:
-                        self.next_picker = True
-                        self.current_picker = self.next_capt(self.current_picker)
-                    else:
-                        self.next_picker = False
-                elif len(self.teams[0]) == 1 and len(self.teams[1]) == 0:  # for volunteer captains method
-                    self.current_picker = self.next_capt(self.current_picker)
-                    self.next_picker = True
-                elif len(self.teams[0]) == 1 and len(self.teams[1]) == 1:  # for volunteer captains method
-                    self.current_picker = self.next_capt(self.current_picker)
-                    self.next_picker = False
-                else:
-                    self.current_picker = self.next_capt(self.current_picker)
-            elif self.picking_method == 'ABABA':
-                self.current_picker = 'capt2' if picker is self.teams[0][0] else 'capt1'
+            self.picking_count += 1
 
     async def _update_menu(self, title):
         """ Update the message to reflect the current status of the team draft. """
@@ -159,7 +137,7 @@ class TeamDraftMenu(discord.Message):
         except PickError as e:  # Player not picked
             title = e.message
         else:  # Player picked
-            title = f'**Team {user.display_name}** picked {pick.display_name}'
+            title = f'**Team \"{user.display_name}\"** picked \"{pick.display_name}\"'
 
         if len(self.users_left) == 1:
             fat_kid_team = self.teams[0] if len(self.teams[0]) <= len(self.teams[1]) else self.teams[1]
@@ -184,7 +162,7 @@ class TeamDraftMenu(discord.Message):
             players.sort(reverse=True, key=lambda x: x.score)
 
             for team in self.teams:
-                captain = self.bot.get_user(players.pop(0).discord)
+                captain = self.bot.get_member(players.pop(0).discord)
                 self.users_left.remove(captain)
                 team.append(captain)
         elif captain_method == 'random':
@@ -322,6 +300,24 @@ class MatchCog(commands.Cog):
             else:
                 raise ValueError(f'Team method "{team_method}" isn\'t valid')
 
+            voice_channel_one = self.bot.get_channel(697938536850128978)
+            await voice_channel_one.edit(name=f'Team {team_one[0].display_name}')
+            voice_channel_two = self.bot.get_channel(697938656752828416)
+            await voice_channel_two.edit(name=f'Team {team_two[0].display_name}')
+            #await voice_channel_one.set_permissions(team_one[0], connect=True)
+            for i in range(len(team_one)):
+                try:
+                    await team_one[i].move_to(voice_channel_one)
+                except (AttributeError, discord.errors.HTTPException):
+                    pass
+
+            for i in range(len(team_two)):
+                try:
+                    await team_two[i].move_to(voice_channel_two)
+                except (AttributeError, discord.errors.HTTPException):
+                    pass
+            #await voice_channel_two.set_permissions(team_two[0], connect=True)
+
             title = ''
             burst_embed = self.bot.embed_template(title=title, description='Fetching server...')
             await ready_message.edit(embed=burst_embed)
@@ -341,11 +337,18 @@ class MatchCog(commands.Cog):
             await ready_message.edit(embed=burst_embed)
             return True  # Everyone readied up
 
+
     @commands.command(usage='teams {captains|autobalance|random}',
                       brief='Set or view the team creation method (Must have admin perms)')
     @commands.has_permissions(administrator=True)
     async def teams(self, ctx, method=None):
         """ Set or display the method by which teams are created. """
+        if ctx.message.channel.id != 705391032891867166:
+            text_channel = ctx.bot.get_channel(705391032891867166)
+            msg = 'Wrong text channel! Use {0.mention}'.format(text_channel)
+            embed = discord.Embed(description=msg, color = self.bot.color)
+            await ctx.send(embed=embed)
+            return
         guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
         team_method = guild_data['team_method']
         valid_methods = ['captains', 'autobalance', 'random']
@@ -371,6 +374,12 @@ class MatchCog(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def captains(self, ctx, method=None):
         """ Set or display the method by which captains are selected. """
+        if ctx.message.channel.id != 705391032891867166:
+            text_channel = ctx.bot.get_channel(705391032891867166)
+            msg = 'Wrong text channel! Use {0.mention}'.format(text_channel)
+            embed = discord.Embed(description=msg, color = self.bot.color)
+            await ctx.send(embed=embed)
+            return
         guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
         captain_method = guild_data['captain_method']
         valid_methods = ['volunteer', 'rank', 'random']
