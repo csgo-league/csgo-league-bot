@@ -165,6 +165,7 @@ class TeamDraftMenu(discord.Message):
         self.pick_number = 0
         captain_method = guild_data['captain_method']
 
+        # Check captain methods
         if captain_method == 'rank':
             players = await self.bot.api_helper.get_players([user.id for user in self.users_left])
             players.sort(reverse=True, key=lambda x: x.score)
@@ -186,6 +187,7 @@ class TeamDraftMenu(discord.Message):
         else:
             raise ValueError(f'Captain method "{captain_method}" isn\'t valid')
 
+        # Edit input message and add emoji button reactions
         await self.edit(embed=self._picker_embed('Team draft has begun!'))
 
         for emoji in self.pick_emojis:
