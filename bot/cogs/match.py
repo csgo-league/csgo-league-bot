@@ -43,6 +43,8 @@ class TeamDraftMenu(discord.Message):
                          u'\u0039\u20E3',
                          u'\U0001F51F']
         self.pick_emojis = dict(zip(emoji_numbers, users))
+        self.pick_order = '12211221'
+        self.pick_number = None
         self.users_left = None
         self.teams = None
         self.future = None
@@ -75,16 +77,27 @@ class TeamDraftMenu(discord.Message):
 
     def _pick_player(self, picker, pickee):
         """ Process a team captain's player pick. """
-        if any(team == [] for team in self.teams) and picker in self.users:
-            picking_team = self.teams[self.teams.index([])]  # Get the first empty team
-            self.users_left.remove(picker)
+        active_picking_team = int(self.pick_order[self.pick_number])
+        active_picker = self.teams[active_picking_team - 1][0]  # Subtract 1 to get team's index
+        picker_is_active = picker == active_picker
+
+        if self.teams[0] == [] and picker in self.users:
+            picking_team = self.teams[0]
             picking_team.append(picker)
+        elif self.teams[1] == and picker in self.users:
+            picking_team = self.teams[1]
+            picking_team.append(picker)
+
+            if not picker_is_active:
+                raise PickError(f'It is not {picker.mention}\'s turn to pick')
         elif picker == self.teams[0][0]:
             picking_team = self.teams[0]
         elif picker == self.teams[1][0]:
             picking_team = self.teams[1]
-        elif picker in self.users:
+        elif picker in self.users_left:
             raise PickError(f'Picker {picker.mention} is not a team captain')
+        elif picker != active_picker:
+            raise PickError(f'It is not {picker.mention}\'s turn to pick')
         else:
             raise PickError(f'Picker {picker.mention} is not a user in the team draft')
 
@@ -94,6 +107,7 @@ class TeamDraftMenu(discord.Message):
         if not picker == pickee:
             self.users_left.remove(pickee)
             picking_team.append(pickee)
+            self.pick_number += 1
 
     async def _update_menu(self, title):
         """ Update the message to reflect the current status of the team draft. """
@@ -138,6 +152,7 @@ class TeamDraftMenu(discord.Message):
         guild_data = await self.bot.db_helper.get_guild(self.guild.id)
         self.users_left = self.users.copy()  # Copy users to edit players remaining in the player pool
         self.teams = [[], []]
+        self.pick_number = 0
         captain_method = guild_data['captain_method']
 
         if captain_method == 'rank':
@@ -171,6 +186,12 @@ class TeamDraftMenu(discord.Message):
         self.bot.add_listener(self._process_pick, name='on_reaction_add')
         await asyncio.wait_for(self.future, 600)
         self.bot.remove_listener(self._process_pick, name='on_reaction_add')
+
+        # Return class to original state after team drafting is done
+        self.pick_number = None
+        self.users_left = None
+        self.teams = None
+        self.future = None
 
         return self.teams
 
