@@ -90,32 +90,30 @@ class TeamDraftMenu(discord.Message):
         return embed
 
     def _pick_player(self, picker, pickee):
-        """ Process a team captain's player pick. """
-        picker_is_active = picker == self._active_picker
-
-        if self.teams[0] == [] and picker in self.users:
+        """ Process a team captain's player pick, assuming the picker is in the team draft. """
+        # Get picking team
+        if self.teams[0] == []:
             picking_team = self.teams[0]
             picking_team.append(picker)
-        elif self.teams[1] == [] and picker in self.users:
+        elif self.teams[1] == []:
             picking_team = self.teams[1]
             picking_team.append(picker)
-
-            if not picker_is_active:
-                raise PickError(f'It is not {picker.mention}\'s turn to pick')
         elif picker == self.teams[0][0]:
             picking_team = self.teams[0]
         elif picker == self.teams[1][0]:
             picking_team = self.teams[1]
-        elif picker in self.users_left:
-            raise PickError(f'Picker {picker.mention} is not a team captain')
-        elif picker != active_picker:
-            raise PickError(f'It is not {picker.mention}\'s turn to pick')
         else:
-            raise PickError(f'Picker {picker.mention} is not a user in the team draft')
+            raise PickError(f'Picker {picker.mention} is not a team captain')
 
-        if len(picking_team) > len(self.users) // 2:  # Team is full
+        # Check if it's picker's turn
+        if picker != self._active_picker:
+            raise PickError(f'It is not {picker.mention}\'s turn to pick')
+
+        # Prevent picks when team is full
+        if len(picking_team) > len(self.users) // 2:
             raise PickError(f'Team {picker.mention} is full')
 
+        # Add pickee to team if user didn't pick themselves (which is only possible picking first as a volunteer)
         if not picker == pickee:
             self.users_left.remove(pickee)
             picking_team.append(pickee)
