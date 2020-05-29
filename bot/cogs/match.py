@@ -50,27 +50,38 @@ class TeamDraftMenu(discord.Message):
     def _picker_embed(self, title):
         """ Generate the menu embed based on the current status of the team draft. """
         embed = self.bot.embed_template(title=title)
-        embed.set_footer(text='React to any of the numbers below to pick the corresponding user')
 
         for team in self.teams:
-            team_name = '__Team__' if len(team) == 0 else f'__Team {team[0].display_name}__'
+            team_name = 'Team' if len(team) == 0 else f'Team {team[0].display_name}'
 
             if len(team) == 0:
-                team_players = '_Empty_'
+                team_players = '```css\n[Empty]\n```'
             else:
-                team_players = '\n'.join(p.display_name for p in team)
+                team_players = '```ini\n'
+                for p in team:
+                    team_players += f'[{p.display_name}]\n'
+                team_players += '```'
 
-            embed.add_field(name=team_name, value=team_players)
+            embed.add_field(name=team_name, value=team_players, inline=False)
 
-        users_left_str = ''
+        users_left_str = '```\n'
+        users_left_index = 0
 
         for emoji, user in self.pick_emojis.items():
+            users_left_index += 1
             if not any(user in team for team in self.teams):
-                users_left_str += f'{emoji}  {user.display_name}\n'
-            else:
-                users_left_str += f':heavy_multiplication_x:  ~~{user.display_name}~~\n'
+                users_left_str += f'[{users_left_index}.  {user.display_name}]\n'
 
-        embed.insert_field_at(1, name='__Players Left__', value=users_left_str)
+        users_left_str += '```'
+        embed.insert_field_at(0, name='Remaining Players                  ‏‏‎ ‎', value=users_left_str, inline=True)
+
+        game_info_str = ''
+        team_name_str = 'Team One'
+        for team in self.teams:
+            game_info_str += f'{team_name_str} Captain: ***{team[0].display_name}***\n'
+            team_name_str = 'Team Two'
+
+        embed.insert_field_at(1, name='Game Info', value=game_info_str, inline=True)
         return embed
 
     def _pick_player(self, picker, pickee):
@@ -161,7 +172,7 @@ class TeamDraftMenu(discord.Message):
         else:
             raise ValueError(f'Captain method "{captain_method}" isn\'t valid')
 
-        await self.edit(embed=self._picker_embed('Team draft has begun!'))
+        await self.edit(embed=self._picker_embed('Draft Phase'))
 
         for emoji in self.pick_emojis:
             await self.add_reaction(emoji)
