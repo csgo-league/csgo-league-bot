@@ -49,6 +49,15 @@ class TeamDraftMenu(discord.Message):
         self.teams = None
         self.future = None
 
+    @property
+    def _active_picker(self):
+        """ Get the active picker using the pick order and nummber. """
+        if pick_number is None:
+            return None
+
+        active_picking_team = int(self.pick_order[self.pick_number])
+        return self.teams[active_picking_team - 1][0]  # Subtract 1 to get team's index
+
     def _picker_embed(self, title):
         """ Generate the menu embed based on the current status of the team draft. """
         embed = self.bot.embed_template(title=title)
@@ -77,9 +86,7 @@ class TeamDraftMenu(discord.Message):
 
     def _pick_player(self, picker, pickee):
         """ Process a team captain's player pick. """
-        active_picking_team = int(self.pick_order[self.pick_number])
-        active_picker = self.teams[active_picking_team - 1][0]  # Subtract 1 to get team's index
-        picker_is_active = picker == active_picker
+        picker_is_active = picker == self._active_picker
 
         if self.teams[0] == [] and picker in self.users:
             picking_team = self.teams[0]
