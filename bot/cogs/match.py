@@ -125,10 +125,11 @@ class TeamDraftMenu(discord.Message):
         if len(self.users_left) == 1:
             fat_kid_team = self.teams[0] if len(self.teams[0]) <= len(self.teams[1]) else self.teams[1]
             fat_kid_team.append(self.users_left.pop(0))
-            title = 'Teams are set!'
 
             if self.future is not None:
                 self.future.set_result(None)
+
+            return
 
         await self._update_menu(title)
 
@@ -224,6 +225,14 @@ class MatchCog(commands.Cog):
         team_size = len(temp_users) // 2
         return temp_users[:team_size], temp_users[team_size:]
 
+
+    def teams_embed(self, title, team_one, team_two):
+        """"""
+        embed = self.bot.embed_template(title=title)
+        embed.add_field(name='__Team 1__', value='\n'.join(user.mention for user in team_one))
+        embed.add_field(name='__Team 2__', value='\n'.join(user.mention for user in team_two))
+        return embed
+
     async def start_match(self, ctx, users):
         """ Ready all the users up and start a match. """
         # Notify everyone to ready up
@@ -273,18 +282,19 @@ class MatchCog(commands.Cog):
 
             if team_method == 'autobalance':
                 team_one, team_two = await self.autobalance_teams(users)
-                await asyncio.sleep(8)
+                team_embed_title = 'Autobalanced teams'
             elif team_method == 'captains':
                 team_one, team_two = await self.draft_teams(ready_message, users)
-                await asyncio.sleep(3)
+                team_embed_title = 'Drafted teams'
             elif team_method == 'random':
                 team_one, team_two = await self.randomize_teams(users)
-                await asyncio.sleep(8)
+                team_embed_title = 'Randomized teams'
             else:
                 raise ValueError(f'Team method "{team_method}" isn\'t valid')
 
-            title = ''
-            burst_embed = self.bot.embed_template(title=title, description='Fetching server...')
+            await ready_message.edit(embed=self.teams_embed(team_embed_title, team_one, team_two))
+            await asyncio.sleep(8)
+            burst_embed = self.bot.embed_template(description='Fetching server...')
             await ready_message.edit(embed=burst_embed)
 
             # Check if able to get a match server and edit message embed accordingly
