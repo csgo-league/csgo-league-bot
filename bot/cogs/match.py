@@ -278,7 +278,7 @@ class MatchCog(commands.Cog):
                 team_one, team_two = await self.draft_teams(ready_message, users)
                 await asyncio.sleep(3)
             elif team_method == 'random':
-                team_one, team_two = self.randomize_teams(users)
+                team_one, team_two = await self.randomize_teams(users)
                 await asyncio.sleep(8)
             else:
                 raise ValueError(f'Team method "{team_method}" isn\'t valid')
