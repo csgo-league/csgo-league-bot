@@ -54,7 +54,7 @@ class StatsCog(commands.Cog):
                           f' First Blood Rate:  {fb_percent_str:>6} ' \
                           '```'
             embed = self.bot.embed_template(description=description)
-            embed.set_author(name=user.display_name, url=player.steam_profile, icon_url=user.avatar_url_as(size=128))
+            embed.set_author(name=user.display_name, url=player.league_profile, icon_url=user.avatar_url_as(size=128))
         else:
             title = f'Unable to get **{ctx.author.display_name}**\'s stats: Their account not linked'
             embed = self.bot.embed_template(title=title)
