@@ -221,14 +221,14 @@ class MatchCog(commands.Cog):
         teams = await menu.draft()
         return teams[0], teams[1]
 
-    async def autobalance_teams(self, user_ids):
+    async def autobalance_teams(self, users):
         """ Balance teams based on players' RankMe score. """
         # Only balance teams with even amounts of players
-        if len(user_ids) % 2 != 0:
+        if len(users) % 2 != 0:
             raise ValueError('Users argument must have even length')
 
         # Get players and sort by RankMe score
-        users_dict = dict(zip(await self.bot.api_helper.get_players(user_ids), user_ids))
+        users_dict = dict(zip(await self.bot.api_helper.get_players([user.id for user in users]), users))
         players = list(users_dict.keys())
         players.sort(key=lambda x: x.score)
 
@@ -305,7 +305,7 @@ class MatchCog(commands.Cog):
             team_method = guild_data['team_method']
 
             if team_method == 'autobalance':
-                team_one, team_two = await self.autobalance_teams([user.id for user in users])
+                team_one, team_two = await self.autobalance_teams(users)
                 await asyncio.sleep(8)
             elif team_method == 'captains':
                 team_one, team_two = await self.draft_teams(ready_message, users)
