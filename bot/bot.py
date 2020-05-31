@@ -33,7 +33,7 @@ class LeagueBot(commands.AutoShardedBot):
         self.guild_data_file = 'guild_data.json'
 
         # Create session for API
-        self.session = aiohttp.ClientSession(loop=self.loop)
+        self.session = aiohttp.ClientSession(loop=self.loop, raise_for_status=True)
         self.api_helper = helpers.ApiHelper(self.session, self.api_base_url, self.api_key)
 
         # Create DB helper to use connection pool
