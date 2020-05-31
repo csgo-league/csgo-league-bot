@@ -100,7 +100,7 @@ class TeamDraftMenu(discord.Message):
         await self.edit(embed=self._picker_embed(title))
         items = self.pick_emojis.items()
         awaitables = [self.clear_reaction(emoji) for emoji, user in items if user not in self.users_left]
-        asyncio.gather(*awaitables, loop=self.bot.loop)
+        await asyncio.gather(*awaitables, loop=self.bot.loop)
 
     async def _process_pick(self, reaction, user):
         """ Handler function for player pick reactions. """
