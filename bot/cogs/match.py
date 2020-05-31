@@ -225,7 +225,6 @@ class MatchCog(commands.Cog):
         team_size = len(temp_users) // 2
         return temp_users[:team_size], temp_users[team_size:]
 
-
     def teams_embed(self, title, team_one, team_two):
         """"""
         embed = self.bot.embed_template(title=title)
