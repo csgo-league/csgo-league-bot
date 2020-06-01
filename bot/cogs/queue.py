@@ -44,6 +44,10 @@ class QueueCog(commands.Cog):
     async def join(self, ctx):
         """ Check if the member can be added to the guild queue and add them if so. """
         name = ctx.author.nick if ctx.author.nick is not None else ctx.author.display_name
+        
+        if not all(ord(c) < 128 for c in name):
+            await ctx.send(f'{ctx.author.mention} **your nickname is not valid**')
+            return
 
         if not await self.bot.api_helper.is_linked(ctx.author.id):  # Message author isn't linked
             title = f'Unable to add **{name}**: Their account is not linked'
