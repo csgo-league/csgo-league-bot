@@ -178,6 +178,46 @@ class DBHelper:
 
         return self._get_record_attrs(deleted, 'user_id')
 
+    async def get_banned_users(self, guild_id):
+        """ Get all the banned users of the guild from the queued_users table. """
+        statement = (
+            'SELECT user_id FROM banned_users\n'
+            '    WHERE guild_id = $1;'
+        )
+
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                queue = await connection.fetch(statement, guild_id)
+
+        return self._get_record_attrs(queue, 'user_id')
+
+    async def insert_banned_users(self, guild_id, *user_ids, unban_time=None):
+        """"""
+        statement = (
+            'INSERT INTO banned_users (guild_id, user_id, unban_time)\n'
+            '    (SELECT * FROM unnest($1::banned_users[]));'
+        )
+
+        insert_rows = [(guild_id, user_id, unban_time) for user_id in user_ids]
+
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                await connection.execute(statement, insert_rows)
+
+    async def delete_banned_users(self, guild_id, *user_ids):
+        """ Delete multiple users of a guild from the queued_users table. """
+        statement = (
+            'DELETE FROM banned_users\n'
+            '    WHERE guild_id = $1 AND user_id = ANY($2::BIGINT[])\n'
+            '    RETURNING user_id;'
+        )
+
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                deleted = await connection.fetch(statement, guild_id, user_ids)
+
+        return self._get_record_attrs(deleted, 'user_id')
+
     async def get_guild(self, guild_id):
         """ Get a guild's row from the guilds table. """
         return await self._get_row('guilds', guild_id)
