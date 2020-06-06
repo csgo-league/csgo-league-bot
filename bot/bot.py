@@ -30,7 +30,6 @@ class LeagueBot(commands.AutoShardedBot):
         self.description = 'An easy to use, fully automated system to set up and play CS:GO pickup games'
         self.color = 0x000000
         self.activity = discord.Activity(type=discord.ActivityType.watching, name="noobs type q!help")
-        self.guild_data_file = 'guild_data.json'
 
         # Create session for API
         self.session = aiohttp.ClientSession(loop=self.loop, raise_for_status=True)
