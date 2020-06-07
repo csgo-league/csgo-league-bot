@@ -96,6 +96,8 @@ class Player:
             if attr != 'discord_name' and attr != 'in_match':  # These attributes are already the correct type
                 setattr(self, attr, 0 if val is None else int(val))  # Convert to ints with None being 0
 
+        self.web_url = web_url
+
     @property
     def league_profile(self):
         """ Generate the player's CS:GO League profile link. """
