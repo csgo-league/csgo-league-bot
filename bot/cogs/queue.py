@@ -43,10 +43,8 @@ class QueueCog(commands.Cog):
     @commands.max_concurrency(1, per=commands.BucketType.guild, wait=True)  # Only process one command per guild at once
     async def join(self, ctx):
         """ Check if the member can be added to the guild queue and add them if so. """
-        name = ctx.author.nick if ctx.author.nick is not None else ctx.author.display_name
-
         if not await self.bot.api_helper.is_linked(ctx.author.id):  # Message author isn't linked
-            title = f'Unable to add **{name}**: Their account is not linked'
+            title = f'Unable to add **{ctx.author.display_name}**: Their account is not linked'
         else:  # Message author is linked
             awaitables = [
                 self.bot.api_helper.get_player(ctx.author.id),
@@ -60,17 +58,17 @@ class QueueCog(commands.Cog):
             capacity = results[3]['capacity']
 
             if ctx.author.id in queue_ids:  # Author already in queue
-                title = f'Unable to add **{name}**: Already in the queue'
+                title = f'Unable to add **{ctx.author.display_name}**: Already in the queue'
             elif len(queue_ids) >= capacity:  # Queue full
-                title = f'Unable to add **{name}**: Queue is full'
+                title = f'Unable to add **{ctx.author.display_name}**: Queue is full'
             elif not player:  # ApiHelper couldn't get player
-                title = f'Unable to add **{name}**: Cannot verify match status'
+                title = f'Unable to add **{ctx.author.display_name}**: Cannot verify match status'
             elif player.in_match:  # User is already in a match
-                title = f'Unable to add **{name}**: They are already in a match'
+                title = f'Unable to add **{ctx.author.display_name}**: They are already in a match'
             else:  # User can be added
                 await self.bot.db_helper.insert_queued_users(ctx.guild.id, ctx.author.id)
                 queue_ids += [ctx.author.id]
-                title = f'**{name}** has been added to the queue'
+                title = f'**{ctx.author.display_name}** has been added to the queue'
 
                 # Check and burst queue if full
                 if len(queue_ids) == capacity:
