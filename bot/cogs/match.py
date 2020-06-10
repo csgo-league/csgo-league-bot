@@ -311,8 +311,8 @@ class MatchCog(commands.Cog):
             await ready_message.edit(embed=burst_embed)
             return True  # Everyone readied up
 
-    @commands.command(usage='teams {captains|autobalance|random}',
-                      brief='Set or view the team creation method (Must have admin perms)')
+    @commands.command(usage='teams [{captains|autobalance|random}]',
+                      brief='Set or view the team creation method (must have admin perms)')
     @commands.has_permissions(administrator=True)
     async def teams(self, ctx, method=None):
         """ Set or display the method by which teams are created. """
@@ -336,8 +336,8 @@ class MatchCog(commands.Cog):
         embed = self.bot.embed_template(title=title)
         await ctx.send(embed=embed)
 
-    @commands.command(usage='captains {volunteer|rank|random}',
-                      brief='Set or view the captain selection method (Must have admin perms)')
+    @commands.command(usage='captains [{volunteer|rank|random}]',
+                      brief='Set or view the captain selection method (must have admin perms)')
     @commands.has_permissions(administrator=True)
     async def captains(self, ctx, method=None):
         """ Set or display the method by which captains are selected. """

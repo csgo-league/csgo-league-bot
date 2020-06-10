@@ -161,8 +161,8 @@ class QueueCog(commands.Cog):
             embed = self.bot.embed_template(title=f'Cannot remove players without {missing_perm} permission!')
             await ctx.send(embed=embed)
 
-    @commands.command(usage='cap [new capacity]',
-                      brief='Set the capacity of the queue (Must have admin perms)')
+    @commands.command(usage='cap [<new capacity>]',
+                      brief='Set or view the capacity of the queue (must have admin perms)')
     @commands.has_permissions(administrator=True)
     async def cap(self, ctx, *args):
         """ Set the queue capacity. """
