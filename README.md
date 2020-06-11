@@ -76,9 +76,11 @@ If you appreciate the project then please take the time to star our repository.
 *Note that currently the `mdraft` command depends on custom emojis to be used as buttons which are hardcoded [here](https://github.com/csgo-league/csgo-league-bot/blob/abb06e1876546bb3948094faa795e90184642882/qbot/cogs/mapdraft.py#L20). As of right now you will need to make the emojis yourself and replace the emoji code in the map objects there.*
 
 ## Commands
-`q!help` **-** Display help menu<br>
+`q!help` **-** Display the help menu<br>
 
 `q!about` **-** Display basic info about this bot<br>
+
+`q!link` **-** Link a player on the backend<br>
 
 `q!join` **-** Join the queue<br>
 
@@ -86,19 +88,19 @@ If you appreciate the project then please take the time to star our repository.
 
 `q!view` **-** Display who is currently in the queue<br>
 
-`q!remove <mention>` **-** Remove the mentioned user from the queue (must have server kick perms)<br>
+`q!remove <user mention>` **-** Remove the mentioned user from the queue (must have server kick perms)<br>
 
 `q!empty` **-** Empty the queue (must have server kick perms)<br>
 
-`q!cap <integer>` **-** Set the capacity of the queue to the specified value (must have admin perms)<br>
+`q!cap [<new capacity>]` **-** Set or view the capacity of the queue (must have admin perms)<br>
 
-`q!setmp {+|-}<map name> ...` **-** Add or remove maps from the mdraft map pool (Must have admin perms)<br>
+`q!teams {captains|autobalance|random}` **-** Set or view the team creation method (must have admin perms)
 
-`q!donate` **-** Link the bot's donation link<br>
+`q!captains {volunteer|rank|random}` **-** Set or view the captain selection method (must have admin perms)
 
 `q!stats` **-** See your stats<br>
 
-`q!leaders` **-** See the top players in the server <br>
+`q!leaders` **-** See the top players in the server<br>
 
 ## Contributions
 
