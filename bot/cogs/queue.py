@@ -166,6 +166,8 @@ class QueueCog(commands.Cog):
         """ Set the queue capacity. """
         guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
         capacity = guild_data['capacity']
+        lower_bound = 2
+        upper_bound = 100
 
         if len(args) == 0:  # No size argument specified
             embed = self.bot.embed_template(title=f'The current queue capacity is {capacity}')
@@ -179,8 +181,9 @@ class QueueCog(commands.Cog):
             else:
                 if new_cap == capacity:
                     embed = self.bot.embed_template(title=f'Capacity is already set to {capacity}')
-                elif new_cap < 2 or new_cap > 100:
-                    embed = self.bot.embed_template(title='Capacity is outside of valid range (2-100)')
+                elif new_cap < lower_bound or new_cap > upper_bound:
+                    title = f'Capacity is outside of valid range ({lower_bound}-{upper_bound})'
+                    embed = self.bot.embed_template(title=title)
                 else:
                     await self.bot.db_helper.delete_all_queued_users(ctx.guild.id)
                     await self.bot.db_helper.update_guild(ctx.guild.id, capacity=new_cap)
