@@ -64,7 +64,7 @@ class QueueCog(commands.Cog):
             elif not player:  # ApiHelper couldn't get player
                 title = f'Unable to add **{ctx.author.display_name}**: Cannot verify match status'
             elif player.in_match:  # User is already in a match
-                title = f'Unable to add **{ctx.author.display_name}**: They are already in a match'
+                title = f'Unable to add **{ctx.author.display_name}**: Already in a match'
             else:  # User can be added
                 await self.bot.db_helper.insert_queued_users(ctx.guild.id, ctx.author.id)
                 queue_ids += [ctx.author.id]
@@ -123,7 +123,7 @@ class QueueCog(commands.Cog):
         try:
             removee = ctx.message.mentions[0]
         except IndexError:
-            embed = self.bot.embed_template(title='Mention a player in the command to remove them')
+            embed = self.bot.embed_template(title='Mention a user in the command to remove them')
             await ctx.send(embed=embed)
         else:
             removed = await self.bot.db_helper.delete_queued_users(ctx.guild.id, removee.id)
