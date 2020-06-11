@@ -2,10 +2,14 @@
 
 from discord.ext import commands
 import asyncio
+from datetime import datetime, timedelta, timezone
+import re
 
 
 class QueueCog(commands.Cog):
     """ Cog to manage queues of players among multiple servers. """
+
+    time_arg_pattern = re.compile(r'\b((?:(?P<days>[0-9]+)d)|(?:(?P<hours>[0-9]+)h)|(?:(?P<minutes>[0-9]+)m))\b')
 
     def __init__(self, bot):
         """ Set attributes. """
@@ -50,14 +54,22 @@ class QueueCog(commands.Cog):
                 self.bot.api_helper.get_player(ctx.author.id),
                 self.bot.db_helper.insert_users(ctx.author.id),
                 self.bot.db_helper.get_queued_users(ctx.guild.id),
-                self.bot.db_helper.get_guild(ctx.guild.id)
+                self.bot.db_helper.get_guild(ctx.guild.id),
+                self.is_banned(ctx.guild, ctx.author)
             ]
             results = await asyncio.gather(*awaitables, loop=self.bot.loop)
             player = results[0]
             queue_ids = results[2]
             capacity = results[3]['capacity']
+            is_banned = results[4]
 
-            if ctx.author.id in queue_ids:  # Author already in queue
+            if is_banned:  # Author is banned from joining the queue
+                title = f'Unable to add **{ctx.author.display_name}**: Banned'
+
+                if type(is_banned) is datetime:  # is_banned is datetime object if user is temp-banned
+                    title += f' for {self.timedelta_str(is_banned - datetime.now(timezone.utc))}'
+
+            elif ctx.author.id in queue_ids:  # Author already in queue
                 title = f'Unable to add **{ctx.author.display_name}**: Already in the queue'
             elif len(queue_ids) >= capacity:  # Queue full
                 title = f'Unable to add **{ctx.author.display_name}**: Queue is full'
@@ -200,3 +212,101 @@ class QueueCog(commands.Cog):
             missing_perm = error.missing_perms[0].replace('_', ' ')
             embed = self.bot.embed_template(title=f'Cannot change queue capacity without {missing_perm} permission!')
             await ctx.send(embed=embed)
+
+    async def is_banned(self, guild, user):
+        """ Check if a user is banned from queueing and remove any ende bans for their guild. """
+        banned_dict = await self.bot.db_helper.get_banned_users(guild.id)
+        now = datetime.now(timezone.utc)
+        ended_bans = [user_id for user_id, unban_time in banned_dict.items() if unban_time is not None and now > unban_time]
+        await self.bot.db_helper.delete_banned_users(guild.id, ended_bans)
+
+        for user_id in ended_bans:
+            banned_dict.pop(user_id)
+
+        # Return True or unban datetime if user is banned
+        return (True if banned_dict[user.id] is None else banned_dict[user.id]) if user.id in banned_dict else False
+
+    @staticmethod
+    def timedelta_str(tdelta):
+        """ Convert time delta object to a worded string representation with only days, hours and minutes. """
+        conversions = (('days', 86400), ('hours', 3600), ('minutes', 60))
+        secs_left = int(tdelta.total_seconds())
+        unit_strings = []
+
+        for unit, conversion in conversions:
+            unit_val, secs_left = divmod(secs_left, conversion)
+
+            if unit_val != 0:
+                unit_strings.append(f'{unit_val} {unit}')
+
+        return ', '.join(unit_strings)
+
+    @commands.command(usage='ban <user mention> ... [<days>d] [<hours>h] [<minutes>m]',
+                      brief='Ban all mentioned users from joining the queue (must have server ban perms)')
+    @commands.has_permissions(ban_members=True)
+    async def ban(self, ctx, *args):
+        """ Ban users mentioned in the command from joining the queue for a certain amount of time or indefinitely. """
+        # Check that users are mentioned
+        if len(ctx.message.mentions) == 0:
+            embed = self.bot.embed_template(title='Mention a user in the command to ban them')
+            await ctx.send(embed=embed)
+            return
+
+        # Parse the time arguments
+        matches = self.time_arg_pattern.finditer(ctx.message.content)
+        time_units = ('days', 'hours', 'minutes')
+        time_delta_values = {}  # Holds the values for each time unit arg
+
+        for match in self.time_arg_pattern.finditer(ctx.message.content):  # Iterate over the time argument matches
+            for time_unit in time_units:  # Figure out which time unit this match is for
+                time_value = match.group(time_unit)  # Get the value for this unit
+
+                if time_value is not None:  # Check if there is an actual group value
+                    time_delta_values[time_unit] = int(time_value)
+                    break  # There is only ever one group value per match
+
+        # Set unban time if there were time arguments
+        time_delta = timedelta(**time_delta_values)
+        unban_time = None if time_delta_values == {} else datetime.now(timezone.utc) + time_delta
+
+        # Get user IDs to ban from mentions and insert them into ban table
+        user_ids = [user.id for user in ctx.message.mentions]
+        await self.bot.db_helper.insert_banned_users(ctx.guild.id, *user_ids, unban_time=unban_time)
+
+        # Remove banned users from the queue
+        for user in ctx.message.mentions:
+            await self.bot.db_helper.delete_queued_users(ctx.guild.id, *user_ids)
+
+        # Generate embed and send message
+        banned_users_str = ', '.join(f'**{user.display_name}**' for user in ctx.message.mentions)
+        ban_time_str = '' if unban_time is None else f' for {self.timedelta_str(time_delta)}'
+        embed = self.bot.embed_template(title=f'Banned {banned_users_str}{ban_time_str}')
+        embed.set_footer(text='Banned users have been removed from the queue')
+        await ctx.send(embed=embed)
+
+    @commands.command(usage='unban <user mention> ...',
+                      brief='Unban all mentioned users so they can join the queue (must have server ban perms)')
+    @commands.has_permissions(ban_members=True)
+    async def unban(self, ctx):
+        """ Unban users mentioned in the command so they can join the queue. """
+        # Check that users are mentioned
+        if len(ctx.message.mentions) == 0:
+            embed = self.bot.embed_template(title='Mention a user in the command to unban them')
+            await ctx.send(embed=embed)
+            return
+
+        # Get user IDs to unban from mentions and delete them from the ban table
+        user_ids = [user.id for user in ctx.message.mentions]
+        unbanned_ids = await self.bot.db_helper.delete_banned_users(ctx.guild.id, *user_ids)
+
+        # Generate embed and send message
+        unbanned_users = [user for user in ctx.message.mentions if user.id in unbanned_ids]
+        never_banned_users = [user for user in ctx.message.mentions if user.id not in unbanned_ids]
+        unbanned_users_str = ', '.join(f'**{user.display_name}**' for user in unbanned_users)
+        never_banned_users_str = ', '.join(f'**{user.display_name}**' for user in never_banned_users)
+        title_1 = 'nobody' if unbanned_users_str == '' else unbanned_users_str
+        were_or_was = 'were' if len(never_banned_users) > 1 else 'was'
+        title_2 = '' if never_banned_users_str == '' else  f' ({never_banned_users_str} {were_or_was} never banned)'
+        embed = self.bot.embed_template(title=f'Unbanned {title_1}{title_2}')
+        embed.set_footer(text='Unbanned users may now join the queue')
+        await ctx.send(embed=embed)
