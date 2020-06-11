@@ -178,6 +178,48 @@ class DBHelper:
 
         return self._get_record_attrs(deleted, 'user_id')
 
+    async def get_banned_users(self, guild_id):
+        """ Get all the banned users of the guild from the banned_users table. """
+        statement = (
+            'SELECT * FROM banned_users\n'
+            '    WHERE guild_id = $1;'
+        )
+
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                queue = await connection.fetch(statement, guild_id)
+
+        return dict(zip(self._get_record_attrs(queue, 'user_id'), self._get_record_attrs(queue, 'unban_time')))
+
+    async def insert_banned_users(self, guild_id, *user_ids, unban_time=None):
+        """ Insert multiple users of a guild into the banned_users table"""
+        statement = (
+            'INSERT INTO banned_users (guild_id, user_id, unban_time)\n'
+            '    VALUES($1, $2, $3)\n'
+            '    ON CONFLICT (guild_id, user_id) DO UPDATE\n'
+            '    SET unban_time = EXCLUDED.unban_time;'
+        )
+
+        insert_rows = [(guild_id, user_id, unban_time) for user_id in user_ids]
+
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                await connection.executemany(statement, insert_rows)
+
+    async def delete_banned_users(self, guild_id, *user_ids):
+        """ Delete multiple users of a guild from the banned_users table. """
+        statement = (
+            'DELETE FROM banned_users\n'
+            '    WHERE guild_id = $1 AND user_id = ANY($2::BIGINT[])\n'
+            '    RETURNING user_id;'
+        )
+
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                deleted = await connection.fetch(statement, guild_id, user_ids)
+
+        return self._get_record_attrs(deleted, 'user_id')
+
     async def get_guild(self, guild_id):
         """ Get a guild's row from the guilds table. """
         return await self._get_row('guilds', guild_id)
