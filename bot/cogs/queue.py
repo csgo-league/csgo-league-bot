@@ -215,16 +215,16 @@ class QueueCog(commands.Cog):
 
     async def is_banned(self, guild, user):
         """ Check if a user is banned from queueing and remove any ende bans for their guild. """
-        banned_dict = await self.bot.db_helper.get_banned_users(guild.id)
+        bans = await self.bot.db_helper.get_banned_users(guild.id)
         now = datetime.now(timezone.utc)
-        ended_bans = [user_id for user_id, unban_time in banned_dict.items() if unban_time is not None and now > unban_time]
+        ended_bans = [user_id for user_id, unban_time in bans.items() if unban_time is not None and now > unban_time]
         await self.bot.db_helper.delete_banned_users(guild.id, ended_bans)
 
         for user_id in ended_bans:
-            banned_dict.pop(user_id)
+            bans.pop(user_id)
 
         # Return True or unban datetime if user is banned
-        return (True if banned_dict[user.id] is None else banned_dict[user.id]) if user.id in banned_dict else False
+        return (True if bans[user.id] is None else bans[user.id]) if user.id in bans else False
 
     @staticmethod
     def timedelta_str(tdelta):
@@ -253,7 +253,6 @@ class QueueCog(commands.Cog):
             return
 
         # Parse the time arguments
-        matches = self.time_arg_pattern.finditer(ctx.message.content)
         time_units = ('days', 'hours', 'minutes')
         time_delta_values = {}  # Holds the values for each time unit arg
 
@@ -306,7 +305,7 @@ class QueueCog(commands.Cog):
         never_banned_users_str = ', '.join(f'**{user.display_name}**' for user in never_banned_users)
         title_1 = 'nobody' if unbanned_users_str == '' else unbanned_users_str
         were_or_was = 'were' if len(never_banned_users) > 1 else 'was'
-        title_2 = '' if never_banned_users_str == '' else  f' ({never_banned_users_str} {were_or_was} never banned)'
+        title_2 = '' if never_banned_users_str == '' else f' ({never_banned_users_str} {were_or_was} never banned)'
         embed = self.bot.embed_template(title=f'Unbanned {title_1}{title_2}')
         embed.set_footer(text='Unbanned users may now join the queue')
         await ctx.send(embed=embed)
