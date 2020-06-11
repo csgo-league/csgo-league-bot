@@ -5,6 +5,8 @@ import asyncio
 import discord
 from discord.ext import commands
 import random
+import sys
+import traceback
 
 
 class PickError(ValueError):
@@ -299,10 +301,11 @@ class MatchCog(commands.Cog):
             # Check if able to get a match server and edit message embed accordingly
             try:
                 match = await self.bot.api_helper.start_match(team_one, team_two)  # Request match from API
-            except aiohttp.ClientResponseError:
+            except aiohttp.ClientResponseError as e:
                 description = 'Sorry! Looks like there aren\'t any servers available at this time. ' \
                               'Please try again later.'
                 burst_embed = self.bot.embed_template(title='There was a problem!', description=description)
+                traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)  # Print exception to stderr
             else:
                 description = f'URL: {match.connect_url}\nCommand: `{match.connect_command}`'
                 burst_embed = self.bot.embed_template(title='Server ready!', description=description)
