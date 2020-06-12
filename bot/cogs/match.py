@@ -166,8 +166,14 @@ class TeamDraftMenu(discord.Message):
 
         await self.edit(embed=self._picker_embed('Team draft has begun!'))
 
-        for emoji in self.pick_emojis:
-            await self.add_reaction(emoji)
+        if captain_method == 'volunteer':
+            for emoji in self.pick_emojis:
+                await self.add_reaction(emoji)
+        else: # don't add reaction for captains
+            items = self.pick_emojis.items()
+            for emoji, member in items:
+                if member in self.members_left:
+                    await self.add_reaction(emoji)
 
         # Add listener handlers and wait until there are no users left to pick
         self.future = self.bot.loop.create_future()
