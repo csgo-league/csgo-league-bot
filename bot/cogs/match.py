@@ -165,15 +165,11 @@ class TeamDraftMenu(discord.Message):
             raise ValueError(f'Captain method "{captain_method}" isn\'t valid')
 
         await self.edit(embed=self._picker_embed('Team draft has begun!'))
-
-        if captain_method == 'volunteer':
-            for emoji in self.pick_emojis:
+                
+        items = self.pick_emojis.items()
+        for emoji, user in items:
+            if user in self.users_left:
                 await self.add_reaction(emoji)
-        else: # don't add reaction for captains
-            items = self.pick_emojis.items()
-            for emoji, member in items:
-                if member in self.members_left:
-                    await self.add_reaction(emoji)
 
         # Add listener handlers and wait until there are no users left to pick
         self.future = self.bot.loop.create_future()
