@@ -55,19 +55,20 @@ class QueueCog(commands.Cog):
                 self.bot.db_helper.insert_users(ctx.author.id),
                 self.bot.db_helper.get_queued_users(ctx.guild.id),
                 self.bot.db_helper.get_guild(ctx.guild.id),
-                self.is_banned(ctx.guild, ctx.author)
+                self.bot.db_helper.get_banned_users(ctx.guild.id)
             ]
             results = await asyncio.gather(*awaitables, loop=self.bot.loop)
             player = results[0]
             queue_ids = results[2]
             capacity = results[3]['capacity']
-            is_banned = results[4]
+            banned_users = results[4]
 
-            if is_banned:  # Author is banned from joining the queue
+            if ctx.author.id in banned_users:  # Author is banned from joining the queue
                 title = f'Unable to add **{ctx.author.display_name}**: Banned'
+                unban_time = banned_users[ctx.author.id]
 
-                if type(is_banned) is datetime:  # is_banned is datetime object if user is temp-banned
-                    title += f' for {self.timedelta_str(is_banned - datetime.now(timezone.utc))}'
+                if unban_time is not None:  # If the user is banned for a duration
+                    title += f' for {self.timedelta_str(unban_time - datetime.now(timezone.utc))}'
 
             elif ctx.author.id in queue_ids:  # Author already in queue
                 title = f'Unable to add **{ctx.author.display_name}**: Already in the queue'
@@ -212,19 +213,6 @@ class QueueCog(commands.Cog):
             missing_perm = error.missing_perms[0].replace('_', ' ')
             embed = self.bot.embed_template(title=f'Cannot change queue capacity without {missing_perm} permission!')
             await ctx.send(embed=embed)
-
-    async def is_banned(self, guild, user):
-        """ Check if a user is banned from queueing and remove any ende bans for their guild. """
-        bans = await self.bot.db_helper.get_banned_users(guild.id)
-        now = datetime.now(timezone.utc)
-        ended_bans = [user_id for user_id, unban_time in bans.items() if unban_time is not None and now > unban_time]
-        await self.bot.db_helper.delete_banned_users(guild.id, ended_bans)
-
-        for user_id in ended_bans:
-            bans.pop(user_id)
-
-        # Return True or unban datetime if user is banned
-        return (True if bans[user.id] is None else bans[user.id]) if user.id in bans else False
 
     @staticmethod
     def timedelta_str(tdelta):

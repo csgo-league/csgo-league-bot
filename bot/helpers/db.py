@@ -180,14 +180,21 @@ class DBHelper:
 
     async def get_banned_users(self, guild_id):
         """ Get all the banned users of the guild from the banned_users table. """
-        statement = (
+        delete_statement = (
+            'DELETE FROM banned_users\n'
+            '    WHERE guild_id = $1 AND CURRENT_TIMESTAMP > unban_time;'
+        )
+        select_statement = (
             'SELECT * FROM banned_users\n'
             '    WHERE guild_id = $1;'
         )
 
         async with self.pool.acquire() as connection:
             async with connection.transaction():
-                queue = await connection.fetch(statement, guild_id)
+                await connection.execute(delete_statement, guild_id)
+
+            async with connection.transaction():
+                queue = await connection.fetch(select_statement, guild_id)
 
         return dict(zip(self._get_record_attrs(queue, 'user_id'), self._get_record_attrs(queue, 'unban_time')))
 
