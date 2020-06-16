@@ -236,7 +236,7 @@ class QueueCog(commands.Cog):
         for unit, conversion in conversions:
             unit_val, secs_left = divmod(secs_left, conversion)
 
-            if unit_val != 0:
+            if unit_val != 0 or (unit == 'minutes' and len(unit_strings) == 0):
                 unit_strings.append(f'{unit_val} {unit}')
 
         return ', '.join(unit_strings)
