@@ -55,7 +55,7 @@ If you appreciate the project then please take the time to star our repository.
 
 5. Create an environment file named `.env` with in the repository's root directory. Fill this template with the requisite information you've gathered:
 
-    ```env
+    ```py
     DISCORD_BOT_TOKEN= # Bot token from the Discord developer portal
 
     CSGO_LEAGUE_API_KEY= # API from the CS:GO League web backend .env file
