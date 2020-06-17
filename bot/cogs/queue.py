@@ -103,7 +103,7 @@ class QueueCog(commands.Cog):
         # Delete last queue message
         await self.update_last_msg(ctx, embed)
 
-    @commands.command(brief='Leave the queue (or the bursted queue)')
+    @commands.command(brief='Leave the queue')
     async def leave(self, ctx):
         """ Check if the member can be remobed from the guild and remove them if so. """
         removed = await self.bot.db_helper.delete_queued_users(ctx.guild.id, ctx.author.id)

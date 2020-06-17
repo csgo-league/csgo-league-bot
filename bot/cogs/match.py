@@ -166,8 +166,10 @@ class TeamDraftMenu(discord.Message):
 
         await self.edit(embed=self._picker_embed('Team draft has begun!'))
 
-        for emoji in self.pick_emojis:
-            await self.add_reaction(emoji)
+        items = self.pick_emojis.items()
+        for emoji, user in items:
+            if user in self.users_left:
+                await self.add_reaction(emoji)
 
         # Add listener handlers and wait until there are no users left to pick
         self.future = self.bot.loop.create_future()
@@ -217,7 +219,7 @@ class MatchCog(commands.Cog):
             else:
                 team_two.append(players.pop())
 
-        return map(users_dict.get, team_one), map(users_dict.get, team_two)
+        return list(map(users_dict.get, team_one)), list(map(users_dict.get, team_two))
 
     @staticmethod
     async def randomize_teams(users):
@@ -268,7 +270,7 @@ class MatchCog(commands.Cog):
                 ready_message.clear_reactions(),
                 self.bot.db_helper.delete_queued_users(ctx.guild.id, *(user.id for user in unreadied))
             ]
-            asyncio.gather(*awaitables, loop=self.bot.loop)
+            await asyncio.gather(*awaitables, loop=self.bot.loop)
             description = '\n'.join(':heavy_multiplication_x:  ' + user.mention for user in unreadied)
             title = 'Not everyone was ready!'
             burst_embed = self.bot.embed_template(title=title, description=description)
@@ -277,24 +279,23 @@ class MatchCog(commands.Cog):
             return False  # Not everyone readied up
         else:  # Everyone readied up
             # Attempt to make teams and start match
-            await ready_message.clear_reactions()
-            guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
-            team_method = guild_data['team_method']
+
+            awaitables = [
+                ready_message.clear_reactions(),
+                self.bot.db_helper.get_guild(ctx.guild.id)
+            ]
+            results = await asyncio.gather(*awaitables, loop=self.bot.loop)
+            team_method = results[1]['team_method']
 
             if team_method == 'autobalance':
                 team_one, team_two = await self.autobalance_teams(users)
-                team_embed_title = 'Autobalanced teams'
             elif team_method == 'captains':
                 team_one, team_two = await self.draft_teams(ready_message, users)
-                team_embed_title = 'Drafted teams'
             elif team_method == 'random':
                 team_one, team_two = await self.randomize_teams(users)
-                team_embed_title = 'Randomized teams'
             else:
                 raise ValueError(f'Team method "{team_method}" isn\'t valid')
 
-            await ready_message.edit(embed=self.teams_embed(team_embed_title, team_one, team_two))
-            await asyncio.sleep(8)
             burst_embed = self.bot.embed_template(description='Fetching server...')
             await ready_message.edit(embed=burst_embed)
 
@@ -308,7 +309,12 @@ class MatchCog(commands.Cog):
                 traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)  # Print exception to stderr
             else:
                 description = f'URL: {match.connect_url}\nCommand: `{match.connect_command}`'
-                burst_embed = self.bot.embed_template(title='Server ready!', description=description)
+                burst_embed = self.bot.embed_template(title='Match server is ready!', description=description)
+
+                for team in [team_one, team_two]:
+                    team_name = f'__Team {team[0].display_name}__'
+                    burst_embed.add_field(name=team_name, value='\n'.join(user.mention for user in team))
+
                 burst_embed.set_footer(text='Server will close after 5 minutes if anyone doesn\'t join')
 
             await ready_message.edit(embed=burst_embed)
