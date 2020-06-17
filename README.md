@@ -56,15 +56,15 @@ If you appreciate the project then please take the time to star our repository.
 5. Create an environment file named `.env` with in the repository's root directory. Fill this template with the requisite information you've gathered:
 
     ```env
-    DISCORD_BOT_TOKEN=
+    DISCORD_BOT_TOKEN= # Bot token from the Discord developer portal
 
-    CSGO_LEAGUE_API_KEY=
-    CSGO_LEAGUE_API_URL=
+    CSGO_LEAGUE_API_KEY= # API from the CS:GO League web backend .env file
+    CSGO_LEAGUE_API_URL= # URL where the web panel is hosted
 
-    POSTGRESQL_USER=
-    POSTGRESQL_PASSWORD=
-    POSTGRESQL_DB=
-    POSTGRESQL_HOST=
+    POSTGRESQL_USER= # "csgoleague" (if you used the same username)
+    POSTGRESQL_PASSWORD= # The DB password you set
+    POSTGRESQL_DB= # "csgoleague" (if you used the same DB name)
+    POSTGRESQL_HOST= # The IP address of the DB server (127.0.0.1 if running on the same system as the bot)
     ```
 
     Optionally you may set these environment variables another way.
