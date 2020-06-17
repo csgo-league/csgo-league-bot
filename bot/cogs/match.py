@@ -270,7 +270,7 @@ class MatchCog(commands.Cog):
                 ready_message.clear_reactions(),
                 self.bot.db_helper.delete_queued_users(ctx.guild.id, *(user.id for user in unreadied))
             ]
-            asyncio.gather(*awaitables, loop=self.bot.loop)
+            await asyncio.gather(*awaitables, loop=self.bot.loop)
             description = '\n'.join(':heavy_multiplication_x:  ' + user.mention for user in unreadied)
             title = 'Not everyone was ready!'
             burst_embed = self.bot.embed_template(title=title, description=description)
