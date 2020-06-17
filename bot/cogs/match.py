@@ -285,18 +285,13 @@ class MatchCog(commands.Cog):
 
             if team_method == 'autobalance':
                 team_one, team_two = await self.autobalance_teams(users)
-                team_embed_title = 'Autobalanced teams'
             elif team_method == 'captains':
                 team_one, team_two = await self.draft_teams(ready_message, users)
-                team_embed_title = 'Drafted teams'
             elif team_method == 'random':
                 team_one, team_two = await self.randomize_teams(users)
-                team_embed_title = 'Randomized teams'
             else:
                 raise ValueError(f'Team method "{team_method}" isn\'t valid')
 
-            await ready_message.edit(embed=self.teams_embed(team_embed_title, team_one, team_two))
-            await asyncio.sleep(8)
             burst_embed = self.bot.embed_template(description='Fetching server...')
             await ready_message.edit(embed=burst_embed)
 
@@ -311,6 +306,11 @@ class MatchCog(commands.Cog):
             else:
                 description = f'URL: {match.connect_url}\nCommand: `{match.connect_command}`'
                 burst_embed = self.bot.embed_template(title='Server ready!', description=description)
+
+                for team in [team_one, team_two]:
+                    team_name = f'__Team {team[0].display_name}__'
+                    burst_embed.add_field(name=team_name, value='\n'.join(user.mention for user in team))
+
                 burst_embed.set_footer(text='Server will close after 5 minutes if anyone doesn\'t join')
 
             await ready_message.edit(embed=burst_embed)
