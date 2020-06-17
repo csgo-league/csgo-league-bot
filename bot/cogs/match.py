@@ -309,7 +309,7 @@ class MatchCog(commands.Cog):
                 traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)  # Print exception to stderr
             else:
                 description = f'URL: {match.connect_url}\nCommand: `{match.connect_command}`'
-                burst_embed = self.bot.embed_template(title='Server ready!', description=description)
+                burst_embed = self.bot.embed_template(title='Match server is ready!', description=description)
 
                 for team in [team_one, team_two]:
                     team_name = f'__Team {team[0].display_name}__'
