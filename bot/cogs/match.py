@@ -219,7 +219,7 @@ class MatchCog(commands.Cog):
             else:
                 team_two.append(players.pop())
 
-        return map(users_dict.get, team_one), map(users_dict.get, team_two)
+        return list(map(users_dict.get, team_one)), list(map(users_dict.get, team_two))
 
     @staticmethod
     async def randomize_teams(users):
