@@ -94,9 +94,9 @@ If you appreciate the project then please take the time to star our repository.
 
 `q!cap [<new capacity>]` **-** Set or view the capacity of the queue (must have admin perms)<br>
 
-`q!teams [{captains|autobalance|random}]` **-** Set or view the team creation method (must have admin perms)
+`q!teams [{captains|autobalance|random}]` **-** Set or view the team creation method (must have admin perms)<br>
 
-`q!captains [{volunteer|rank|random}]` **-** Set or view the captain selection method (must have admin perms)
+`q!captains [{volunteer|rank|random}]` **-** Set or view the captain selection method (must have admin perms)<br>
 
 `q!stats` **-** See your stats<br>
 
