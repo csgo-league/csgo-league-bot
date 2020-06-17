@@ -279,9 +279,13 @@ class MatchCog(commands.Cog):
             return False  # Not everyone readied up
         else:  # Everyone readied up
             # Attempt to make teams and start match
-            await ready_message.clear_reactions()
-            guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
-            team_method = guild_data['team_method']
+
+            awaitables = [
+                ready_message.clear_reactions(),
+                self.bot.db_helper.get_guild(ctx.guild.id)
+            ]
+            results = await asyncio.gather(*awaitables, loop=self.bot.loop)
+            team_method = results[1]['team_method']
 
             if team_method == 'autobalance':
                 team_one, team_two = await self.autobalance_teams(users)
