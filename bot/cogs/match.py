@@ -5,6 +5,8 @@ import asyncio
 import discord
 from discord.ext import commands
 import random
+import sys
+import traceback
 
 
 class PickError(ValueError):
@@ -124,7 +126,7 @@ class TeamDraftMenu(discord.Message):
         await self.edit(embed=self._picker_embed(title))
         items = self.pick_emojis.items()
         awaitables = [self.clear_reaction(emoji) for emoji, user in items if user not in self.users_left]
-        asyncio.gather(*awaitables, loop=self.bot.loop)
+        await asyncio.gather(*awaitables, loop=self.bot.loop)
 
     async def _process_pick(self, reaction, user):
         """ Handler function for player pick reactions. """
@@ -149,10 +151,11 @@ class TeamDraftMenu(discord.Message):
         if len(self.users_left) == 1:
             fat_kid_team = self.teams[0] if len(self.teams[0]) <= len(self.teams[1]) else self.teams[1]
             fat_kid_team.append(self.users_left.pop(0))
-            title = 'Teams are set!'
 
             if self.future is not None:
                 self.future.set_result(None)
+
+            return
 
         await self._update_menu(title)
 
@@ -190,8 +193,10 @@ class TeamDraftMenu(discord.Message):
         # Edit input message and add emoji button reactions
         await self.edit(embed=self._picker_embed('Team draft has begun!'))
 
-        for emoji in self.pick_emojis:
-            await self.add_reaction(emoji)
+        items = self.pick_emojis.items()
+        for emoji, user in items:
+            if user in self.users_left:
+                await self.add_reaction(emoji)
 
         # Add listener handlers and wait until there are no users left to pick
         self.future = self.bot.loop.create_future()
@@ -247,7 +252,7 @@ class MatchCog(commands.Cog):
             else:
                 team_two.append(players.pop())
 
-        return map(users_dict.get, team_one), map(users_dict.get, team_two)
+        return list(map(users_dict.get, team_one)), list(map(users_dict.get, team_two))
 
     @staticmethod
     async def randomize_teams(users):
@@ -256,6 +261,13 @@ class MatchCog(commands.Cog):
         random.shuffle(temp_users)
         team_size = len(temp_users) // 2
         return temp_users[:team_size], temp_users[team_size:]
+
+    def teams_embed(self, title, team_one, team_two):
+        """"""
+        embed = self.bot.embed_template(title=title)
+        embed.add_field(name='__Team 1__', value='\n'.join(user.mention for user in team_one))
+        embed.add_field(name='__Team 2__', value='\n'.join(user.mention for user in team_two))
+        return embed
 
     async def start_match(self, ctx, users):
         """ Ready all the users up and start a match. """
@@ -291,7 +303,7 @@ class MatchCog(commands.Cog):
                 ready_message.clear_reactions(),
                 self.bot.db_helper.delete_queued_users(ctx.guild.id, *(user.id for user in unreadied))
             ]
-            asyncio.gather(*awaitables, loop=self.bot.loop)
+            await asyncio.gather(*awaitables, loop=self.bot.loop)
             description = '\n'.join(':heavy_multiplication_x:  ' + user.mention for user in unreadied)
             title = 'Not everyone was ready!'
             burst_embed = self.bot.embed_template(title=title, description=description)
@@ -300,43 +312,49 @@ class MatchCog(commands.Cog):
             return False  # Not everyone readied up
         else:  # Everyone readied up
             # Attempt to make teams and start match
-            await ready_message.clear_reactions()
-            guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
-            team_method = guild_data['team_method']
+
+            awaitables = [
+                ready_message.clear_reactions(),
+                self.bot.db_helper.get_guild(ctx.guild.id)
+            ]
+            results = await asyncio.gather(*awaitables, loop=self.bot.loop)
+            team_method = results[1]['team_method']
 
             if team_method == 'autobalance':
                 team_one, team_two = await self.autobalance_teams(users)
-                await asyncio.sleep(8)
             elif team_method == 'captains':
                 team_one, team_two = await self.draft_teams(ready_message, users)
-                await asyncio.sleep(3)
             elif team_method == 'random':
-                team_one, team_two = self.randomize_teams(users)
-                await asyncio.sleep(8)
+                team_one, team_two = await self.randomize_teams(users)
             else:
                 raise ValueError(f'Team method "{team_method}" isn\'t valid')
 
-            title = ''
-            burst_embed = self.bot.embed_template(title=title, description='Fetching server...')
+            burst_embed = self.bot.embed_template(description='Fetching server...')
             await ready_message.edit(embed=burst_embed)
 
             # Check if able to get a match server and edit message embed accordingly
             try:
                 match = await self.bot.api_helper.start_match(team_one, team_two)  # Request match from API
-            except aiohttp.ClientResponseError:
+            except aiohttp.ClientResponseError as e:
                 description = 'Sorry! Looks like there aren\'t any servers available at this time. ' \
                               'Please try again later.'
                 burst_embed = self.bot.embed_template(title='There was a problem!', description=description)
+                traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)  # Print exception to stderr
             else:
                 description = f'URL: {match.connect_url}\nCommand: `{match.connect_command}`'
-                burst_embed = self.bot.embed_template(title='Server ready!', description=description)
+                burst_embed = self.bot.embed_template(title='Match server is ready!', description=description)
+
+                for team in [team_one, team_two]:
+                    team_name = f'__Team {team[0].display_name}__'
+                    burst_embed.add_field(name=team_name, value='\n'.join(user.mention for user in team))
+
                 burst_embed.set_footer(text='Server will close after 5 minutes if anyone doesn\'t join')
 
             await ready_message.edit(embed=burst_embed)
             return True  # Everyone readied up
 
-    @commands.command(usage='teams {captains|autobalance|random}',
-                      brief='Set or view the team creation method (Must have admin perms)')
+    @commands.command(usage='teams [{captains|autobalance|random}]',
+                      brief='Set or view the team creation method (must have admin perms)')
     @commands.has_permissions(administrator=True)
     async def teams(self, ctx, method=None):
         """ Set or display the method by which teams are created. """
@@ -360,8 +378,8 @@ class MatchCog(commands.Cog):
         embed = self.bot.embed_template(title=title)
         await ctx.send(embed=embed)
 
-    @commands.command(usage='captains {volunteer|rank|random}',
-                      brief='Set or view the captain selection method (Must have admin perms)')
+    @commands.command(usage='captains [{volunteer|rank|random}]',
+                      brief='Set or view the captain selection method (must have admin perms)')
     @commands.has_permissions(administrator=True)
     async def captains(self, ctx, method=None):
         """ Set or display the method by which captains are selected. """

@@ -4,7 +4,7 @@
 class Player:
     """ Represents a player with the contents returned by the API. """
 
-    def __init__(self, player_data):
+    def __init__(self, player_data, web_url=None):
         """ Set attributes. """
         self.steam = player_data['steam']
         self.discord = player_data['discord']
@@ -95,6 +95,14 @@ class Player:
         for attr, val in self.__dict__.items():
             if attr != 'discord_name' and attr != 'in_match':  # These attributes are already the correct type
                 setattr(self, attr, 0 if val is None else int(val))  # Convert to ints with None being 0
+
+        self.web_url = web_url
+
+    @property
+    def league_profile(self):
+        """ Generate the player's CS:GO League profile link. """
+        if self.web_url:
+            return f'{self.web_url}/profile/{self.steam}'
 
     @property
     def steam_profile(self):
@@ -215,7 +223,7 @@ class ApiHelper:
         url = f'{self.base_url}/player/discord/{user_id}'
 
         async with self.session.get(url=url, headers=self.headers) as resp:
-            return Player(await resp.json())
+            return Player(await resp.json(), self.base_url)
 
     async def get_players(self, user_ids):
         """ Get multiple players' data from the API. """
@@ -224,7 +232,7 @@ class ApiHelper:
 
         async with self.session.post(url=url, headers=self.headers, json=discord_ids) as resp:
             players = await resp.json()
-            return [Player(player_data) for player_data in players]
+            return [Player(player_data, self.base_url) for player_data in players]
 
     async def start_match(self, team_one, team_two):
         """ Get a match server from the API. """
