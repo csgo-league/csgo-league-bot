@@ -154,6 +154,7 @@ class TeamDraftMenu(discord.Message):
             fat_kid_team = self.teams[0] if len(self.teams[0]) <= len(self.teams[1]) else self.teams[1]
             fat_kid_team.append(self.users_left.pop(0))
 
+        if len(self.users_left) == 0:
             if self.future is not None:
                 self.future.set_result(None)
 
