@@ -96,9 +96,11 @@ class TeamDraftMenu(discord.Message):
         # Get picking team
         if self.teams[0] == []:
             picking_team = self.teams[0]
+            self.users_left.remove(picker)
             picking_team.append(picker)
-        elif self.teams[1] == []:
+        elif self.teams[1] == [] and picker != self.teams[0][0]:
             picking_team = self.teams[1]
+            self.users_left.remove(picker)
             picking_team.append(picker)
         elif picker == self.teams[0][0]:
             picking_team = self.teams[0]
