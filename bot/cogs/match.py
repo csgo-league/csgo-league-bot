@@ -205,12 +205,13 @@ class TeamDraftMenu(discord.Message):
         self.bot.remove_listener(self._process_pick, name='on_reaction_add')
 
         # Return class to original state after team drafting is done
+        picked_teams = self.teams
         self.pick_number = None
         self.users_left = None
         self.teams = None
         self.future = None
 
-        return self.teams
+        return picked_teams
 
 
 class MatchCog(commands.Cog):
