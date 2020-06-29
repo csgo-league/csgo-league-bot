@@ -205,6 +205,7 @@ class TeamDraftMenu(discord.Message):
         self.bot.add_listener(self._process_pick, name='on_reaction_add')
         await asyncio.wait_for(self.future, 600)
         self.bot.remove_listener(self._process_pick, name='on_reaction_add')
+        await self.clear_reactions()
 
         # Return class to original state after team drafting is done
         picked_teams = self.teams
