@@ -224,8 +224,7 @@ class MatchCog(commands.Cog):
     def __init__(self, bot):
         """ Set attributes. """
         self.bot = bot
-        self.reactors = set()  # Track who has readied up
-        self.old_ready_message = []
+        self.pending_task = None
 
     async def draft_teams(self, message, users):
         """ Create a TeamDraftMenu from an existing message and run the draft. """
@@ -287,6 +286,7 @@ class MatchCog(commands.Cog):
         await ready_message.add_reaction(ready_emoji)
 
         # Wait for everyone to ready up
+        reactors = set()  # Track who has readied up
 
         def all_ready(reaction, user):
             """ Check if all players in the queue have readied up. """
@@ -294,22 +294,21 @@ class MatchCog(commands.Cog):
             if reaction.message.id != ready_message.id or user not in users or reaction.emoji != ready_emoji:
                 return False
 
-            self.reactors.add(user)
+            reactors.add(user)
 
-            if self.reactors.issuperset(users):  # All queued users have reacted
+            if reactors.issuperset(users):  # All queued users have reacted
                 return True
             else:
                 return False
 
         try:
-            self.reactors = set()  # Empty reactors for old message
-            for task in self.old_ready_message:
-                task.close()
+            if self.pending_task is not None:
+                self.pending_task.close()
 
-            self.old_ready_message.append(self.bot.wait_for('reaction_add', timeout=60.0, check=all_ready))
-            await self.old_ready_message[-1]
+            self.pending_task = self.bot.wait_for('reaction_add', timeout=60.0, check=all_ready)
+            await self.pending_task
         except asyncio.TimeoutError:  # Not everyone readied up
-            unreadied = set(users) - self.reactors
+            unreadied = set(users) - reactors
             awaitables = [
                 ready_message.clear_reactions(),
                 self.bot.db_helper.delete_queued_users(ctx.guild.id, *(user.id for user in unreadied))
@@ -320,12 +319,10 @@ class MatchCog(commands.Cog):
             burst_embed = self.bot.embed_template(title=title, description=description)
             burst_embed.set_footer(text='The missing players have been removed from the queue')
             await ready_message.edit(embed=burst_embed)
-            self.old_ready_message.clear()
-            self.reactors = set()  # Empty reactors for old message
             return False  # Not everyone readied up
         else:  # Everyone readied up
+            self.pending_task = None
             # Attempt to make teams and start match
-
             awaitables = [
                 ready_message.clear_reactions(),
                 self.bot.db_helper.get_guild(ctx.guild.id)
