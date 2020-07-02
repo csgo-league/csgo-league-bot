@@ -6,8 +6,6 @@ on:
       - develop
   pull_request:
     types: [opened, edited]
-    branches:
-      - develop
 
 jobs:
   build:
