@@ -45,9 +45,25 @@ class TeamDraftMenu(discord.Message):
                          u'\u0039\u20E3',
                          u'\U0001F51F']
         self.pick_emojis = dict(zip(emoji_numbers, users))
+        self.pick_order = '12211221'
+        self.pick_number = None
         self.users_left = None
         self.teams = None
         self.future = None
+
+    @property
+    def _active_picker(self):
+        """ Get the active picker using the pick order and nummber. """
+        if self.pick_number is None:
+            return None
+
+        picking_team_number = int(self.pick_order[self.pick_number])
+        picking_team = self.teams[picking_team_number - 1]  # Subtract 1 to get team's index
+
+        if len(picking_team) == 0:
+            return None
+
+        return picking_team[0]
 
     def _picker_embed(self, title):
         """ Generate the menu embed based on the current status of the team draft. """
@@ -76,26 +92,36 @@ class TeamDraftMenu(discord.Message):
         return embed
 
     def _pick_player(self, picker, pickee):
-        """ Process a team captain's player pick. """
-        if any(team == [] for team in self.teams) and picker in self.users:
-            picking_team = self.teams[self.teams.index([])]  # Get the first empty team
+        """ Process a team captain's player pick, assuming the picker is in the team draft. """
+        # Get picking team
+        if self.teams[0] == []:
+            picking_team = self.teams[0]
+            self.users_left.remove(picker)
+            picking_team.append(picker)
+        elif self.teams[1] == [] and picker != self.teams[0][0]:
+            picking_team = self.teams[1]
             self.users_left.remove(picker)
             picking_team.append(picker)
         elif picker == self.teams[0][0]:
             picking_team = self.teams[0]
         elif picker == self.teams[1][0]:
             picking_team = self.teams[1]
-        elif picker in self.users:
-            raise PickError(f'Picker {picker.mention} is not a team captain')
         else:
-            raise PickError(f'Picker {picker.mention} is not a user in the team draft')
+            raise PickError(f'Picker {picker.display_name} is not a team captain')
 
-        if len(picking_team) > len(self.users) // 2:  # Team is full
-            raise PickError(f'Team {picker.mention} is full')
+        # Check if it's picker's turn
+        if picker != self._active_picker:
+            raise PickError(f'It is not {picker.display_name}\'s turn to pick')
 
+        # Prevent picks when team is full
+        if len(picking_team) > len(self.users) // 2:
+            raise PickError(f'Team {picker.display_name} is full')
+
+        # Add pickee to team if user didn't pick themselves (which is only possible picking first as a volunteer)
         if not picker == pickee:
             self.users_left.remove(pickee)
             picking_team.append(pickee)
+            self.pick_number += 1
 
     async def _update_menu(self, title):
         """ Update the message to reflect the current status of the team draft. """
@@ -128,6 +154,7 @@ class TeamDraftMenu(discord.Message):
             fat_kid_team = self.teams[0] if len(self.teams[0]) <= len(self.teams[1]) else self.teams[1]
             fat_kid_team.append(self.users_left.pop(0))
 
+        if len(self.users_left) == 0:
             if self.future is not None:
                 self.future.set_result(None)
 
@@ -141,8 +168,10 @@ class TeamDraftMenu(discord.Message):
         guild_data = await self.bot.db_helper.get_guild(self.guild.id)
         self.users_left = self.users.copy()  # Copy users to edit players remaining in the player pool
         self.teams = [[], []]
+        self.pick_number = 0
         captain_method = guild_data['captain_method']
 
+        # Check captain methods
         if captain_method == 'rank':
             players = await self.bot.api_helper.get_players([user.id for user in self.users_left])
             players.sort(reverse=True, key=lambda x: x.score)
@@ -164,6 +193,7 @@ class TeamDraftMenu(discord.Message):
         else:
             raise ValueError(f'Captain method "{captain_method}" isn\'t valid')
 
+        # Edit input message and add emoji button reactions
         await self.edit(embed=self._picker_embed('Team draft has begun!'))
 
         items = self.pick_emojis.items()
@@ -176,8 +206,16 @@ class TeamDraftMenu(discord.Message):
         self.bot.add_listener(self._process_pick, name='on_reaction_add')
         await asyncio.wait_for(self.future, 600)
         self.bot.remove_listener(self._process_pick, name='on_reaction_add')
+        await self.clear_reactions()
 
-        return self.teams
+        # Return class to original state after team drafting is done
+        picked_teams = self.teams
+        self.pick_number = None
+        self.users_left = None
+        self.teams = None
+        self.future = None
+
+        return picked_teams
 
 
 class MatchCog(commands.Cog):

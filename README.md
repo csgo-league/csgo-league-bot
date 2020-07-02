@@ -71,7 +71,7 @@ If you appreciate the project then please take the time to star our repository.
 
 6. Apply the database migrations by running `python3 migrate.py up`.
 
-7. Run the launcher Python script, `launcher.py`.
+7. Run the launcher Python script by calling `python3 launcher.py`.
 
 *Note that currently the `mdraft` command depends on custom emojis to be used as buttons which are hardcoded [here](https://github.com/csgo-league/csgo-league-bot/blob/abb06e1876546bb3948094faa795e90184642882/qbot/cogs/mapdraft.py#L20). As of right now you will need to make the emojis yourself and replace the emoji code in the map objects there.*
 
