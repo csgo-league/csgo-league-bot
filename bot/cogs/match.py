@@ -268,13 +268,6 @@ class MatchCog(commands.Cog):
         team_size = len(temp_users) // 2
         return temp_users[:team_size], temp_users[team_size:]
 
-    def teams_embed(self, title, team_one, team_two):
-        """"""
-        embed = self.bot.embed_template(title=title)
-        embed.add_field(name='__Team 1__', value='\n'.join(user.mention for user in team_one))
-        embed.add_field(name='__Team 2__', value='\n'.join(user.mention for user in team_two))
-        return embed
-
     async def start_match(self, ctx, users):
         """ Ready all the users up and start a match. """
         # Notify everyone to ready up
