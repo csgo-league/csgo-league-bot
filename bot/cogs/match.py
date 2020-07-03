@@ -65,7 +65,7 @@ class TeamDraftMenu(discord.Message):
 
         return picking_team[0]
 
-    def _picker_embed(self, title):
+    def _draft_embed(self, title):
         """ Generate the menu embed based on the current status of the team draft. """
         embed = self.bot.embed_template(title=title)
         embed.set_footer(text='React to any of the numbers below to pick the corresponding user')
@@ -125,7 +125,7 @@ class TeamDraftMenu(discord.Message):
 
     async def _update_menu(self, title):
         """ Update the message to reflect the current status of the team draft. """
-        await self.edit(embed=self._picker_embed(title))
+        await self.edit(embed=self._draft_embed(title))
         items = self.pick_emojis.items()
         awaitables = [self.clear_reaction(emoji) for emoji, user in items if user not in self.users_left]
         await asyncio.gather(*awaitables, loop=self.bot.loop)
@@ -194,7 +194,7 @@ class TeamDraftMenu(discord.Message):
             raise ValueError(f'Captain method "{captain_method}" isn\'t valid')
 
         # Edit input message and add emoji button reactions
-        await self.edit(embed=self._picker_embed('Team draft has begun!'))
+        await self.edit(embed=self._draft_embed('Team draft has begun!'))
 
         items = self.pick_emojis.items()
         for emoji, user in items:
