@@ -224,7 +224,7 @@ class MatchCog(commands.Cog):
     def __init__(self, bot):
         """ Set attributes. """
         self.bot = bot
-        self.pending_task = {}
+        self.pending_ready_tasks = {}
 
     async def draft_teams(self, message, users):
         """ Create a TeamDraftMenu from an existing message and run the draft. """
@@ -302,11 +302,11 @@ class MatchCog(commands.Cog):
                 return False
 
         try:
-            if ctx.guild in self.pending_task:
-                self.pending_task[ctx.guild].close()
+            if ctx.guild in self.pending_ready_tasks:
+                self.pending_ready_tasks[ctx.guild].close()
                 
-            self.pending_task[ctx.guild.id] = self.bot.wait_for('reaction_add', timeout=60.0, check=all_ready)
-            await self.pending_task[ctx.guild]
+            self.pending_ready_tasks[ctx.guild.id] = self.bot.wait_for('reaction_add', timeout=60.0, check=all_ready)
+            await self.pending_ready_tasks[ctx.guild]
         except asyncio.TimeoutError:  # Not everyone readied up
             unreadied = set(users) - reactors
             awaitables = [
@@ -321,7 +321,7 @@ class MatchCog(commands.Cog):
             await ready_message.edit(embed=burst_embed)
             return False  # Not everyone readied up
         else:  # Everyone readied up
-            self.pending_task.pop(ctx.guild)
+            self.pending_ready_tasks.pop(ctx.guild)
             # Attempt to make teams and start match
             awaitables = [
                 ready_message.clear_reactions(),
