@@ -65,7 +65,7 @@ class TeamDraftMenu(discord.Message):
 
         return picking_team[0]
 
-    def _picker_embed(self, title):
+    def _draft_embed(self, title):
         """ Generate the menu embed based on the current status of the team draft. """
         embed = self.bot.embed_template(title=title)
         embed.set_footer(text='React to any of the numbers below to pick the corresponding user')
@@ -125,7 +125,7 @@ class TeamDraftMenu(discord.Message):
 
     async def _update_menu(self, title):
         """ Update the message to reflect the current status of the team draft. """
-        await self.edit(embed=self._picker_embed(title))
+        await self.edit(embed=self._draft_embed(title))
         items = self.pick_emojis.items()
         awaitables = [self.clear_reaction(emoji) for emoji, user in items if user not in self.users_left]
         await asyncio.gather(*awaitables, loop=self.bot.loop)
@@ -194,7 +194,7 @@ class TeamDraftMenu(discord.Message):
             raise ValueError(f'Captain method "{captain_method}" isn\'t valid')
 
         # Edit input message and add emoji button reactions
-        await self.edit(embed=self._picker_embed('Team draft has begun!'))
+        await self.edit(embed=self._draft_embed('Team draft has begun!'))
 
         items = self.pick_emojis.items()
         for emoji, user in items:
@@ -267,13 +267,6 @@ class MatchCog(commands.Cog):
         random.shuffle(temp_users)
         team_size = len(temp_users) // 2
         return temp_users[:team_size], temp_users[team_size:]
-
-    def teams_embed(self, title, team_one, team_two):
-        """"""
-        embed = self.bot.embed_template(title=title)
-        embed.add_field(name='__Team 1__', value='\n'.join(user.mention for user in team_one))
-        embed.add_field(name='__Team 2__', value='\n'.join(user.mention for user in team_two))
-        return embed
 
     async def start_match(self, ctx, users):
         """ Ready all the users up and start a match. """
