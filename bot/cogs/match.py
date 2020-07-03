@@ -302,11 +302,11 @@ class MatchCog(commands.Cog):
                 return False
 
         try:
-            if str(ctx.guild.id) in self.pending_task.keys():
-                self.pending_task[str(ctx.guild.id)].close()
+            if ctx.guild in self.pending_task:
+                self.pending_task[ctx.guild].close()
                 
-            self.pending_task.update({str(ctx.guild.id): self.bot.wait_for('reaction_add', timeout=60.0, check=all_ready)})
-            await self.pending_task[str(ctx.guild.id)]
+            self.pending_task[ctx.guild.id] = self.bot.wait_for('reaction_add', timeout=60.0, check=all_ready)
+            await self.pending_task[ctx.guild]
         except asyncio.TimeoutError:  # Not everyone readied up
             unreadied = set(users) - reactors
             awaitables = [
@@ -321,7 +321,7 @@ class MatchCog(commands.Cog):
             await ready_message.edit(embed=burst_embed)
             return False  # Not everyone readied up
         else:  # Everyone readied up
-            self.pending_task.pop(str(ctx.guild.id))
+            self.pending_task.pop(ctx.guild)
             # Attempt to make teams and start match
             awaitables = [
                 ready_message.clear_reactions(),
