@@ -305,7 +305,7 @@ class MatchCog(commands.Cog):
             if ctx.guild in self.pending_ready_tasks:
                 self.pending_ready_tasks[ctx.guild].close()
 
-            self.pending_ready_tasks[ctx.guild.id] = self.bot.wait_for('reaction_add', timeout=60.0, check=all_ready)
+            self.pending_ready_tasks[ctx.guild] = self.bot.wait_for('reaction_add', timeout=60.0, check=all_ready)
             await self.pending_ready_tasks[ctx.guild]
         except asyncio.TimeoutError:  # Not everyone readied up
             unreadied = set(users) - reactors
