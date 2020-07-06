@@ -609,3 +609,56 @@ class MatchCog(commands.Cog):
             title = f'Cannot set {ctx.command.name} method without {missing_perm} permission!'
             embed = self.bot.embed_template(title=title)
             await ctx.send(embed=embed)
+
+    @commands.command(usage='mpool {+|-}<map name> ...',
+                      brief='Add or remove maps from the map pool (must have admin perms)')
+    @commands.has_permissions(administrator=True)
+    async def mpool(self, ctx, *args):
+        """ Edit the guild's map pool for map drafts. """
+        guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
+        map_pool = [m.dev_name for m in MAPS if guild_data[m.dev_name]]
+
+        if len(args) == 0:
+            embed = self.bot.embed_template(title='Current map pool')
+        else:
+            description = ''
+            any_wrong_arg = False  # Indicates if the command was used correctly
+
+            for arg in args:
+                map_name = arg[1:]  # Remove +/- prefix
+                map_obj = next((m for m in MAPS if m.dev_name == map_name), None)
+
+                if map_obj is None:
+                    description += f'\u2022 Could not interpret `{arg}`\n'
+                    any_wrong_arg = True
+                    continue
+
+                if arg.startswith('+'):  # Add map
+                    if map_name not in map_pool:
+                        map_pool.append(map_name)
+                        description += f'\u2022 Added `{map_name}`\n'
+                elif arg.startswith('-'):  # Remove map
+                    if map_name in map_pool:
+                        map_pool.remove(map_name)
+                        description += f'\u2022 Removed `{map_name}`\n'
+
+            if len(map_pool) < 3:
+                description = 'Pool cannot have fewer than 3 maps!'
+            else:
+                map_pool_data = {m.dev_name: m.dev_name in map_pool for m in MAPS}
+                await self.bot.db_helper.update_guild(ctx.guild.id, **map_pool_data)
+
+            embed = self.bot.embed_template(title='Modified map pool', description=description)
+
+            if any_wrong_arg:  # Add example usage footer if command was used incorrectly
+                embed.set_footer(text=f'Ex: {self.bot.command_prefix[0]}mpool +de_cache -de_mirage')
+
+        active_maps = ''.join(f'{m.emoji}  `{m.dev_name}`\n' for m in MAPS if m.dev_name in map_pool)
+        inactive_maps = ''.join(f'{m.emoji}  `{m.dev_name}`\n' for m in MAPS if m.dev_name not in map_pool)
+
+        if not inactive_maps:
+            inactive_maps = '*None*'
+
+        embed.add_field(name='__Active Maps__', value=active_maps)
+        embed.add_field(name='__Inactive Maps__', value=inactive_maps)
+        await ctx.send(embed=embed)
