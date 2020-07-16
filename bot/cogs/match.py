@@ -602,20 +602,22 @@ class MatchCog(commands.Cog):
 
             # Check if able to get a match server and edit message embed accordingly
             try:
-                match = await self.bot.api_helper.start_match(team_one, team_two)  # Request match from API
+                match = await self.bot.api_helper.start_match(team_one, team_two, map_pick.dev_name)  # API start match
             except aiohttp.ClientResponseError as e:
                 description = 'Sorry! Looks like there aren\'t any servers available at this time. ' \
                               'Please try again later.'
                 burst_embed = self.bot.embed_template(title='There was a problem!', description=description)
                 traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)  # Print exception to stderr
             else:
-                description = f'URL: {match.connect_url}\nCommand: `{match.connect_command}`'
+                description = f'URL: {match.connect_url}\nCommand: `{match.connect_command}`' \
+                              f'\n\nMap: **{map_pick.name}** {map_pick.emoji}'
                 burst_embed = self.bot.embed_template(title='Match server is ready!', description=description)
 
                 for team in [team_one, team_two]:
                     team_name = f'__Team {team[0].display_name}__'
                     burst_embed.add_field(name=team_name, value='\n'.join(user.mention for user in team))
 
+                burst_embed.set_thumbnail(url=map_pick.image_url)
                 burst_embed.set_footer(text='Server will close after 5 minutes if anyone doesn\'t join')
 
             await ready_message.edit(embed=burst_embed)

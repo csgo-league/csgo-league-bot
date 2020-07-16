@@ -234,13 +234,16 @@ class ApiHelper:
             players = await resp.json()
             return [Player(player_data, self.base_url) for player_data in players]
 
-    async def start_match(self, team_one, team_two):
+    async def start_match(self, team_one, team_two, map_pick=None):
         """ Get a match server from the API. """
         url = f'{self.base_url}/match/start'
-        teams = {
+        data = {
             'team_one': {user.id: user.display_name for user in team_one},
             'team_two': {user.id: user.display_name for user in team_two}
         }
 
-        async with self.session.post(url=url, headers=self.headers, json=teams) as resp:
+        if map_pick:
+            data['maps'] = map_pick
+
+        async with self.session.post(url=url, headers=self.headers, json=data) as resp:
             return MatchServer(await resp.json())
