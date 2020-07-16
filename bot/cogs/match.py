@@ -361,6 +361,98 @@ class MapDraftMenu(discord.Message):
         return map_pick
 
 
+class MapVoteMenu(discord.Message):
+    """ Message containing the components for a map draft. """
+
+    def __init__(self, message, bot, users):
+        """ Copy constructor from a message and specific team draft args. """
+        # Copy all attributes from message object
+        for attr_name in message.__slots__:
+            try:
+                attr_val = getattr(message, attr_name)
+            except AttributeError:
+                continue
+
+            setattr(self, attr_name, attr_val)
+
+        # Add custom attributes
+        self.bot = bot
+        self.users = users
+        self.voted_users = None
+        self.map_pool = None
+        self.map_choices = None
+        self.map_votes = None
+        self.future = None
+
+    async def _process_vote(self, reaction, user):
+        """"""
+        # Check that reaction is on this message and user is a captain
+        if reaction.message.id != self.id or user not in self.users:
+            return
+
+        # Add map vote if it is valid
+        if user in self.voted_users:
+            return
+
+        self.map_votes[str(reaction)] += 1
+        self.voted_users.add(user)
+
+        # Check if the voting is over
+        if len(self.voted_users) == len(self.users):
+            if self.future is not None:
+                self.future.set_result(None)
+
+    async def vote(self):
+        """"""
+        self.voted_users = set()
+        guild_data = await self.bot.db_helper.get_guild(self.guild.id)
+        self.map_pool = [m for m in MAPS if guild_data[m.dev_name]]
+        random.shuffle(self.map_pool)
+        self.map_choices = self.map_pool[:2]
+        self.map_votes = {m.emoji: 0 for m in self.map_pool[:2]}
+        description = '\n'.join(f'{m.emoji} {m.name}' for m in self.map_choices)
+        embed = self.bot.embed_template(title='Map vote started! (1 min)', description=description)
+        embed.set_footer(text='React to either of the map icons below to vote for the corresponding map')
+        await self.edit(embed=embed)
+
+        for map_option in self.map_choices:
+            await self.add_reaction(map_option.emoji)
+
+        # Add listener handlers and wait until there are no maps left to ban
+        self.future = self.bot.loop.create_future()
+        self.bot.add_listener(self._process_vote, name='on_reaction_add')
+
+        try:
+            await asyncio.wait_for(self.future, 60)
+        except asyncio.TimeoutError:
+            pass
+
+        self.bot.remove_listener(self._process_vote, name='on_reaction_add')
+        await self.clear_reactions()
+
+        # Gather results
+        winners_emoji = []
+        winners_votes = 0
+
+        for emoji, votes in self.map_votes.items():
+            if votes > winners_votes:
+                winners_emoji.clear()
+                winners_emoji.append(emoji)
+                winners_votes = votes
+            elif votes == winners_votes:
+                winners_emoji.append(emoji)
+
+        winner_emoji = winners_emoji[0] if len(winners_emoji) == 1 else random.choice(winners_emoji)
+        winner_map = [m for m in self.map_pool if m.emoji == winner_emoji][0]
+
+        # Return class to original state after map drafting is done
+        self.map_pool = None
+        self.map_choices = None
+        self.map_votes = None
+        self.future = None
+
+        return winner_map
+
 class MatchCog(commands.Cog):
     """ Handles everything needed to create matches. """
 
@@ -416,6 +508,12 @@ class MatchCog(commands.Cog):
         menu = MapDraftMenu(message, self.bot)
         map_pick = await menu.draft(captain_1, captain_2)
         return map_pick
+
+    async def vote_maps(self, message, users):
+        """"""
+        menu = MapVoteMenu(message, self.bot, users)
+        voted_map = await menu.vote()
+        return voted_map
 
     async def random_map(self, guild):
         """"""
@@ -493,7 +591,7 @@ class MatchCog(commands.Cog):
             if map_method == 'captains':
                 map_pick = await self.draft_maps(ready_message, team_one[0], team_two[0])
             elif map_method == 'vote':
-                map_pick = await self.random_map(ctx.guild)  # TODO: Create map voting menu from 2-3 maps
+                map_pick = await self.vote_maps(ready_message, users)
             elif map_method == 'random':
                 map_pick = await self.random_map(ctx.guild)
             else:
