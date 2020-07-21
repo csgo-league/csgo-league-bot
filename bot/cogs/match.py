@@ -280,10 +280,11 @@ class MapDraftMenu(discord.Message):
         embed = self.bot.embed_template(title=title)
         embed.set_footer(text='React to any of the map icons below to ban the corresponding map')
         maps_str = ''
+        x_emoji = ':heavy_multiplication_x:'
 
         if self.map_pool is not None and self.maps_left is not None:
             for m in self.map_pool:
-                maps_str += f'{m.emoji}  {m.name}\n' if m.emoji in self.maps_left else f':heavy_multiplication_x:  ~~{m.name}~~\n'
+                maps_str += f'{m.emoji}  {m.name}\n' if m.emoji in self.maps_left else f'{x_emoji}  ~~{m.name}~~\n'
 
         status_str = ''
 
@@ -334,7 +335,7 @@ class MapDraftMenu(discord.Message):
         self.maps_left = {m.emoji: m for m in self.map_pool}
         self.ban_number = 0
 
-        if len(map_pool) % 2 == 0:
+        if len(self.map_pool) % 2 == 0:
             self.captains.reverse()
 
         # Edit input message and add emoji button reactions
@@ -452,6 +453,7 @@ class MapVoteMenu(discord.Message):
         self.future = None
 
         return winner_map
+
 
 class MatchCog(commands.Cog):
     """ Handles everything needed to create matches. """
