@@ -93,6 +93,10 @@ If you appreciate the project then please take the time to star our repository.
 
 `q!captains [{volunteer|rank|random}]` **-** Set or view the captain selection method (must have admin perms)<br>
 
+`q!maps [{captains|vote|random}]` **-** Set or view the map selection method (must have admin perms)<br>
+
+`q!mpool {+|-}<map name> ...` **-** Add or remove maps from the map pool (must have admin perms)<br>
+
 `q!stats` **-** See your stats<br>
 
 `q!leaders` **-** See the top players in the server<br>
