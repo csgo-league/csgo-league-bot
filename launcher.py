@@ -77,8 +77,8 @@ def create_emojis(guild_id):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run the CS:GO League bot')
-    parser.add_argument('--emojis', '-e', type=int, required=False, metavar='guildID',
-                        help='create the necessary bot emojis in the guild of the specified ID')
+    parser.add_argument('-e', '--emojis', type=int, required=False, metavar='serverID',
+                        help='create the necessary bot emojis in the server of the specified ID')
     args = parser.parse_args()
 
     if args.emojis:
