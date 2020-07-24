@@ -2,8 +2,10 @@
 
 from bot.bot import LeagueBot
 
+import argparse
 import asyncio
 import asyncpg
+import discord
 from dotenv import load_dotenv
 import os
 
@@ -29,5 +31,58 @@ def run_bot():
     bot.run()
 
 
+def create_emojis(guild_id):
+    """"""
+    client = discord.Client(loop=asyncio.new_event_loop())
+
+    @client.event
+    async def on_ready():
+        """"""
+        guild = await client.fetch_guild(guild_id)
+        icon_dir = 'assets/maps/icons/'
+        reason = 'Used by the CS:GO League Bot'
+        existing_emojis = {emoji.name: emoji for emoji in guild.emojis}
+
+        for item in os.listdir(icon_dir):
+            if item.endswith('.png'):
+                emoji_name = item.split('.')[0]  # Remove file extension for emoji name
+
+                # Check if emoji already exists and if it was made by this bot
+                if emoji_name in existing_emojis:
+                    # Emoji user attribute only accessible with fetch_emoji()
+                    emoji = await guild.fetch_emoji(existing_emojis[emoji_name].id)
+
+                    if emoji.user == client.user:
+                        print(f'Emoji :{emoji_name}: already exists')
+                        continue
+
+                # Attempt to create emoji
+                try:
+                    with open(os.path.join(icon_dir, item), 'rb') as file:
+                        await guild.create_custom_emoji(name=emoji_name, image=file.read(), reason=reason)
+                except discord.Forbidden:
+                    print('Bot does not have permission to create custom emojis in the specified server')
+                    break
+                except discord.HTTPException as e:
+                    print(f'HTTP exception raised when creating emoji for "{item}": {e.text} ({e.code})')
+                else:
+                    print(f'Emoji :{emoji_name}: created successfully')
+
+        await client.close()
+
+    # Run the client with the token in the local .env file
+    load_dotenv()
+    client.run(os.environ['DISCORD_BOT_TOKEN'])
+
+
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Run the CS:GO League bot')
+    parser.add_argument('--emojis', '-e', type=int, required=False, metavar='guildID',
+                        help='create the necessary bot emojis in the guild of the specified ID')
+    args = parser.parse_args()
+
+    if args.emojis:
+        guild_id = args.emojis
+        create_emojis(guild_id)
+
     run_bot()
