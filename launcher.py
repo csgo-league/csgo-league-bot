@@ -29,8 +29,9 @@ def run_bot():
     if api_url.endswith('/'):
         api_url = api_url[:-1]
 
-    with open(EMOJI_FILE) as f:
-        emoji_dict = json.load(f)
+    try:
+        with open(EMOJI_FILE) as f:
+            emoji_dict = json.load(f)
     except OSError:
         print('Emoji file not found: Use the "-e" flag with your guild ID to create bot emojis')
     else:
