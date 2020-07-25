@@ -64,10 +64,11 @@ def create_emojis(guild_id):
                 # Check if emoji already exists and if it was made by this bot
                 if emoji_name in existing_emojis:
                     # Emoji user attribute only accessible with fetch_emoji()
-                    emoji = await guild.fetch_emoji(existing_emojis[emoji_name].id)
+                    existing_emoji = await guild.fetch_emoji(existing_emojis[emoji_name].id)
 
-                    if emoji.user == client.user:
-                        print(f'Emoji :{emoji_name}: already exists')
+                    if existing_emoji.user == client.user:
+                        print(f'Emoji :{existing_emoji.name}: already exists')
+                        emoji_dict[existing_emoji.name] = f'<:{existing_emoji.name}:{existing_emoji.id}>'
                         continue
 
                 # Attempt to create emoji
