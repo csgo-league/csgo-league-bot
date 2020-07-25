@@ -220,26 +220,28 @@ class TeamDraftMenu(discord.Message):
 
 class Map:
     """ A group of attributes representing a map. """
+    image_folder = 'https://raw.githubusercontent.com/csgo-league/csgo-league-bot/develop/assets/maps/images/'
+    icon_folder = 'https://raw.githubusercontent.com/csgo-league/csgo-league-bot/develop/assets/maps/icons/'
 
-    def __init__(self, name, dev_name, emoji, image_url):
+    def __init__(self, name, dev_name, emoji):
         """ Set attributes. """
         self.name = name
         self.dev_name = dev_name
         self.emoji = emoji
-        self.image_url = image_url
+        self.image_url = f'{self.image_folder}{self.dev_name}.jpg'
+        self.icon_url = f'{self.icon_folder}{self.dev_name}.png'
 
 
-IMAGE_FOLDER = 'https://raw.githubusercontent.com/csgo-league/csgo-league-bot/develop/assets/maps/images/'
 MAPS = [
-    Map('Cache', 'de_cache', '<:de_cache:693554472525365271>', f'{IMAGE_FOLDER}de_cache.jpg'),
-    Map('Cobblestone', 'de_cbble', '<:de_cbble:693554473276145774>', f'{IMAGE_FOLDER}de_cbble.jpg'),
-    Map('Dust II', 'de_dust2', '<:de_dust2:693554474085515286>', f'{IMAGE_FOLDER}de_dust2.jpg'),
-    Map('Inferno', 'de_inferno', '<:de_inferno:693554475356520512>', f'{IMAGE_FOLDER}de_inferno.jpg'),
-    Map('Mirage', 'de_mirage', '<:de_mirage:693554473993502750>', f'{IMAGE_FOLDER}de_mirage.jpg'),
-    Map('Nuke', 'de_nuke', '<:de_nuke:693554474391830549>', f'{IMAGE_FOLDER}de_nuke.jpg'),
-    Map('Overpass', 'de_overpass', '<:de_overpass:693554473624141865>', f'{IMAGE_FOLDER}de_overpass.jpg'),
-    Map('Train', 'de_train', '<:de_train:693554473800302682>', f'{IMAGE_FOLDER}de_train.jpg'),
-    Map('Vertigo', 'de_vertigo', '<:de_vertigo:693554473829662771>', f'{IMAGE_FOLDER}de_vertigo.jpg')
+    Map('Cache', 'de_cache', '<:de_cache:736245155081748530>'),
+    Map('Cobblestone', 'de_cbble', '<:de_cbble:736245157187420330>'),
+    Map('Dust II', 'de_dust2', '<:de_dust2:736245158491979826>'),
+    Map('Inferno', 'de_inferno', '<:de_inferno:736245160794652714>'),
+    Map('Mirage', 'de_mirage', '<:de_mirage:736245162828759123>'),
+    Map('Nuke', 'de_nuke', '<:de_nuke:736245166049984562>'),
+    Map('Overpass', 'de_overpass', '<:de_overpass:736245167463596072>'),
+    Map('Train', 'de_train', '<:de_train:736245168432480378>'),
+    Map('Vertigo', 'de_vertigo', '<:de_vertigo:736245170089230378>')
 ]
 
 
@@ -611,9 +613,9 @@ class MatchCog(commands.Cog):
                 burst_embed = self.bot.embed_template(title='There was a problem!', description=description)
                 traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)  # Print exception to stderr
             else:
-                description = f'URL: {match.connect_url}\nCommand: `{match.connect_command}`' \
-                              f'\n\nMap: **{map_pick.name}** {map_pick.emoji}'
+                description = f'URL: {match.connect_url}\nCommand: `{match.connect_command}`'
                 burst_embed = self.bot.embed_template(title='Match server is ready!', description=description)
+                burst_embed.set_author(name=f'Match #{match.id}', url=match.match_page, icon_url=map_pick.icon_url)
 
                 for team in [team_one, team_two]:
                     team_name = f'__Team {team[0].display_name}__'
