@@ -67,7 +67,7 @@ def create_emojis(guild_id):
                     existing_emoji = await guild.fetch_emoji(existing_emojis[emoji_name].id)
 
                     if existing_emoji.user == client.user:
-                        print(f'Emoji :{existing_emoji.name}: already exists')
+                        print(f'Emoji :{existing_emoji.name}: has already been created in the server, updating')
                         emoji_dict[existing_emoji.name] = f'<:{existing_emoji.name}:{existing_emoji.id}>'
                         continue
 
@@ -99,7 +99,7 @@ def create_emojis(guild_id):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run the CS:GO League bot')
     parser.add_argument('-e', '--emojis', type=int, required=False, metavar='serverID',
-                        help='create the necessary bot emojis in the server of the specified ID')
+                        help='create necessary bot emojis in the specified server and save the info to a JSON file')
     args = parser.parse_args()
 
     if args.emojis:
