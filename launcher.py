@@ -29,7 +29,7 @@ def run_bot():
     if api_url.endswith('/'):
         api_url = api_url[:-1]
 
-    with open(EMOJI_FILE, 'r') as f:
+    with open(EMOJI_FILE) as f:
         emoji_dict = json.load(f)
 
     bot = LeagueBot(bot_token, api_url, api_key, db_pool, emoji_dict)
@@ -49,7 +49,7 @@ def create_emojis(guild_id):
         existing_emojis = {emoji.name: emoji for emoji in guild.emojis}
 
         if os.path.exists(EMOJI_FILE):
-            with open(EMOJI_FILE, 'r') as f:
+            with open(EMOJI_FILE) as f:
                 emoji_dict = json.load(f)
         else:
             emoji_dict = {}
