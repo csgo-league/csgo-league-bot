@@ -39,10 +39,11 @@ class QueueCog(commands.Cog):
         """ Send embed message and delete the last one sent. """
         msg = self.last_queue_msgs.get(ctx.guild)
 
-        try:
-            await msg.delete()
-        except discord.errors.NotFound:
-            pass
+        if msg is not None:
+            try:
+                await msg.delete()
+            except discord.errors.NotFound:
+                pass
 
         self.last_queue_msgs[ctx.guild] = await ctx.send(embed=embed)
 
