@@ -232,6 +232,20 @@ class Map:
         self.icon_url = f'{self.icon_folder}{self.dev_name}.png'
 
 
+def all_maps(bot):
+    return [
+        Map('Cache', 'de_cache', bot.emoji_dict['de_cache']),
+        Map('Cobblestone', 'de_cbble', bot.emoji_dict['de_cbble']),
+        Map('Dust II', 'de_dust2', bot.emoji_dict['de_dust2']),
+        Map('Inferno', 'de_inferno', bot.emoji_dict['de_inferno']),
+        Map('Mirage', 'de_mirage', bot.emoji_dict['de_mirage']),
+        Map('Nuke', 'de_nuke', bot.emoji_dict['de_nuke']),
+        Map('Overpass', 'de_overpass', bot.emoji_dict['de_overpass']),
+        Map('Train', 'de_train', bot.emoji_dict['de_train']),
+        Map('Vertigo', 'de_vertigo', bot.emoji_dict['de_vertigo'])
+    ]
+
+
 class MapDraftMenu(discord.Message):
     """ Message containing the components for a map draft. """
 
@@ -249,17 +263,7 @@ class MapDraftMenu(discord.Message):
         # Add custom attributes
         self.bot = bot
         self.ban_order = '12121212'
-        self.all_maps = [
-            Map('Cache', 'de_cache', self.bot.emoji_dict['de_cache']),
-            Map('Cobblestone', 'de_cbble', self.bot.emoji_dict['de_cbble']),
-            Map('Dust II', 'de_dust2', self.bot.emoji_dict['de_dust2']),
-            Map('Inferno', 'de_inferno', self.bot.emoji_dict['de_inferno']),
-            Map('Mirage', 'de_mirage', self.bot.emoji_dict['de_mirage']),
-            Map('Nuke', 'de_nuke', self.bot.emoji_dict['de_nuke']),
-            Map('Overpass', 'de_overpass', self.bot.emoji_dict['de_overpass']),
-            Map('Train', 'de_train', self.bot.emoji_dict['de_train']),
-            Map('Vertigo', 'de_vertigo', self.bot.emoji_dict['de_vertigo'])
-        ]
+        self.all_maps = all_maps(self.bot)
         self.captains = None
         self.map_pool = None
         self.maps_left = None
@@ -379,6 +383,7 @@ class MapVoteMenu(discord.Message):
         # Add custom attributes
         self.bot = bot
         self.users = users
+        self.all_maps = all_maps(self.bot)
         self.voted_users = None
         self.map_pool = None
         self.map_choices = None
@@ -462,6 +467,7 @@ class MatchCog(commands.Cog):
         """ Set attributes. """
         self.bot = bot
         self.pending_ready_tasks = {}
+        self.all_maps = all_maps(self.bot)
 
     async def draft_teams(self, message, users):
         """ Create a TeamDraftMenu from an existing message and run the draft. """
