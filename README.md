@@ -64,7 +64,7 @@ If you appreciate the project then please take the time to star our repository.
 
 8. Apply the database migrations by running `python3 migrate.py up`.
 
-9. Run the launcher Python script by calling `python3 launcher.py -e {server ID}`. You will only need to use the `-e` flag when running for the first time to create the emojis in your server. Look [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-#) for help finding your Discord server's ID.
+9. Run the launcher Python script by calling `python3 launcher.py -e {server ID}`. You will only need to use the `-e` flag when running for the first time to create the emojis in your server (be sure to give the bot the "manage emojis" permission in your server). Look [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-#) for help finding your Discord server's ID.
 
 ## Commands
 `q!help` **-** Display the help menu<br>
