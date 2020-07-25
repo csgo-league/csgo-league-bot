@@ -232,19 +232,6 @@ class Map:
         self.icon_url = f'{self.icon_folder}{self.dev_name}.png'
 
 
-MAPS = [
-    Map('Cache', 'de_cache', '<:de_cache:736245155081748530>'),
-    Map('Cobblestone', 'de_cbble', '<:de_cbble:736245157187420330>'),
-    Map('Dust II', 'de_dust2', '<:de_dust2:736245158491979826>'),
-    Map('Inferno', 'de_inferno', '<:de_inferno:736245160794652714>'),
-    Map('Mirage', 'de_mirage', '<:de_mirage:736245162828759123>'),
-    Map('Nuke', 'de_nuke', '<:de_nuke:736245166049984562>'),
-    Map('Overpass', 'de_overpass', '<:de_overpass:736245167463596072>'),
-    Map('Train', 'de_train', '<:de_train:736245168432480378>'),
-    Map('Vertigo', 'de_vertigo', '<:de_vertigo:736245170089230378>')
-]
-
-
 class MapDraftMenu(discord.Message):
     """ Message containing the components for a map draft. """
 
@@ -262,6 +249,17 @@ class MapDraftMenu(discord.Message):
         # Add custom attributes
         self.bot = bot
         self.ban_order = '12121212'
+        self.all_maps = [
+            Map('Cache', 'de_cache', self.bot.emoji_dict['de_cache']),
+            Map('Cobblestone', 'de_cbble', self.bot.emoji_dict['de_cbble']),
+            Map('Dust II', 'de_dust2', self.bot.emoji_dict['de_dust2']),
+            Map('Inferno', 'de_inferno', self.bot.emoji_dict['de_inferno']),
+            Map('Mirage', 'de_mirage', self.bot.emoji_dict['de_mirage']),
+            Map('Nuke', 'de_nuke', self.bot.emoji_dict['de_nuke']),
+            Map('Overpass', 'de_overpass', self.bot.emoji_dict['de_overpass']),
+            Map('Train', 'de_train', self.bot.emoji_dict['de_train']),
+            Map('Vertigo', 'de_vertigo', self.bot.emoji_dict['de_vertigo'])
+        ]
         self.captains = None
         self.map_pool = None
         self.maps_left = None
@@ -333,7 +331,7 @@ class MapDraftMenu(discord.Message):
         # Initialize draft
         guild_data = await self.bot.db_helper.get_guild(self.guild.id)
         self.captains = [captain_1, captain_2]
-        self.map_pool = [m for m in MAPS if guild_data[m.dev_name]]
+        self.map_pool = [m for m in self.all_maps if guild_data[m.dev_name]]
         self.maps_left = {m.emoji: m for m in self.map_pool}
         self.ban_number = 0
 
@@ -409,7 +407,7 @@ class MapVoteMenu(discord.Message):
         """"""
         self.voted_users = set()
         guild_data = await self.bot.db_helper.get_guild(self.guild.id)
-        self.map_pool = [m for m in MAPS if guild_data[m.dev_name]]
+        self.map_pool = [m for m in self.all_maps if guild_data[m.dev_name]]
         random.shuffle(self.map_pool)
         self.map_choices = self.map_pool[:2]
         self.map_votes = {m.emoji: 0 for m in self.map_pool[:2]}
@@ -522,7 +520,7 @@ class MatchCog(commands.Cog):
     async def random_map(self, guild):
         """"""
         guild_data = await self.bot.db_helper.get_guild(guild.id)
-        map_pool = [m for m in MAPS if guild_data[m.dev_name]]
+        map_pool = [m for m in self.all_maps if guild_data[m.dev_name]]
         return random.choice(map_pool)
 
     async def start_match(self, ctx, users):
@@ -720,7 +718,7 @@ class MatchCog(commands.Cog):
     async def mpool(self, ctx, *args):
         """ Edit the guild's map pool for map drafts. """
         guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
-        map_pool = [m.dev_name for m in MAPS if guild_data[m.dev_name]]
+        map_pool = [m.dev_name for m in self.all_maps if guild_data[m.dev_name]]
 
         if len(args) == 0:
             embed = self.bot.embed_template(title='Current map pool')
@@ -730,7 +728,7 @@ class MatchCog(commands.Cog):
 
             for arg in args:
                 map_name = arg[1:]  # Remove +/- prefix
-                map_obj = next((m for m in MAPS if m.dev_name == map_name), None)
+                map_obj = next((m for m in self.all_maps if m.dev_name == map_name), None)
 
                 if map_obj is None:
                     description += f'\u2022 Could not interpret `{arg}`\n'
@@ -749,7 +747,7 @@ class MatchCog(commands.Cog):
             if len(map_pool) < 3:
                 description = 'Pool cannot have fewer than 3 maps!'
             else:
-                map_pool_data = {m.dev_name: m.dev_name in map_pool for m in MAPS}
+                map_pool_data = {m.dev_name: m.dev_name in map_pool for m in self.all_maps}
                 await self.bot.db_helper.update_guild(ctx.guild.id, **map_pool_data)
 
             embed = self.bot.embed_template(title='Modified map pool', description=description)
@@ -757,8 +755,8 @@ class MatchCog(commands.Cog):
             if any_wrong_arg:  # Add example usage footer if command was used incorrectly
                 embed.set_footer(text=f'Ex: {self.bot.command_prefix[0]}mpool +de_cache -de_mirage')
 
-        active_maps = ''.join(f'{m.emoji}  `{m.dev_name}`\n' for m in MAPS if m.dev_name in map_pool)
-        inactive_maps = ''.join(f'{m.emoji}  `{m.dev_name}`\n' for m in MAPS if m.dev_name not in map_pool)
+        active_maps = ''.join(f'{m.emoji}  `{m.dev_name}`\n' for m in self.all_maps if m.dev_name in map_pool)
+        inactive_maps = ''.join(f'{m.emoji}  `{m.dev_name}`\n' for m in self.all_maps if m.dev_name not in map_pool)
 
         if not inactive_maps:
             inactive_maps = '*None*'

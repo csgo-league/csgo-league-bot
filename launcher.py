@@ -7,8 +7,10 @@ import asyncio
 import asyncpg
 import discord
 from dotenv import load_dotenv
+import json
 import os
 
+EMOJI_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'emojis.json')
 load_dotenv()  # Load the environment variables in the local .env file
 
 
@@ -27,7 +29,10 @@ def run_bot():
     if api_url.endswith('/'):
         api_url = api_url[:-1]
 
-    bot = LeagueBot(bot_token, api_url, api_key, db_pool)
+    with open(EMOJI_FILE, 'r') as f:
+        emoji_dict = json.load(f)
+
+    bot = LeagueBot(bot_token, api_url, api_key, db_pool, emoji_dict)
     bot.run()
 
 
@@ -42,6 +47,12 @@ def create_emojis(guild_id):
         icon_dir = 'assets/maps/icons/'
         reason = 'Used by the CS:GO League Bot'
         existing_emojis = {emoji.name: emoji for emoji in guild.emojis}
+
+        if os.path.exists(EMOJI_FILE):
+            with open(EMOJI_FILE, 'r') as f:
+                emoji_dict = json.load(f)
+        else:
+            emoji_dict = {}
 
         for item in os.listdir(icon_dir):
             if item.endswith('.png'):
@@ -59,14 +70,20 @@ def create_emojis(guild_id):
                 # Attempt to create emoji
                 try:
                     with open(os.path.join(icon_dir, item), 'rb') as file:
-                        await guild.create_custom_emoji(name=emoji_name, image=file.read(), reason=reason)
+                        new_emoji = await guild.create_custom_emoji(name=emoji_name, image=file.read(), reason=reason)
                 except discord.Forbidden:
                     print('Bot does not have permission to create custom emojis in the specified server')
                     break
                 except discord.HTTPException as e:
                     print(f'HTTP exception raised when creating emoji for "{item}": {e.text} ({e.code})')
+                except Exception as e:
+                    print(f'Exception {e} occurred')
                 else:
                     print(f'Emoji :{emoji_name}: created successfully')
+                    emoji_dict[new_emoji.name] = f'<:{new_emoji.name}:{new_emoji.id}>'
+
+        with open(EMOJI_FILE, 'w+') as f:
+            json.dump(emoji_dict, f)
 
         await client.close()
 

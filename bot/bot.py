@@ -15,7 +15,7 @@ import traceback
 class LeagueBot(commands.AutoShardedBot):
     """ Sub-classed AutoShardedBot modified to fit the needs of the application. """
 
-    def __init__(self, discord_token, api_base_url, api_key, db_pool, donate_url=None):
+    def __init__(self, discord_token, api_base_url, api_key, db_pool, emoji_dict, donate_url=None):
         """ Set attributes and configure bot. """
         # Call parent init
         super().__init__(command_prefix=('q!', 'Q!'), case_insensitive=True)
@@ -25,6 +25,7 @@ class LeagueBot(commands.AutoShardedBot):
         self.api_base_url = api_base_url
         self.api_key = api_key
         self.db_pool = db_pool
+        self.emoji_dict = emoji_dict
         self.donate_url = donate_url
 
         # Set constants
