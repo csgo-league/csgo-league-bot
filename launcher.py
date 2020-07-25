@@ -31,9 +31,11 @@ def run_bot():
 
     with open(EMOJI_FILE) as f:
         emoji_dict = json.load(f)
-
-    bot = LeagueBot(bot_token, api_url, api_key, db_pool, emoji_dict)
-    bot.run()
+    except OSError:
+        print('Emoji file not found: Use the "-e" flag with your guild ID to create bot emojis')
+    else:
+        bot = LeagueBot(bot_token, api_url, api_key, db_pool, emoji_dict)
+        bot.run()
 
 
 def create_emojis(guild_id):
