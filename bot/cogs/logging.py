@@ -1,7 +1,6 @@
 # console.py
 
 import __main__
-import datetime
 from discord.ext import commands
 import logging
 from logging import handlers
@@ -29,6 +28,7 @@ def format_dec(log_func):
         log_func(*new_args, **kwargs)
 
     return log_formatted
+
 
 class LoggingCog(commands.Cog):
     """ Does the console printing of the bot. """
