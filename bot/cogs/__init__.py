@@ -1,7 +1,7 @@
 # __init__.py
 
 from .auth import AuthCog
-from .console import ConsoleCog
+from .logging import LoggingCog
 from .donate import DonateCog
 from .help import HelpCog
 from .queue import QueueCog
@@ -10,7 +10,7 @@ from .match import MatchCog
 
 __all__ = [
     AuthCog,
-    ConsoleCog,
+    LoggingCog,
     DonateCog,
     HelpCog,
     QueueCog,
