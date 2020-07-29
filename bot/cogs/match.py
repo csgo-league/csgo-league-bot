@@ -9,6 +9,19 @@ import sys
 import traceback
 
 
+EMOJI_NUMBERS = [u'\u0030\u20E3',
+                u'\u0031\u20E3',
+                u'\u0032\u20E3',
+                u'\u0033\u20E3',
+                u'\u0034\u20E3',
+                u'\u0035\u20E3',
+                u'\u0036\u20E3',
+                u'\u0037\u20E3',
+                u'\u0038\u20E3',
+                u'\u0039\u20E3',
+                u'\U0001F51F']
+
+
 class PickError(ValueError):
     """ Raised when a team draft pick is invalid for some reason. """
 
@@ -34,17 +47,7 @@ class TeamDraftMenu(discord.Message):
         # Add custom attributes
         self.bot = bot
         self.users = users
-        emoji_numbers = [u'\u0031\u20E3',
-                         u'\u0032\u20E3',
-                         u'\u0033\u20E3',
-                         u'\u0034\u20E3',
-                         u'\u0035\u20E3',
-                         u'\u0036\u20E3',
-                         u'\u0037\u20E3',
-                         u'\u0038\u20E3',
-                         u'\u0039\u20E3',
-                         u'\U0001F51F']
-        self.pick_emojis = dict(zip(emoji_numbers, users))
+        self.pick_emojis = dict(zip(EMOJI_NUMBERS[1:], users))
         self.pick_order = '12211221'
         self.pick_number = None
         self.users_left = None
@@ -390,6 +393,13 @@ class MapVoteMenu(discord.Message):
         self.map_votes = None
         self.future = None
 
+    def _vote_embed(self):
+        embed = self.bot.embed_template(title='Map vote started! (1 min)')
+        embed.add_field(name="Map", value='\n\n'.join(f'{m.emoji} {m.name}' for m in self.map_pool), inline=True)
+        embed.add_field(name="Votes", value='\n\n'.join(EMOJI_NUMBERS[self.map_votes[m.emoji]] for m in self.map_pool), inline=True)
+        embed.set_footer(text='React to either of the map icons below to vote for the corresponding map')
+        return embed
+
     async def _process_vote(self, reaction, user):
         """"""
         # Check that reaction is on this message and user is a captain
@@ -400,8 +410,14 @@ class MapVoteMenu(discord.Message):
         if user in self.voted_users:
             return
 
-        self.map_votes[str(reaction)] += 1
+        try:
+            self.map_votes[str(reaction)] += 1
+        except KeyError:
+            return
+
         self.voted_users.add(user)
+        embed = self._vote_embed()
+        await self.edit(embed=embed)
 
         # Check if the voting is over
         if len(self.voted_users) == len(self.users):
@@ -416,9 +432,7 @@ class MapVoteMenu(discord.Message):
         random.shuffle(self.map_pool)
         self.map_choices = self.map_pool[:2]
         self.map_votes = {m.emoji: 0 for m in self.map_pool[:2]}
-        description = '\n'.join(f'{m.emoji} {m.name}' for m in self.map_choices)
-        embed = self.bot.embed_template(title='Map vote started! (1 min)', description=description)
-        embed.set_footer(text='React to either of the map icons below to vote for the corresponding map')
+        embed = self._vote_embed()
         await self.edit(embed=embed)
 
         for map_option in self.map_choices:
