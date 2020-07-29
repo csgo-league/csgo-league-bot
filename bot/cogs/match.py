@@ -10,16 +10,16 @@ import traceback
 
 
 EMOJI_NUMBERS = [u'\u0030\u20E3',
-                u'\u0031\u20E3',
-                u'\u0032\u20E3',
-                u'\u0033\u20E3',
-                u'\u0034\u20E3',
-                u'\u0035\u20E3',
-                u'\u0036\u20E3',
-                u'\u0037\u20E3',
-                u'\u0038\u20E3',
-                u'\u0039\u20E3',
-                u'\U0001F51F']
+                 u'\u0031\u20E3',
+                 u'\u0032\u20E3',
+                 u'\u0033\u20E3',
+                 u'\u0034\u20E3',
+                 u'\u0035\u20E3',
+                 u'\u0036\u20E3',
+                 u'\u0037\u20E3',
+                 u'\u0038\u20E3',
+                 u'\u0039\u20E3',
+                 u'\U0001F51F']
 
 
 class PickError(ValueError):
@@ -395,8 +395,8 @@ class MapVoteMenu(discord.Message):
 
     def _vote_embed(self):
         embed = self.bot.embed_template(title='Map vote started! (1 min)')
-        embed.add_field(name="Map", value='\n\n'.join(f'{m.emoji} {m.name}' for m in self.map_pool), inline=True)
-        embed.add_field(name="Votes", value='\n\n'.join(EMOJI_NUMBERS[self.map_votes[m.emoji]] for m in self.map_pool), inline=True)
+        embed.add_field(name="Map", value='\n\n'.join(f'{m.emoji} {m.name}' for m in self.map_pool))
+        embed.add_field(name="Votes", value='\n\n'.join(EMOJI_NUMBERS[self.map_votes[m.emoji]] for m in self.map_pool))
         embed.set_footer(text='React to either of the map icons below to vote for the corresponding map')
         return embed
 
