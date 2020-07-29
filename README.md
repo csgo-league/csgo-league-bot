@@ -48,7 +48,7 @@ If you appreciate the project then please take the time to star our repository.
 
 7. Create an environment file named `.env` with in the repository's root directory. Fill this template with the requisite information you've gathered:
 
-    ```py
+    ```ini
     DISCORD_BOT_TOKEN=B0tT0k3nFr0mD3v3l0p3rP0rtal
 
     CSGO_LEAGUE_API_KEY=W3bAP1K3y  # From web php.env file
