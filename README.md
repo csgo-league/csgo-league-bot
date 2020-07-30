@@ -27,7 +27,7 @@ If you appreciate the project then please take the time to star our repository.
 ## Setup (Linux)
 1. First you must have a bot instance to run this script on. Follow the discord.py tutorial [here](https://discordpy.readthedocs.io/en/latest/discord.html) on how to set one up. Be sure to invite it to a server to use it.
 
-   * The permissions integer necessary is `17067072`.
+   * The necessary OAuth2 invite permission scopes integer is `17067072`.
 
 2. Setup and get an API token for the CS:GO League [web API](https://github.com/csgo-league/csgo-league-web) along with the host base URL.
 
