@@ -24,6 +24,41 @@ If you appreciate the project then please take the time to star our repository.
 
 ![Star us](https://github.com/b3none/gdprconsent/raw/development/.github/README_ASSETS/star_us.png)
 
+## Commands
+`q!help` **-** Display the help menu<br>
+
+`q!about` **-** Display basic info about this bot<br>
+
+`q!link` **-** Link a player on the backend<br>
+
+`q!join` **-** Join the queue<br>
+
+`q!leave` **-** Leave the queue<br>
+
+`q!view` **-** Display who is currently in the queue<br>
+
+`q!remove <user mention>` **-** Remove the mentioned user from the queue (must have server kick perms)<br>
+
+`q!empty` **-** Empty the queue (must have server kick perms)<br>
+
+`q!cap [<new capacity>]` **-** Set or view the capacity of the queue (must have admin perms)<br>
+
+`q!ban <user mention> ... [<days>d] [<hours>h] [<minutes>m]` **-** Ban all mentioned users from joining the queue (must have server ban perms)<br>
+
+`q!unban <user mention> ...` **-** Unban all mentioned users so they can join the queue (must have server ban perms)<br>
+
+`q!teams [{captains|autobalance|random}]` **-** Set or view the team creation method (must have admin perms)<br>
+
+`q!captains [{volunteer|rank|random}]` **-** Set or view the captain selection method (must have admin perms)<br>
+
+`q!maps [{captains|vote|random}]` **-** Set or view the map selection method (must have admin perms)<br>
+
+`q!mpool {+|-}<map name> ...` **-** Add or remove maps from the map pool (must have admin perms)<br>
+
+`q!stats` **-** See your stats<br>
+
+`q!leaders` **-** See the top players in the server<br>
+
 ## Setup (Linux)
 1. First you must have a bot instance to run this script on. Follow the discord.py tutorial [here](https://discordpy.readthedocs.io/en/latest/discord.html) on how to set one up. Be sure to invite it to a server to use it.
 
@@ -65,41 +100,6 @@ If you appreciate the project then please take the time to star our repository.
 8. Apply the database migrations by running `python3 migrate.py up`.
 
 9. Run the launcher Python script by calling `python3 launcher.py -e {server ID}`. You will only need to use the `-e` flag when running for the first time to create the emojis in your server (be sure to give the bot the "manage emojis" permission in your server). Look [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-#) for help finding your Discord server's ID.
-
-## Commands
-`q!help` **-** Display the help menu<br>
-
-`q!about` **-** Display basic info about this bot<br>
-
-`q!link` **-** Link a player on the backend<br>
-
-`q!join` **-** Join the queue<br>
-
-`q!leave` **-** Leave the queue<br>
-
-`q!view` **-** Display who is currently in the queue<br>
-
-`q!remove <user mention>` **-** Remove the mentioned user from the queue (must have server kick perms)<br>
-
-`q!empty` **-** Empty the queue (must have server kick perms)<br>
-
-`q!cap [<new capacity>]` **-** Set or view the capacity of the queue (must have admin perms)<br>
-
-`q!ban <user mention> ... [<days>d] [<hours>h] [<minutes>m]` **-** Ban all mentioned users from joining the queue (must have server ban perms)<br>
-
-`q!unban <user mention> ...` **-** Unban all mentioned users so they can join the queue (must have server ban perms)<br>
-
-`q!teams [{captains|autobalance|random}]` **-** Set or view the team creation method (must have admin perms)<br>
-
-`q!captains [{volunteer|rank|random}]` **-** Set or view the captain selection method (must have admin perms)<br>
-
-`q!maps [{captains|vote|random}]` **-** Set or view the map selection method (must have admin perms)<br>
-
-`q!mpool {+|-}<map name> ...` **-** Add or remove maps from the map pool (must have admin perms)<br>
-
-`q!stats` **-** See your stats<br>
-
-`q!leaders` **-** See the top players in the server<br>
 
 ## Contributions
 
