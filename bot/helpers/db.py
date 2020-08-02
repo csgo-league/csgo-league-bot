@@ -1,12 +1,20 @@
 # db.py
 
+import asyncio
+import asyncpg
+
 
 class DBHelper:
     """ Class to contain database query wrapper functions. """
 
-    def __init__(self, pool):
+    def __init__(self, connect_url):
         """ Set attributes. """
-        self.pool = pool
+        loop = asyncio.get_event_loop()
+        self.pool = loop.run_until_complete(asyncpg.create_pool(connect_url))
+
+    async def close(self):
+        """"""
+        await self.pool.close()
 
     @staticmethod
     def _get_record_attrs(records, key):

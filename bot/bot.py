@@ -2,20 +2,17 @@
 
 import discord
 from discord.ext import commands
+import sys
+import traceback
 
 from . import cogs
 from . import helpers
-
-import aiohttp
-import json
-import sys
-import traceback
 
 
 class LeagueBot(commands.AutoShardedBot):
     """ Sub-classed AutoShardedBot modified to fit the needs of the application. """
 
-    def __init__(self, discord_token, api_base_url, api_key, db_pool, emoji_dict, donate_url=None):
+    def __init__(self, discord_token, api_base_url, api_key, db_connect_url, emoji_dict, donate_url=None):
         """ Set attributes and configure bot. """
         # Call parent init
         super().__init__(command_prefix=('q!', 'Q!'), case_insensitive=True)
@@ -24,7 +21,7 @@ class LeagueBot(commands.AutoShardedBot):
         self.discord_token = discord_token
         self.api_base_url = api_base_url
         self.api_key = api_key
-        self.db_pool = db_pool
+        self.db_connect_url = db_connect_url
         self.emoji_dict = emoji_dict
         self.donate_url = donate_url
 
@@ -34,12 +31,10 @@ class LeagueBot(commands.AutoShardedBot):
         self.activity = discord.Activity(type=discord.ActivityType.watching, name="noobs type q!help")
 
         # Create session for API
-        self.session = aiohttp.ClientSession(loop=self.loop, json_serialize=lambda x: json.dumps(x, ensure_ascii=False),
-                                             raise_for_status=True)
-        self.api_helper = helpers.ApiHelper(self.session, self.api_base_url, self.api_key)
+        self.api_helper = helpers.ApiHelper(self.loop, self.api_base_url, self.api_key)
 
         # Create DB helper to use connection pool
-        self.db_helper = helpers.DBHelper(self.db_pool)
+        self.db_helper = helpers.DBHelper(self.db_connect_url)
 
         # Initialize set of errors to ignore
         self.ignore_error_types = set()
@@ -96,5 +91,5 @@ class LeagueBot(commands.AutoShardedBot):
     async def close(self):
         """ Override parent close to close the API session also. """
         await super().close()
-        await self.session.close()
-        await self.db_pool.close()
+        await self.api_helper.close()
+        await self.db_helper.close()

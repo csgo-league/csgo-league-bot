@@ -1,5 +1,8 @@
 # api.py
 
+import aiohttp
+import json
+
 
 class Player:
     """ Represents a player with the contents returned by the API. """
@@ -184,11 +187,17 @@ class MatchServer:
 class ApiHelper:
     """ Class to contain API request wrapper functions. """
 
-    def __init__(self, session, base_url, api_key):
+    def __init__(self, loop, base_url, api_key):
         """ Set attributes. """
-        self.session = session
+        # Set attributes
+        self.session = aiohttp.ClientSession(loop=loop, json_serialize=lambda x: json.dumps(x, ensure_ascii=False),
+                                             raise_for_status=True)
         self.base_url = base_url
         self.api_key = api_key
+
+    async def close(self):
+        """ Close the API helper's session. """
+        await self.session.close()
 
     @property
     def headers(self):

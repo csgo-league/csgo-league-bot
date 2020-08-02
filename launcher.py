@@ -4,7 +4,6 @@ from bot.bot import LeagueBot
 
 import argparse
 import asyncio
-import asyncpg
 import discord
 from dotenv import load_dotenv
 import json
@@ -17,9 +16,8 @@ load_dotenv()  # Load the environment variables in the local .env file
 def run_bot():
     """ Parse the config file and run the bot. """
     # Get database object for bot
-    connect_url = 'postgresql://{POSTGRESQL_USER}:{POSTGRESQL_PASSWORD}@{POSTGRESQL_HOST}/{POSTGRESQL_DB}'
-    loop = asyncio.get_event_loop()
-    db_pool = loop.run_until_complete(asyncpg.create_pool(connect_url.format(**os.environ)))
+    db_connect_url = 'postgresql://{POSTGRESQL_USER}:{POSTGRESQL_PASSWORD}@{POSTGRESQL_HOST}/{POSTGRESQL_DB}'
+    db_connect_url = db_connect_url.format(**os.environ)
 
     # Get environment variables
     bot_token = os.environ['DISCORD_BOT_TOKEN']
@@ -35,7 +33,7 @@ def run_bot():
     except OSError:
         print('Emoji file not found: Use the "-e" flag with your guild ID to create bot emojis')
     else:
-        bot = LeagueBot(bot_token, api_url, api_key, db_pool, emoji_dict)
+        bot = LeagueBot(bot_token, api_url, api_key, db_connect_url, emoji_dict)
         bot.run()
 
 
