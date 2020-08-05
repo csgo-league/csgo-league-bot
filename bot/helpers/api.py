@@ -1,7 +1,9 @@
 # api.py
 
 import aiohttp
+import asyncio
 import json
+import logging
 
 
 class Player:
@@ -184,14 +186,35 @@ class MatchServer:
             return f'{self.web_url}/match/{self.id}'
 
 
+async def start_request_log(session, ctx, params):
+    """"""
+    ctx.start = asyncio.get_event_loop().time()
+    logger = logging.getLogger('csgoleague.api')
+    logger.info(f'Sending {params.method} request to {params.url}')
+
+
+async def end_request_log(session, ctx, params):
+    """"""
+    logger = logging.getLogger('csgoleague.api')
+    elapsed = asyncio.get_event_loop().time() - ctx.start
+    logger.info(f'Response received from {params.url} ({elapsed:.2f}s)\n' /
+                f'    Status: {params.response.status}\n' /
+                f'    Reason: {params.response.reason}')
+    resp_json = await params.response.json()
+    logger.debug(f'Response JSON from {params.url}: {resp_json}')
+
+
 class ApiHelper:
     """ Class to contain API request wrapper functions. """
 
     def __init__(self, loop, base_url, api_key):
         """ Set attributes. """
         # Set attributes
+        trace_config = aiohttp.TraceConfig()
+        trace_config.on_request_start.append(start_request_log)
+        trace_config.on_request_end.append(end_request_log)
         self.session = aiohttp.ClientSession(loop=loop, json_serialize=lambda x: json.dumps(x, ensure_ascii=False),
-                                             raise_for_status=True)
+                                             raise_for_status=True, trace_configs=[trace_config])
         self.base_url = base_url
         self.api_key = api_key
 
