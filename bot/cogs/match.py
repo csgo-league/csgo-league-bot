@@ -333,12 +333,11 @@ class MapDraftMenu(discord.Message):
 
         await self._update_menu(f'**{user.display_name}** banned {map_ban.name}')
 
-    async def draft(self, captain_1, captain_2):
+    async def draft(self, captain_1, captain_2, map_pool):
         """ Start the team draft and return the teams after it's finished. """
         # Initialize draft
-        guild_data = await self.bot.db_helper.get_guild(self.guild.id)
         self.captains = [captain_1, captain_2]
-        self.map_pool = [m for m in self.all_maps if guild_data[m.dev_name]]
+        self.map_pool = map_pool
         self.maps_left = {m.emoji: m for m in self.map_pool}
         self.ban_number = 0
 
@@ -386,12 +385,11 @@ class MapVoteMenu(discord.Message):
         # Add custom attributes
         self.bot = bot
         self.users = users
-        self.all_maps = all_maps(self.bot)
         self.voted_users = None
         self.map_pool = None
-        self.map_choices = None
         self.map_votes = None
         self.future = None
+        self.tie_count = 0
 
     def _vote_embed(self):
         embed = self.bot.embed_template(title='Map vote started! (1 min)')
@@ -424,18 +422,15 @@ class MapVoteMenu(discord.Message):
             if self.future is not None:
                 self.future.set_result(None)
 
-    async def vote(self):
+    async def vote(self, map_pool):
         """"""
         self.voted_users = set()
-        guild_data = await self.bot.db_helper.get_guild(self.guild.id)
-        self.map_pool = [m for m in self.all_maps if guild_data[m.dev_name]]
-        random.shuffle(self.map_pool)
-        self.map_choices = self.map_pool[:2]
-        self.map_votes = {m.emoji: 0 for m in self.map_pool[:2]}
+        self.map_pool = map_pool
+        self.map_votes = {m.emoji: 0 for m in self.map_pool}
         embed = self._vote_embed()
         await self.edit(embed=embed)
 
-        for map_option in self.map_choices:
+        for map_option in self.map_pool:
             await self.add_reaction(map_option.emoji)
 
         # Add listener handlers and wait until there are no maps left to ban
@@ -462,16 +457,21 @@ class MapVoteMenu(discord.Message):
             elif votes == winners_votes:
                 winners_emoji.append(emoji)
 
-        winner_emoji = winners_emoji[0] if len(winners_emoji) == 1 else random.choice(winners_emoji)
-        winner_map = [m for m in self.map_pool if m.emoji == winner_emoji][0]
+        self.map_pool = [m for m in map_pool if m.emoji in winners_emoji]
 
         # Return class to original state after map drafting is done
-        self.map_pool = None
-        self.map_choices = None
+        self.voted_users = None
         self.map_votes = None
         self.future = None
 
-        return winner_map
+        if len(winners_emoji) == 1:
+            return self.map_pool[0]
+        elif len(winners_emoji) == 2 and self.tie_count == 1:
+            return random.choice(self.map_pool)
+        else:
+            if len(winners_emoji) == 2:
+                self.tie_count += 1
+            return await self.vote(self.map_pool)
 
 
 class MatchCog(commands.Cog):
@@ -525,22 +525,20 @@ class MatchCog(commands.Cog):
         team_size = len(temp_users) // 2
         return temp_users[:team_size], temp_users[team_size:]
 
-    async def draft_maps(self, message, captain_1, captain_2):
+    async def draft_maps(self, message, captain_1, captain_2, map_pool):
         """"""
         menu = MapDraftMenu(message, self.bot)
-        map_pick = await menu.draft(captain_1, captain_2)
+        map_pick = await menu.draft(captain_1, captain_2, map_pool)
         return map_pick
 
-    async def vote_maps(self, message, users):
+    async def vote_maps(self, message, users, map_pool):
         """"""
         menu = MapVoteMenu(message, self.bot, users)
-        voted_map = await menu.vote()
+        voted_map = await menu.vote(map_pool)
         return voted_map
 
-    async def random_map(self, guild):
+    async def random_map(self, guild, map_pool):
         """"""
-        guild_data = await self.bot.db_helper.get_guild(guild.id)
-        map_pool = [m for m in self.all_maps if guild_data[m.dev_name]]
         return random.choice(map_pool)
 
     async def start_match(self, ctx, users):
@@ -609,13 +607,16 @@ class MatchCog(commands.Cog):
             else:
                 raise ValueError(f'Team method "{team_method}" isn\'t valid')
 
+            guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
+            map_pool = [m for m in self.all_maps if guild_data[m.dev_name]]
+
             # Get map pick
             if map_method == 'captains':
-                map_pick = await self.draft_maps(ready_message, team_one[0], team_two[0])
+                map_pick = await self.draft_maps(ready_message, team_one[0], team_two[0], map_pool)
             elif map_method == 'vote':
-                map_pick = await self.vote_maps(ready_message, users)
+                map_pick = await self.vote_maps(ready_message, users, map_pool)
             elif map_method == 'random':
-                map_pick = await self.random_map(ctx.guild)
+                map_pick = await self.random_map(ctx.guild, map_pool)
             else:
                 raise ValueError(f'Map method "{map_method}" isn\'t valid')
 
