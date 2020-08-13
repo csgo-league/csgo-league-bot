@@ -333,11 +333,12 @@ class MapDraftMenu(discord.Message):
 
         await self._update_menu(f'**{user.display_name}** banned {map_ban.name}')
 
-    async def draft(self, captain_1, captain_2, map_pool):
+    async def draft(self, captain_1, captain_2):
         """ Start the team draft and return the teams after it's finished. """
         # Initialize draft
+        guild_data = await self.bot.db_helper.get_guild(self.guild.id)
         self.captains = [captain_1, captain_2]
-        self.map_pool = map_pool
+        self.map_pool = [m for m in self.all_maps if guild_data[m.dev_name]]
         self.maps_left = {m.emoji: m for m in self.map_pool}
         self.ban_number = 0
 
@@ -525,20 +526,24 @@ class MatchCog(commands.Cog):
         team_size = len(temp_users) // 2
         return temp_users[:team_size], temp_users[team_size:]
 
-    async def draft_maps(self, message, captain_1, captain_2, map_pool):
+    async def draft_maps(self, message, captain_1, captain_2):
         """"""
         menu = MapDraftMenu(message, self.bot)
-        map_pick = await menu.draft(captain_1, captain_2, map_pool)
+        map_pick = await menu.draft(captain_1, captain_2)
         return map_pick
 
-    async def vote_maps(self, message, users, map_pool):
+    async def vote_maps(self, message, users):
         """"""
+        guild_data = await self.bot.db_helper.get_guild(message.guild.id)
+        map_pool = [m for m in self.all_maps if guild_data[m.dev_name]]
         menu = MapVoteMenu(message, self.bot, users)
         voted_map = await menu.vote(map_pool)
         return voted_map
 
-    async def random_map(self, guild, map_pool):
+    async def random_map(self, guild):
         """"""
+        guild_data = await self.bot.db_helper.get_guild(guild.id)
+        map_pool = [m for m in self.all_maps if guild_data[m.dev_name]]        
         return random.choice(map_pool)
 
     async def start_match(self, ctx, users):
@@ -607,16 +612,13 @@ class MatchCog(commands.Cog):
             else:
                 raise ValueError(f'Team method "{team_method}" isn\'t valid')
 
-            guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
-            map_pool = [m for m in self.all_maps if guild_data[m.dev_name]]
-
             # Get map pick
             if map_method == 'captains':
-                map_pick = await self.draft_maps(ready_message, team_one[0], team_two[0], map_pool)
+                map_pick = await self.draft_maps(ready_message, team_one[0], team_two[0])
             elif map_method == 'vote':
-                map_pick = await self.vote_maps(ready_message, users, map_pool)
+                map_pick = await self.vote_maps(ready_message, users)
             elif map_method == 'random':
-                map_pick = await self.random_map(ctx.guild, map_pool)
+                map_pick = await self.random_map(ctx.guild)
             else:
                 raise ValueError(f'Map method "{map_method}" isn\'t valid')
 
