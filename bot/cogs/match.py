@@ -543,7 +543,7 @@ class MatchCog(commands.Cog):
     async def random_map(self, guild):
         """"""
         guild_data = await self.bot.db_helper.get_guild(guild.id)
-        map_pool = [m for m in self.all_maps if guild_data[m.dev_name]]        
+        map_pool = [m for m in self.all_maps if guild_data[m.dev_name]]
         return random.choice(map_pool)
 
     async def start_match(self, ctx, users):
