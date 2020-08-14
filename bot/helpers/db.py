@@ -2,6 +2,7 @@
 
 import asyncio
 import asyncpg
+import logging
 
 
 class DBHelper:
@@ -11,9 +12,11 @@ class DBHelper:
         """ Set attributes. """
         loop = asyncio.get_event_loop()
         self.pool = loop.run_until_complete(asyncpg.create_pool(connect_url))
+        self.logger = logging.getLogger('csgoleague.db')
 
     async def close(self):
         """"""
+        self.logger.info('Closing database connection pool')
         await self.pool.close()
 
     @staticmethod

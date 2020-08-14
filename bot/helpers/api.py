@@ -217,9 +217,11 @@ class ApiHelper:
                                              raise_for_status=True, trace_configs=[trace_config])
         self.base_url = base_url
         self.api_key = api_key
+        self.logger = logging.getLogger('csgoleague.api')
 
     async def close(self):
         """ Close the API helper's session. """
+        self.logger.info('Closing API helper client session')
         await self.session.close()
 
     @property
