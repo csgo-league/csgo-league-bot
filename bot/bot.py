@@ -2,6 +2,7 @@
 
 import discord
 from discord.ext import commands
+import logging
 import sys
 import traceback
 
@@ -29,6 +30,7 @@ class LeagueBot(commands.AutoShardedBot):
         self.description = 'An easy to use, fully automated system to set up and play CS:GO pickup games'
         self.color = 0x000000
         self.activity = discord.Activity(type=discord.ActivityType.watching, name="noobs type q!help")
+        self.logger = logging.getLogger('csgoleague.bot')
 
         # Create session for API
         self.api_helper = helpers.ApiHelper(self.loop, self.api_base_url, self.api_key)
