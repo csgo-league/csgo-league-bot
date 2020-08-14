@@ -6,6 +6,18 @@ import json
 import logging
 
 
+def catch_ZeroDivisionError(func):
+    """ Decorator to catch ZeroDivisionError and return 0. """
+    def caught_func(*args, **kwargs):
+        """ Function to be returned by the decorator. """
+        try:
+            return func(*args, **kwargs)
+        except ZeroDivisionError:
+            return 0
+
+    return caught_func
+
+
 class Player:
     """ Represents a player with the contents returned by the API. """
 
@@ -120,43 +132,33 @@ class Player:
         return self.match_win + self.match_draw + self.match_lose
 
     @property
+    @catch_ZeroDivisionError
     def win_percent(self):
         """ Calculate and return win percentage. """
-        try:
-            return self.match_win / (self.match_win + self.match_lose)
-        except ZeroDivisionError:
-            return 0
+        return self.match_win / (self.match_win + self.match_lose)
 
     @property
+    @catch_ZeroDivisionError
     def kd_ratio(self):
         """ Calculate and return K/D ratio. """
-        try:
-            return self.kills / self.deaths
-        except ZeroDivisionError:
-            return 0
+        return self.kills / self.deaths
 
     @property
+    @catch_ZeroDivisionError
     def adr(self):
         """ Calculate and return average damage per round. """
-        try:
-            return self.damage / (self.rounds_tr + self.rounds_ct)
-        except ZeroDivisionError:
-            return 0
+        return self.damage / (self.rounds_tr + self.rounds_ct)
 
     @property
+    @catch_ZeroDivisionError
     def hs_percent(self):
         """ Calculate and return headshot kill percentage. """
-        try:
-            return float(self.headshots / self.kills)
-        except ZeroDivisionError:
-            return 0
+        return float(self.headshots / self.kills)
 
     @property
+    @catch_ZeroDivisionError
     def first_blood_rate(self):
-        try:
-            return self.first_blood / (self.rounds_tr + self.rounds_ct)
-        except ZeroDivisionError:
-            return 0
+        return self.first_blood / (self.rounds_tr + self.rounds_ct)
 
 
 class MatchServer:
