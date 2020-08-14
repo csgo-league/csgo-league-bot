@@ -213,11 +213,12 @@ class ApiHelper:
         trace_config = aiohttp.TraceConfig()
         trace_config.on_request_start.append(start_request_log)
         trace_config.on_request_end.append(end_request_log)
+        self.logger = logging.getLogger('csgoleague.api')
+        self.logger.info('Starting API helper client session')
         self.session = aiohttp.ClientSession(loop=loop, json_serialize=lambda x: json.dumps(x, ensure_ascii=False),
                                              raise_for_status=True, trace_configs=[trace_config])
         self.base_url = base_url
         self.api_key = api_key
-        self.logger = logging.getLogger('csgoleague.api')
 
     async def close(self):
         """ Close the API helper's session. """
