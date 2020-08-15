@@ -37,23 +37,23 @@ If you appreciate the project then please take the time to star our repository.
 
 `q!view` **-** Display who is currently in the queue<br>
 
-`q!remove <user mention>` **-** Remove the mentioned user from the queue (must have server kick perms)<br>
+`q!remove <user mention>` **-** Remove the mentioned user from the queue (need server kick perms)<br>
 
-`q!empty` **-** Empty the queue (must have server kick perms)<br>
+`q!empty` **-** Empty the queue (need server kick perms)<br>
 
-`q!cap [<new capacity>]` **-** Set or view the capacity of the queue (must have admin perms)<br>
+`q!cap [<new capacity>]` **-** Set or view the capacity of the queue (need admin perms)<br>
 
-`q!ban <user mention> ... [<days>d] [<hours>h] [<minutes>m]` **-** Ban all mentioned users from joining the queue (must have server ban perms)<br>
+`q!ban <user mention> ... [<days>d] [<hours>h] [<minutes>m]` **-** Ban all mentioned users from joining the queue (need server ban perms)<br>
 
-`q!unban <user mention> ...` **-** Unban all mentioned users so they can join the queue (must have server ban perms)<br>
+`q!unban <user mention> ...` **-** Unban all mentioned users so they can join the queue (need server ban perms)<br>
 
-`q!teams [{captains|autobalance|random}]` **-** Set or view the team creation method (must have admin perms)<br>
+`q!teams [{captains|autobalance|random}]` **-** Set or view the team creation method (need admin perms)<br>
 
-`q!captains [{volunteer|rank|random}]` **-** Set or view the captain selection method (must have admin perms)<br>
+`q!captains [{volunteer|rank|random}]` **-** Set or view the captain selection method (need admin perms)<br>
 
-`q!maps [{captains|vote|random}]` **-** Set or view the map selection method (must have admin perms)<br>
+`q!maps [{captains|vote|random}]` **-** Set or view the map selection method (need admin perms)<br>
 
-`q!mpool {+|-}<map name> ...` **-** Add or remove maps from the map pool (must have admin perms)<br>
+`q!mpool {+|-}<map name> ...` **-** Add or remove maps from the map pool (need admin perms)<br>
 
 `q!stats` **-** See your stats<br>
 

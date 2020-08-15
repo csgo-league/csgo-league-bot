@@ -132,7 +132,7 @@ class QueueCog(commands.Cog):
         await self.update_last_msg(ctx, embed)
 
     @commands.command(usage='remove <user mention>',
-                      brief='Remove the mentioned user from the queue (must have server kick perms)')
+                      brief='Remove the mentioned user from the queue (need server kick perms)')
     @commands.has_permissions(kick_members=True)
     async def remove(self, ctx):
         """ Remove the specified user from the queue. """
@@ -155,7 +155,7 @@ class QueueCog(commands.Cog):
             # Update queue display message
             await self.update_last_msg(ctx, embed)
 
-    @commands.command(brief='Empty the queue (must have server kick perms)')
+    @commands.command(brief='Empty the queue (need server kick perms)')
     @commands.has_permissions(kick_members=True)
     async def empty(self, ctx):
         """ Reset the guild queue list to empty. """
@@ -176,7 +176,7 @@ class QueueCog(commands.Cog):
             await ctx.send(embed=embed)
 
     @commands.command(usage='cap [<new capacity>]',
-                      brief='Set or view the capacity of the queue (must have admin perms)')
+                      brief='Set or view the capacity of the queue (need admin perms)')
     @commands.has_permissions(administrator=True)
     async def cap(self, ctx, *args):
         """ Set the queue capacity. """
@@ -233,7 +233,7 @@ class QueueCog(commands.Cog):
         return ', '.join(unit_strings)
 
     @commands.command(usage='ban <user mention> ... [<days>d] [<hours>h] [<minutes>m]',
-                      brief='Ban all mentioned users from joining the queue (must have server ban perms)')
+                      brief='Ban all mentioned users from joining the queue (need server ban perms)')
     @commands.has_permissions(ban_members=True)
     async def ban(self, ctx, *args):
         """ Ban users mentioned in the command from joining the queue for a certain amount of time or indefinitely. """
@@ -275,7 +275,7 @@ class QueueCog(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(usage='unban <user mention> ...',
-                      brief='Unban all mentioned users so they can join the queue (must have server ban perms)')
+                      brief='Unban all mentioned users so they can join the queue (need server ban perms)')
     @commands.has_permissions(ban_members=True)
     async def unban(self, ctx):
         """ Unban users mentioned in the command so they can join the queue. """

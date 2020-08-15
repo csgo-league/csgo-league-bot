@@ -646,7 +646,7 @@ class MatchCog(commands.Cog):
             return True  # Everyone readied up
 
     @commands.command(usage='teams [{captains|autobalance|random}]',
-                      brief='Set or view the team creation method (must have admin perms)')
+                      brief='Set or view the team creation method (need admin perms)')
     @commands.has_permissions(administrator=True)
     async def teams(self, ctx, method=None):
         """ Set or display the method by which teams are created. """
@@ -671,7 +671,7 @@ class MatchCog(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(usage='captains [{volunteer|rank|random}]',
-                      brief='Set or view the captain selection method (must have admin perms)')
+                      brief='Set or view the captain selection method (need admin perms)')
     @commands.has_permissions(administrator=True)
     async def captains(self, ctx, method=None):
         """ Set or display the method by which captains are selected. """
@@ -696,7 +696,7 @@ class MatchCog(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(usage='maps [{captains|vote|random}]',
-                      brief='Set or view the map selection method (must have admin perms)')
+                      brief='Set or view the map selection method (need admin perms)')
     @commands.has_permissions(administrator=True)
     async def maps(self, ctx, method=None):
         """ Set or display the method by which the teams are created. """
@@ -733,7 +733,7 @@ class MatchCog(commands.Cog):
             await ctx.send(embed=embed)
 
     @commands.command(usage='mpool {+|-}<map name> ...',
-                      brief='Add or remove maps from the map pool (must have admin perms)')
+                      brief='Add or remove maps from the map pool (need admin perms)')
     @commands.has_permissions(administrator=True)
     async def mpool(self, ctx, *args):
         """ Edit the guild's map pool for map drafts. """
