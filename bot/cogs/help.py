@@ -17,13 +17,21 @@ class HelpCog(commands.Cog):
         self.bot.remove_command('help')
         self.bot.ignore_error_types.add(commands.CommandNotFound)
 
-    def help_embed(self, title):
-        embed = self.bot.embed_template(title=title)
+    async def help_embed(self, ctx):
+        embed = self.bot.embed_template(title='__CS:GO League Bot Commands__')
         prefix = self.bot.command_prefix
         prefix = prefix[0] if prefix is not str else prefix
 
         for cog in self.bot.cogs:  # Uset bot.cogs instead of bot.commands to control ordering in the help embed
             for cmd in self.bot.get_cog(cog).get_commands():
+                try:
+                    can_run = await cmd.can_run(ctx)
+                except commands.CommandError:
+                    can_run = False
+
+                if not can_run:
+                    continue
+
                 if cmd.usage:  # Command has usage attribute set
                     embed.add_field(name=f'**`{prefix}{cmd.usage}`**', value=f'_{cmd.brief}_', inline=False)
                 else:
@@ -58,14 +66,16 @@ class HelpCog(commands.Cog):
     @commands.command(brief='Display the help menu')
     async def help(self, ctx):
         """ Generate and send help embed based on the bot's commands. """
-        embed = self.help_embed('__CS:GO League Bot Commands__')
+        embed = await self.help_embed(ctx)
         await ctx.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_message(self, message):
         """ Send the help embed if the bot is mentioned. """
         if self.bot.user in message.mentions:
-            await message.channel.send(embed=self.help_embed('__CS:GO League Bot Commands__'))
+            ctx = await self.bot.get_context(message)
+            embed = await self.help_embed(ctx)
+            await message.channel.send(embed=embed)
 
     @commands.command(brief='Display basic info about this bot')
     async def about(self, ctx):
