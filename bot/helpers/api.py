@@ -230,7 +230,6 @@ class ApiHelper:
         self.session = aiohttp.ClientSession(loop=loop, json_serialize=lambda x: json.dumps(x, ensure_ascii=False),
                                              raise_for_status=True, trace_configs=[trace_config])
 
-
     async def close(self):
         """ Close the API helper's session. """
         self.logger.info('Closing API helper client session')
