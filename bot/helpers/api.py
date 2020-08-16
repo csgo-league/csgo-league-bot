@@ -210,17 +210,26 @@ class ApiHelper:
     """ Class to contain API request wrapper functions. """
 
     def __init__(self, loop, base_url, api_key):
-        """ Set attributes. """
+        """ Set attributes and initialize logging handlers. """
         # Set attributes
+        self.base_url = base_url
+        self.api_key = api_key
+        self.logger = logging.getLogger('csgoleague.api')
+
+        # Check API URL
+        if not self.base_url.startswith('https') and self.base_url.startswith('http'):
+            self.logger.warning(f'API url "{self.base_url}" should start with "https" instead of "http"')
+
+        # Register trace config handlers
         trace_config = aiohttp.TraceConfig()
         trace_config.on_request_start.append(start_request_log)
         trace_config.on_request_end.append(end_request_log)
-        self.logger = logging.getLogger('csgoleague.api')
+
+        # Start session
         self.logger.info('Starting API helper client session')
         self.session = aiohttp.ClientSession(loop=loop, json_serialize=lambda x: json.dumps(x, ensure_ascii=False),
                                              raise_for_status=True, trace_configs=[trace_config])
-        self.base_url = base_url
-        self.api_key = api_key
+
 
     async def close(self):
         """ Close the API helper's session. """
