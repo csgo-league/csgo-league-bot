@@ -9,7 +9,8 @@ from dotenv import load_dotenv
 import json
 import os
 
-EMOJI_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'emojis.json')
+ABS_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+EMOJI_FILE = os.path.join(ABS_ROOT_DIR, 'emojis.json')
 load_dotenv()  # Load the environment variables in the local .env file
 
 
@@ -45,7 +46,7 @@ def create_emojis(guild_id):
     async def on_ready():
         """"""
         guild = await client.fetch_guild(guild_id)
-        icon_dir = 'assets/maps/icons/'
+        icon_dir = os.path.join(ABS_ROOT_DIR, 'assets', 'maps', 'icons')
         reason = 'Used by the CS:GO League Bot'
         existing_emojis = {emoji.name: emoji for emoji in guild.emojis}
 
