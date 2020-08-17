@@ -99,7 +99,7 @@ class TeamDraftMenu(discord.Message):
         picker_name = picker.nick if picker.nick is not None else picker.display_name
         # Get picking team
         if picker == pickee:
-            raise PickError(f'Volunteer **{picker_name}** can\'t pick themselve')
+            raise PickError(f'{picker_name} can\'t pick themselves')
         elif self.teams[0] == []:
             picking_team = self.teams[0]
             self.users_left.remove(picker)
