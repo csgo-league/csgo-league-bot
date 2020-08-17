@@ -88,7 +88,7 @@ class QueueCog(commands.Cog):
 
                 # Check and burst queue if full
                 if len(queue_ids) == capacity:
-                    queue_users = [self.bot.get_user(user_id) for user_id in queue_ids]
+                    queue_users = [ctx.guild.get_member(user_id) for user_id in queue_ids]
                     match_cog = self.bot.get_cog('MatchCog')
 
                     try:
