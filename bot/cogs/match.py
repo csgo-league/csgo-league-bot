@@ -96,19 +96,18 @@ class TeamDraftMenu(discord.Message):
 
     def _pick_player(self, picker, pickee):
         """ Process a team captain's player pick, assuming the picker is in the team draft. """
-        picker_name = picker.nick if picker.nick is not None else picker.display_name
         # Get picking team
         if picker == pickee:
-            raise PickError(f'{picker_name} can\'t pick themselves')
-        elif self.teams[0] == []:
+            raise PickError(f'{picker.display_name} can\'t pick themselves')
+        elif not self.teams[0]:
             picking_team = self.teams[0]
             self.users_left.remove(picker)
             picking_team.append(picker)
-        elif self.teams[1] == [] and picker == self.teams[0][0]:
-            raise PickError(f'It is not {picker_name}\'s turn to pick')
-        elif self.teams[1] == [] and picker in self.teams[0]:
-            raise PickError(f'Picker {picker_name} is not a team captain')
-        elif self.teams[1] == []:
+        elif not self.teams[1] and picker == self.teams[0][0]:
+            raise PickError(f'It is not {picker.display_name}\'s turn to pick')
+        elif not self.teams[1] and picker in self.teams[0]:
+            raise PickError(f'Picker {picker.display_name} is not a team captain')
+        elif not self.teams[1]:
             picking_team = self.teams[1]
             self.users_left.remove(picker)
             picking_team.append(picker)
@@ -117,15 +116,15 @@ class TeamDraftMenu(discord.Message):
         elif picker == self.teams[1][0]:
             picking_team = self.teams[1]
         else:
-            raise PickError(f'Picker {picker_name} is not a team captain')
+            raise PickError(f'Picker {picker.display_name} is not a team captain')
 
         # Check if it's picker's turn
         if picker != self._active_picker:
-            raise PickError(f'It is not {picker_name}\'s turn to pick')
+            raise PickError(f'It is not {picker.display_name}\'s turn to pick')
 
         # Prevent picks when team is full
         if len(picking_team) > len(self.users) // 2:
-            raise PickError(f'Team {picker_name} is full')
+            raise PickError(f'Team {picker.display_name} is full')
 
         self.users_left.remove(pickee)
         picking_team.append(pickee)
