@@ -97,11 +97,17 @@ class TeamDraftMenu(discord.Message):
     def _pick_player(self, picker, pickee):
         """ Process a team captain's player pick, assuming the picker is in the team draft. """
         # Get picking team
-        if self.teams[0] == []:
+        if picker == pickee:
+            raise PickError(f'{picker.display_name} can\'t pick themselves')
+        elif not self.teams[0]:
             picking_team = self.teams[0]
             self.users_left.remove(picker)
             picking_team.append(picker)
-        elif self.teams[1] == [] and picker != self.teams[0][0]:
+        elif not self.teams[1] and picker == self.teams[0][0]:
+            raise PickError(f'It is not {picker.display_name}\'s turn to pick')
+        elif not self.teams[1] and picker in self.teams[0]:
+            raise PickError(f'Picker {picker.display_name} is not a team captain')
+        elif not self.teams[1]:
             picking_team = self.teams[1]
             self.users_left.remove(picker)
             picking_team.append(picker)
@@ -120,11 +126,9 @@ class TeamDraftMenu(discord.Message):
         if len(picking_team) > len(self.users) // 2:
             raise PickError(f'Team {picker.display_name} is full')
 
-        # Add pickee to team if user didn't pick themselves (which is only possible picking first as a volunteer)
-        if not picker == pickee:
-            self.users_left.remove(pickee)
-            picking_team.append(pickee)
-            self.pick_number += 1
+        self.users_left.remove(pickee)
+        picking_team.append(pickee)
+        self.pick_number += 1
 
     async def _update_menu(self, title):
         """ Update the message to reflect the current status of the team draft. """
