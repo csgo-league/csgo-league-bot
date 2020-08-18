@@ -78,7 +78,7 @@ class StatsCog(commands.Cog):
             guild_players = guild_players[:num]
 
         # Generate leaderboard text
-        data = [['Player'] + [self.bot.get_user(player.discord).display_name for player in guild_players],
+        data = [['Player'] + [ctx.guild.get_member(player.discord).display_name for player in guild_players],
                 ['Score'] + [str(player.score) for player in guild_players],
                 ['Winrate'] + [f'{player.win_percent * 100:.2f}%' for player in guild_players],
                 ['Played'] + [str(player.matches_played) for player in guild_players]]
