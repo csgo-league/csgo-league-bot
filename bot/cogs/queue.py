@@ -125,7 +125,7 @@ class QueueCog(commands.Cog):
     @commands.command(brief='Display who is currently in the queue')
     async def view(self, ctx):
         """ Display the queue as an embed list of mentioned names. """
-        title = 'Players in queue for 10-mans'
+        title = 'Players in queue for PUGs'
         embed = await self.queue_embed(ctx.guild, title)
 
         # Update queue display message
