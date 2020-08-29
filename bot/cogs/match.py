@@ -788,3 +788,19 @@ class MatchCog(commands.Cog):
         embed.add_field(name='__Active Maps__', value=active_maps)
         embed.add_field(name='__Inactive Maps__', value=inactive_maps)
         await ctx.send(embed=embed)
+
+    @commands.command(usage='end <match id>',
+                      brief='Force end a match by its ID (must have admin perms)')
+    @commands.has_permissions(administrator=True)
+    async def end(self, ctx, *args):
+        """ Force end a match. """
+        if len(args) == 1:
+            if await self.bot.api_helper.end_match(args[0]):
+                msg = f'Match {args[0]} just cancelled'
+            else:
+                msg = 'Invalid match id'
+        else:
+            msg = f'Usage: `{self.bot.command_prefix[0]}end <Match ID>`'
+
+        embed = self.bot.embed_template(title=msg)
+        await ctx.send(embed=embed)

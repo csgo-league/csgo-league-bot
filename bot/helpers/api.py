@@ -286,6 +286,14 @@ class ApiHelper:
             players = await resp.json()
             return [Player(player_data, self.base_url) for player_data in players]
 
+    async def end_match(self, match_id):
+        """ Force end a match through the API. """
+        url = f'{self.base_url}/match/end/{match_id}'
+
+        async with self.session.get(url=url, headers=self.headers) as resp:
+            resp_json = await resp.json()
+            return resp_json['success']
+
     async def start_match(self, team_one, team_two, map_pick=None):
         """ Get a match server from the API. """
         url = f'{self.base_url}/match/start'
