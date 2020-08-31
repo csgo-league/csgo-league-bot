@@ -7,6 +7,7 @@ from discord.ext import commands
 import random
 import sys
 import traceback
+from collections import defaultdict
 
 
 EMOJI_NUMBERS = [u'\u0030\u20E3',
@@ -486,6 +487,7 @@ class MatchCog(commands.Cog):
         self.bot = bot
         self.pending_ready_tasks = {}
         self.all_maps = all_maps(self.bot)
+        self.guild_matchids = defaultdict(list)
 
     async def draft_teams(self, message, users):
         """ Create a TeamDraftMenu from an existing message and run the draft. """
@@ -635,6 +637,7 @@ class MatchCog(commands.Cog):
                 burst_embed = self.bot.embed_template(title='There was a problem!', description=description)
                 traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)  # Print exception to stderr
             else:
+                self.guild_matchids[ctx.guild].append(match.id)
                 description = f'URL: {match.connect_url}\nCommand: `{match.connect_command}`'
                 burst_embed = self.bot.embed_template(title='Match server is ready!', description=description)
                 burst_embed.set_author(name=f'Match #{match.id}', url=match.match_page, icon_url=map_pick.icon_url)
@@ -795,7 +798,8 @@ class MatchCog(commands.Cog):
     async def end(self, ctx, *args):
         """ Force end a match. """
         if len(args) == 1:
-            if await self.bot.api_helper.end_match(args[0]):
+            if args[0] in self.guild_matchids[ctx.guild] and await self.bot.api_helper.end_match(args[0]):
+                self.guild_matchids[ctx.guild].remove(args[0])
                 msg = f'Match {args[0]} just cancelled'
             else:
                 msg = 'Invalid match id'
