@@ -68,7 +68,9 @@ def create_emojis(guild_id):
                     existing_emoji = await guild.fetch_emoji(existing_emojis[emoji_name].id)
 
                     if existing_emoji.user == client.user:
-                        BOT_LOGGER.info(f'Emoji :{existing_emoji.name}: has already been created in the server, updating')
+                        BOT_LOGGER.info(
+                            f'Emoji :{existing_emoji.name}: has already been created in the server, updating'
+                        )
                         emoji_dict[existing_emoji.name] = f'<:{existing_emoji.name}:{existing_emoji.id}>'
                         continue
 
