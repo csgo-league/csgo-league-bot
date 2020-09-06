@@ -7,10 +7,12 @@ import asyncio
 import discord
 from dotenv import load_dotenv
 import json
+import logging
 import os
 
 ABS_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 EMOJI_FILE = os.path.join(ABS_ROOT_DIR, 'emojis.json')
+BOT_LOGGER = logging.getLogger('csgoleague.bot')
 load_dotenv()  # Load the environment variables in the local .env file
 
 
@@ -32,7 +34,7 @@ def run_bot():
         with open(EMOJI_FILE) as f:
             emoji_dict = json.load(f)
     except OSError:
-        print('Emoji file not found: Use the "-e" flag with your guild ID to create bot emojis')
+        BOT_LOGGER.error('Emoji file not found: Use the "-e" flag with your guild ID to create bot emojis')
     else:
         bot = LeagueBot(bot_token, api_url, api_key, db_connect_url, emoji_dict)
         bot.run()
@@ -66,7 +68,7 @@ def create_emojis(guild_id):
                     existing_emoji = await guild.fetch_emoji(existing_emojis[emoji_name].id)
 
                     if existing_emoji.user == client.user:
-                        print(f'Emoji :{existing_emoji.name}: has already been created in the server, updating')
+                        BOT_LOGGER.info(f'Emoji :{existing_emoji.name}: has already been created in the server, updating')
                         emoji_dict[existing_emoji.name] = f'<:{existing_emoji.name}:{existing_emoji.id}>'
                         continue
 
@@ -75,14 +77,14 @@ def create_emojis(guild_id):
                     with open(os.path.join(icon_dir, item), 'rb') as file:
                         new_emoji = await guild.create_custom_emoji(name=emoji_name, image=file.read(), reason=reason)
                 except discord.Forbidden:
-                    print('Bot does not have permission to create custom emojis in the specified server')
+                    BOT_LOGGER.error('Bot does not have permission to create custom emojis in the specified server')
                     break
                 except discord.HTTPException as e:
-                    print(f'HTTP exception raised when creating emoji for "{item}": {e.text} ({e.code})')
+                    BOT_LOGGER.error(f'HTTP exception raised when creating emoji for "{item}": {e.text} ({e.code})')
                 except Exception as e:
-                    print(f'Exception {e} occurred')
+                    BOT_LOGGER.error(f'Exception {e} occurred')
                 else:
-                    print(f'Emoji :{emoji_name}: created successfully')
+                    BOT_LOGGER.info(f'Emoji :{emoji_name}: created successfully')
                     emoji_dict[new_emoji.name] = f'<:{new_emoji.name}:{new_emoji.id}>'
 
         with open(EMOJI_FILE, 'w+') as f:
