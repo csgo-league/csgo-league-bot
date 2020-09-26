@@ -159,7 +159,7 @@ class QueueCog(commands.Cog):
     @commands.has_permissions(kick_members=True)
     async def empty(self, ctx):
         """ Reset the guild queue list to empty. """
-        await self.bot.db_helper.delete_all_queued_users(ctx.guild.id)
+        await self.bot.db_helper.clear_queued_users(ctx.guild.id)
         embed = await self.queue_embed(ctx.guild, 'The queue has been emptied')
 
         # Update queue display message
@@ -201,7 +201,7 @@ class QueueCog(commands.Cog):
                     title = f'Capacity is outside of valid range ({lower_bound}-{upper_bound})'
                     embed = self.bot.embed_template(title=title)
                 else:
-                    await self.bot.db_helper.delete_all_queued_users(ctx.guild.id)
+                    await self.bot.db_helper.clear_queued_users(ctx.guild.id)
                     await self.bot.db_helper.update_guild(ctx.guild.id, capacity=new_cap)
                     embed = self.bot.embed_template(title=f'Queue capacity set to {new_cap}')
                     embed.set_footer(text='The queue has been emptied because of the capacity change')
