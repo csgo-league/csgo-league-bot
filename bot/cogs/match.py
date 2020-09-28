@@ -8,6 +8,8 @@ import random
 import sys
 import traceback
 
+from .utils import Map
+
 
 EMOJI_NUMBERS = [u'\u0030\u20E3',
                  u'\u0031\u20E3',
@@ -224,33 +226,17 @@ class TeamDraftMenu(discord.Message):
 
         return picked_teams
 
-
-class Map:
-    """ A group of attributes representing a map. """
-    image_folder = 'https://raw.githubusercontent.com/csgo-league/csgo-league-bot/develop/assets/maps/images/'
-    icon_folder = 'https://raw.githubusercontent.com/csgo-league/csgo-league-bot/develop/assets/maps/icons/'
-
-    def __init__(self, name, dev_name, emoji):
-        """ Set attributes. """
-        self.name = name
-        self.dev_name = dev_name
-        self.emoji = emoji
-        self.image_url = f'{self.image_folder}{self.dev_name}.jpg'
-        self.icon_url = f'{self.icon_folder}{self.dev_name}.png'
-
-
-def all_maps(bot):
-    return [
-        Map('Cache', 'de_cache', bot.emoji_dict['de_cache']),
-        Map('Cobblestone', 'de_cbble', bot.emoji_dict['de_cbble']),
-        Map('Dust II', 'de_dust2', bot.emoji_dict['de_dust2']),
-        Map('Inferno', 'de_inferno', bot.emoji_dict['de_inferno']),
-        Map('Mirage', 'de_mirage', bot.emoji_dict['de_mirage']),
-        Map('Nuke', 'de_nuke', bot.emoji_dict['de_nuke']),
-        Map('Overpass', 'de_overpass', bot.emoji_dict['de_overpass']),
-        Map('Train', 'de_train', bot.emoji_dict['de_train']),
-        Map('Vertigo', 'de_vertigo', bot.emoji_dict['de_vertigo'])
-    ]
+ALL_MAPS = [
+    Map('Cache', 'de_cache'),
+    Map('Cobblestone', 'de_cbble'),
+    Map('Dust II', 'de_dust2'),
+    Map('Inferno', 'de_inferno'),
+    Map('Mirage', 'de_mirage'),
+    Map('Nuke', 'de_nuke'),
+    Map('Overpass', 'de_overpass'),
+    Map('Train', 'de_train'),
+    Map('Vertigo', 'de_vertigo')
+]
 
 
 class MapDraftMenu(discord.Message):
@@ -270,7 +256,7 @@ class MapDraftMenu(discord.Message):
         # Add custom attributes
         self.bot = bot
         self.ban_order = '12121212'
-        self.all_maps = all_maps(self.bot)
+        self.all_maps = ALL_MAPS
         self.captains = None
         self.map_pool = None
         self.maps_left = None
@@ -295,7 +281,8 @@ class MapDraftMenu(discord.Message):
 
         if self.map_pool is not None and self.maps_left is not None:
             for m in self.map_pool:
-                maps_str += f'{m.emoji}  {m.name}\n' if m.emoji in self.maps_left else f'{x_emoji}  ~~{m.name}~~\n'
+                emoji = self.bot.emoji_dict[m.dev_name]
+                maps_str += f'{emoji}  {m.name}\n' if emoji in self.maps_left else f'{x_emoji}  ~~{m.name}~~\n'
 
         status_str = ''
 
@@ -311,7 +298,8 @@ class MapDraftMenu(discord.Message):
     async def _update_menu(self, title):
         """ Update the message to reflect the current status of the map draft. """
         await self.edit(embed=self._draft_embed(title))
-        awaitables = [self.clear_reaction(m.emoji) for m in self.map_pool if m.emoji not in self.maps_left]
+        awaitables = [self.clear_reaction(self.bot.emoji_dict[m.dev_name])
+                      for m in self.map_pool if self.bot.emoji_dict[m.dev_name] not in self.maps_left]
         await asyncio.gather(*awaitables, loop=self.bot.loop)
 
     async def _process_ban(self, reaction, user):
@@ -343,7 +331,7 @@ class MapDraftMenu(discord.Message):
         guild_data = await self.bot.db_helper.get_guild(self.guild.id)
         self.captains = [captain_1, captain_2]
         self.map_pool = [m for m in self.all_maps if guild_data[m.dev_name]]
-        self.maps_left = {m.emoji: m for m in self.map_pool}
+        self.maps_left = {self.emoji_dict[m.dev_name]: m for m in self.map_pool}
         self.ban_number = 0
 
         if len(self.map_pool) % 2 == 0:
@@ -353,7 +341,7 @@ class MapDraftMenu(discord.Message):
         await self.edit(embed=self._draft_embed('Map bans have begun!'))
 
         for m in self.map_pool:
-            await self.add_reaction(m.emoji)
+            await self.add_reaction(self.emoji_dict[m.dev_name])
 
         # Add listener handlers and wait until there are no maps left to ban
         self.future = self.bot.loop.create_future()
@@ -390,7 +378,7 @@ class MapVoteMenu(discord.Message):
         # Add custom attributes
         self.bot = bot
         self.users = users
-        self.all_maps = all_maps(self.bot)
+        self.all_maps = ALL_MAPS
         self.voted_users = None
         self.map_pool = None
         self.map_choices = None
@@ -399,8 +387,10 @@ class MapVoteMenu(discord.Message):
 
     def _vote_embed(self):
         embed = self.bot.embed_template(title='Map vote started! (1 min)')
-        embed.add_field(name="Map", value='\n\n'.join(f'{m.emoji} {m.name}' for m in self.map_pool))
-        embed.add_field(name="Votes", value='\n\n'.join(EMOJI_NUMBERS[self.map_votes[m.emoji]] for m in self.map_pool))
+        embed.add_field(name="Map", value='\n\n'.join(
+            f'{self.emoji_dict[m.dev_name]} {m.name}' for m in self.map_pool))
+        embed.add_field(name="Votes", value='\n\n'.join(
+            EMOJI_NUMBERS[self.map_votes[self.emoji_dict[m.dev_name]]] for m in self.map_pool))
         embed.set_footer(text='React to either of the map icons below to vote for the corresponding map')
         return embed
 
@@ -435,12 +425,13 @@ class MapVoteMenu(discord.Message):
         self.map_pool = [m for m in self.all_maps if guild_data[m.dev_name]]
         random.shuffle(self.map_pool)
         self.map_choices = self.map_pool[:2]
-        self.map_votes = {m.emoji: 0 for m in self.map_pool[:2]}
+        self.map_votes = {
+            self.emoji_dict[m.dev_name]: 0 for m in self.map_pool[:2]}
         embed = self._vote_embed()
         await self.edit(embed=embed)
 
         for map_option in self.map_choices:
-            await self.add_reaction(map_option.emoji)
+            await self.add_reaction(self.emoji_dict[map_option.dev_name])
 
         # Add listener handlers and wait until there are no maps left to ban
         self.future = self.bot.loop.create_future()
@@ -485,7 +476,7 @@ class MatchCog(commands.Cog):
         """ Set attributes. """
         self.bot = bot
         self.pending_ready_tasks = {}
-        self.all_maps = all_maps(self.bot)
+        self.all_maps = ALL_MAPS
 
     async def draft_teams(self, message, users):
         """ Create a TeamDraftMenu from an existing message and run the draft. """
@@ -779,8 +770,10 @@ class MatchCog(commands.Cog):
             if any_wrong_arg:  # Add example usage footer if command was used incorrectly
                 embed.set_footer(text=f'Ex: {self.bot.command_prefix[0]}mpool +de_cache -de_mirage')
 
-        active_maps = ''.join(f'{m.emoji}  `{m.dev_name}`\n' for m in self.all_maps if m.dev_name in map_pool)
-        inactive_maps = ''.join(f'{m.emoji}  `{m.dev_name}`\n' for m in self.all_maps if m.dev_name not in map_pool)
+        active_maps = ''.join(
+            f'{self.emoji_dict[m.dev_name]}  `{m.dev_name}`\n' for m in self.all_maps if m.dev_name in map_pool)
+        inactive_maps = ''.join(
+            f'{self.emoji_dict[m.dev_name]}  `{m.dev_name}`\n' for m in self.all_maps if m.dev_name not in map_pool)
 
         if not inactive_maps:
             inactive_maps = '*None*'

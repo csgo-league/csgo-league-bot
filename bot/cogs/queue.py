@@ -19,17 +19,17 @@ class QueueCog(commands.Cog):
 
     async def queue_embed(self, ctx, title=None):
         """ Method to create the queue embed for a guild. """
-        queued_ids = await self.bot.db_helper.get_queued_users(ctx.guild.id)
+        queued_users = await ctx.queued_users()
         guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
         capacity = guild_data['capacity']
 
         if title:
-            title += f' ({len(queued_ids)}/{capacity})'
+            title += f' ({len(queued_users)}/{capacity})'
 
-        if len(queued_ids) == 0:  # If there are no users in the queue
+        if len(queued_users) == 0:  # If there are no users in the queue
             queue_str = '_The queue is empty..._'
         else:  # Users still in queue
-            queue_str = ''.join(f'{num}. <@{user_id}>\n' for num, user_id in enumerate(queued_ids, start=1))
+            queue_str = ''.join(f'{num}. {user.mention}\n' for num, user in enumerate(queued_users, start=1))
 
         embed = self.bot.embed_template(title=title, description=queue_str)
         embed.set_footer(text='Players will receive a notification when the queue fills up')
@@ -56,13 +56,13 @@ class QueueCog(commands.Cog):
             awaitables = [
                 self.bot.api_helper.get_player(ctx.author.id),
                 self.bot.db_helper.insert_users(ctx.author.id),
-                self.bot.db_helper.get_queued_users(ctx.guild.id),
+                ctx.queued_users(),
                 self.bot.db_helper.get_guild(ctx.guild.id),
-                self.bot.db_helper.get_banned_users(ctx.guild.id)
+                ctx.queue_banlist()
             ]
             results = await asyncio.gather(*awaitables, loop=self.bot.loop)
             player = results[0]
-            queue_ids = results[2]
+            queued_users = results[2]
             capacity = results[3]['capacity']
             banned_users = results[4]
 
@@ -73,9 +73,9 @@ class QueueCog(commands.Cog):
                 if unban_time is not None:  # If the user is banned for a duration
                     title += f' for {self.timedelta_str(unban_time - datetime.now(timezone.utc))}'
 
-            elif ctx.author.id in queue_ids:  # Author already in queue
+            elif ctx.author in queued_users:  # Author already in queue
                 title = f'Unable to add **{ctx.author.display_name}**: Already in the queue'
-            elif len(queue_ids) >= capacity:  # Queue full
+            elif len(queued_users) >= capacity:  # Queue full
                 title = f'Unable to add **{ctx.author.display_name}**: Queue is full'
             elif not player:  # ApiHelper couldn't get player
                 title = f'Unable to add **{ctx.author.display_name}**: Cannot verify match status'
@@ -83,21 +83,21 @@ class QueueCog(commands.Cog):
                 title = f'Unable to add **{ctx.author.display_name}**: Already in a match'
             else:  # User can be added
                 await self.bot.db_helper.insert_queued_users(ctx.guild.id, ctx.author.id)
-                queue_ids += [ctx.author.id]
+                queued_users += [ctx.author]
                 title = f'**{ctx.author.display_name}** has been added to the queue'
 
                 # Check and burst queue if full
-                if len(queue_ids) == capacity:
-                    queue_users = [ctx.guild.get_member(user_id) for user_id in queue_ids]
+                if len(queued_users) == capacity:
                     match_cog = self.bot.get_cog('MatchCog')
 
                     try:
-                        all_readied = await match_cog.start_match(ctx, queue_users)
+                        all_readied = await match_cog.start_match(ctx, queued_users)
                     except asyncio.TimeoutError:
                         return
 
                     if all_readied:
-                        await self.bot.db_helper.delete_queued_users(ctx.guild.id, *queue_ids)
+                        user_ids = [user.id for user in queued_users]
+                        await self.bot.db_helper.delete_queued_users(ctx.guild.id, *user_ids)
 
                     return
 

@@ -7,7 +7,6 @@ import sys
 import traceback
 
 from . import cogs
-from . import helpers
 
 
 class LeagueBot(commands.AutoShardedBot):
@@ -29,14 +28,14 @@ class LeagueBot(commands.AutoShardedBot):
         # Set constants
         self.description = 'An easy to use, fully automated system to set up and play CS:GO pickup games'
         self.color = 0x000000
-        self.activity = discord.Activity(type=discord.ActivityType.watching, name="noobs type q!help")
+        self.activity = discord.Activity(type=discord.ActivityType.watching, name="noobs type q!help")  # TODO: Make help command string dynamic
         self.logger = logging.getLogger('csgoleague.bot')
 
         # Create session for API
-        self.api_helper = helpers.ApiHelper(self.loop, self.api_base_url, self.api_key)
+        self.api_helper = cogs.utils.ApiHelper(self.loop, self.api_base_url, self.api_key)
 
         # Create DB helper to use connection pool
-        self.db_helper = helpers.DBHelper(self.db_connect_url)
+        self.db_helper = cogs.utils.DBHelper(self.db_connect_url)
 
         # Initialize set of errors to ignore
         self.ignore_error_types = set()
@@ -58,6 +57,14 @@ class LeagueBot(commands.AutoShardedBot):
 
         if self.donate_url:
             self.add_cog(cogs.DonateCog(self))
+
+    async def get_context(self, message, *, cls=None):
+        """ Override parent method to use CustomContext """
+        return await super().get_context(message, cls=cls or cogs.utils.LeagueBotContext)
+
+    def get_users(self, user_ids):
+        """"""
+        return [self.get_user(uid) for uid in user_ids]
 
     def embed_template(self, **kwargs):
         """ Implement the bot's default-style embed. """
