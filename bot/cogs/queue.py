@@ -50,11 +50,11 @@ class QueueCog(commands.Cog):
     @commands.command(brief='Join the queue')
     async def join(self, ctx):
         """ Check if the member can be added to the guild queue and add them if so. """
-        if not await self.bot.api_helper.is_linked(ctx.author.id):  # Message author isn't linked
+        if not await self.bot.api.is_linked(ctx.author.id):  # Message author isn't linked
             title = f'Unable to add **{ctx.author.display_name}**: Their account is not linked'
         else:  # Message author is linked
             awaitables = [
-                self.bot.api_helper.get_player(ctx.author.id),
+                self.bot.api.get_player(ctx.author.id),
                 self.bot.db_helper.insert_users(ctx.author.id),
                 ctx.queued_users(),
                 self.bot.db_helper.get_guild(ctx.guild.id),
@@ -77,7 +77,7 @@ class QueueCog(commands.Cog):
                 title = f'Unable to add **{ctx.author.display_name}**: Already in the queue'
             elif len(queued_users) >= capacity:  # Queue full
                 title = f'Unable to add **{ctx.author.display_name}**: Queue is full'
-            elif not player:  # ApiHelper couldn't get player
+            elif not player:  # ApiWrapper couldn't get player
                 title = f'Unable to add **{ctx.author.display_name}**: Cannot verify match status'
             elif player.in_match:  # User is already in a match
                 title = f'Unable to add **{ctx.author.display_name}**: Already in a match'

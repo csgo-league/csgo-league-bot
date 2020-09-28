@@ -53,7 +53,7 @@ async def end_request_log(session, ctx, params):
     logger.debug(f'Response JSON from {params.url}: {resp_json}')
 
 
-class ApiHelper:
+class ApiWrapper:
     """ Class to contain API request wrapper functions. """
 
     def __init__(self, loop, base_url, api_key):

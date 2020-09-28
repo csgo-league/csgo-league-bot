@@ -12,7 +12,7 @@ from . import cogs
 class LeagueBot(commands.AutoShardedBot):
     """ Sub-classed AutoShardedBot modified to fit the needs of the application. """
 
-    def __init__(self, discord_token, api_base_url, api_key, db_connect_url, emoji_dict, donate_url=None):
+    def __init__(self, discord_token, api_base_url, api_key, db_pool, emoji_dict, donate_url=None):
         """ Set attributes and configure bot. """
         # Call parent init
         super().__init__(command_prefix=('q!', 'Q!'), case_insensitive=True)
@@ -21,7 +21,7 @@ class LeagueBot(commands.AutoShardedBot):
         self.discord_token = discord_token
         self.api_base_url = api_base_url
         self.api_key = api_key
-        self.db_connect_url = db_connect_url
+        self.db_pool = db_pool
         self.emoji_dict = emoji_dict
         self.donate_url = donate_url
 
@@ -32,10 +32,7 @@ class LeagueBot(commands.AutoShardedBot):
         self.logger = logging.getLogger('csgoleague.bot')
 
         # Create session for API
-        self.api_helper = cogs.utils.ApiHelper(self.loop, self.api_base_url, self.api_key)
-
-        # Create DB helper to use connection pool
-        self.db_helper = cogs.utils.DBHelper(self.db_connect_url)
+        self.api = cogs.utils.ApiWrapper(self.loop, self.api_base_url, self.api_key)
 
         # Initialize set of errors to ignore
         self.ignore_error_types = set()
@@ -74,17 +71,23 @@ class LeagueBot(commands.AutoShardedBot):
     @commands.Cog.listener()
     async def on_ready(self):
         """ Synchronize the guilds the bot is in with the guilds table. """
-        await self.db_helper.sync_guilds(*(guild.id for guild in self.guilds))
+        async with self.db_pool.acquire() as conn:
+            db = cogs.utils.DBHelper(conn)
+            await db.sync_guilds(*(guild.id for guild in self.guilds))
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
         """ Insert the newly added guild to the guilds table. """
-        await self.db_helper.insert_guilds(guild.id)
+        async with self.db_pool.acquire() as conn:
+            db = cogs.utils.DBHelper(conn)
+            await db.insert_guilds(guild.id)
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
         """ Delete the recently removed guild from the guilds table. """
-        await self.db_helper.delete_guilds(guild.id)
+        async with self.db_pool.acquire() as conn:
+            db = cogs.utils.DBHelper(conn)
+            await db.delete_guilds(guild.id)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
@@ -98,7 +101,7 @@ class LeagueBot(commands.AutoShardedBot):
         super().run(self.discord_token)
 
     async def close(self):
-        """ Override parent close to close the API session also. """
+        """ Override parent close to close the API session and DB connection pool. """
         await super().close()
-        await self.api_helper.close()
-        await self.db_helper.close()
+        await self.api.close()
+        await self.db_pool.close()

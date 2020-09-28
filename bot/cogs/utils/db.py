@@ -1,24 +1,15 @@
 # db.py
 
 import asyncio
-import asyncpg
 import logging
 
 
 class DBHelper:
     """ Class to contain database query wrapper functions. """
 
-    def __init__(self, connect_url):
+    def __init__(self, conn):
         """ Set attributes. """
-        loop = asyncio.get_event_loop()
-        self.logger = logging.getLogger('csgoleague.db')
-        self.logger.info('Creating database connection pool')
-        self.pool = loop.run_until_complete(asyncpg.create_pool(connect_url))
-
-    async def close(self):
-        """"""
-        self.logger.info('Closing database connection pool')
-        await self.pool.close()
+        self.conn = conn
 
     @staticmethod
     def _get_record_attrs(records, key):
@@ -32,9 +23,8 @@ class DBHelper:
             '    WHERE id = $1'
         )
 
-        async with self.pool.acquire() as connection:
-            async with connection.transaction():
-                row = await connection.fetchrow(statement, row_id)
+        async with self.conn.transaction():
+            row = await self.conn.fetchrow(statement, row_id)
 
         return {col: val for col, val in row.items()}
 
@@ -50,9 +40,8 @@ class DBHelper:
             f'    RETURNING {ret_vals};'
         )
 
-        async with self.pool.acquire() as connection:
-            async with connection.transaction():
-                updated_vals = await connection.fetch(statement, row_id, *[data[col] for col in cols])
+        async with self.conn.transaction():
+            updated_vals = await self.conn.fetch(statement, row_id, *[data[col] for col in cols])
 
         return {col: val for rec in updated_vals for col, val in rec.items()}
 
@@ -66,9 +55,8 @@ class DBHelper:
             '    RETURNING id;'
         )
 
-        async with self.pool.acquire() as connection:
-            async with connection.transaction():
-                inserted = await connection.fetch(statement, rows)
+        async with self.conn.transaction():
+            inserted = await self.conn.fetch(statement, rows)
 
         return self._get_record_attrs(inserted, 'id')
 
@@ -80,9 +68,8 @@ class DBHelper:
             '    RETURNING id;'
         )
 
-        async with self.pool.acquire() as connection:
-            async with connection.transaction():
-                deleted = await connection.fetch(statement, guild_ids)
+        async with self.conn.transaction():
+            deleted = await self.conn.fetch(statement, guild_ids)
 
         return self._get_record_attrs(deleted, 'id')
 
@@ -102,10 +89,9 @@ class DBHelper:
             '    RETURNING id;'
         )
 
-        async with self.pool.acquire() as connection:
-            async with connection.transaction():
-                inserted = await connection.fetch(insert_statement, insert_rows)
-                deleted = await connection.fetch(delete_statement, guild_ids)
+        async with self.conn.transaction():
+            inserted = await self.conn.fetch(insert_statement, insert_rows)
+            deleted = await self.conn.fetch(delete_statement, guild_ids)
 
         return self._get_record_attrs(inserted, 'id'), self._get_record_attrs(deleted, 'id')
 
@@ -119,9 +105,8 @@ class DBHelper:
             '    RETURNING id;'
         )
 
-        async with self.pool.acquire() as connection:
-            async with connection.transaction():
-                inserted = await connection.fetch(statement, rows)
+        async with self.conn.transaction():
+            inserted = await self.conn.fetch(statement, rows)
 
         return self._get_record_attrs(inserted, 'id')
 
@@ -133,9 +118,8 @@ class DBHelper:
             '    RETURNING id;'
         )
 
-        async with self.pool.acquire() as connection:
-            async with connection.transaction():
-                deleted = await connection.fetch(statement, user_ids)
+        async with self.conn.transaction():
+            deleted = await self.conn.fetch(statement, user_ids)
 
         return self._get_record_attrs(deleted, 'id')
 
@@ -146,9 +130,8 @@ class DBHelper:
             '    WHERE guild_id = $1;'
         )
 
-        async with self.pool.acquire() as connection:
-            async with connection.transaction():
-                queue = await connection.fetch(statement, guild_id)
+        async with self.conn.transaction():
+            queue = await self.conn.fetch(statement, guild_id)
 
         return self._get_record_attrs(queue, 'user_id')
 
@@ -159,9 +142,8 @@ class DBHelper:
             '    (SELECT * FROM unnest($1::queued_users[]));'
         )
 
-        async with self.pool.acquire() as connection:
-            async with connection.transaction():
-                await connection.execute(statement, [(guild_id, user_id) for user_id in user_ids])
+        async with self.conn.transaction():
+            await self.conn.execute(statement, [(guild_id, user_id) for user_id in user_ids])
 
     async def delete_queued_users(self, guild_id, *user_ids):
         """ Delete multiple users of a guild from the queued_users table. """
@@ -171,9 +153,8 @@ class DBHelper:
             '    RETURNING user_id;'
         )
 
-        async with self.pool.acquire() as connection:
-            async with connection.transaction():
-                deleted = await connection.fetch(statement, guild_id, user_ids)
+        async with self.conn.transaction():
+            deleted = await self.conn.fetch(statement, guild_id, user_ids)
 
         return self._get_record_attrs(deleted, 'user_id')
 
@@ -185,9 +166,8 @@ class DBHelper:
             '    RETURNING user_id;'
         )
 
-        async with self.pool.acquire() as connection:
-            async with connection.transaction():
-                deleted = await connection.fetch(statement, guild_id)
+        async with self.conn.transaction():
+            deleted = await self.conn.fetch(statement, guild_id)
 
         return self._get_record_attrs(deleted, 'user_id')
 
@@ -202,12 +182,11 @@ class DBHelper:
             '    WHERE guild_id = $1;'
         )
 
-        async with self.pool.acquire() as connection:
-            async with connection.transaction():
-                await connection.execute(delete_statement, guild_id)
+        async with self.conn.transaction():
+            await self.conn.execute(delete_statement, guild_id)
 
-            async with connection.transaction():
-                queue = await connection.fetch(select_statement, guild_id)
+        async with self.conn.transaction():
+            queue = await self.conn.fetch(select_statement, guild_id)
 
         return dict(zip(self._get_record_attrs(queue, 'user_id'), self._get_record_attrs(queue, 'unban_time')))
 
@@ -222,9 +201,8 @@ class DBHelper:
 
         insert_rows = [(guild_id, user_id, unban_time) for user_id in user_ids]
 
-        async with self.pool.acquire() as connection:
-            async with connection.transaction():
-                await connection.executemany(statement, insert_rows)
+        async with self.conn.transaction():
+            await self.conn.executemany(statement, insert_rows)
 
     async def delete_banned_users(self, guild_id, *user_ids):
         """ Delete multiple users of a guild from the banned_users table. """
@@ -234,9 +212,8 @@ class DBHelper:
             '    RETURNING user_id;'
         )
 
-        async with self.pool.acquire() as connection:
-            async with connection.transaction():
-                deleted = await connection.fetch(statement, guild_id, user_ids)
+        async with self.conn.transaction():
+            deleted = await self.conn.fetch(statement, guild_id, user_ids)
 
         return self._get_record_attrs(deleted, 'user_id')
 

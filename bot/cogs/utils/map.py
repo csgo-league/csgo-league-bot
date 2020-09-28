@@ -30,12 +30,7 @@ class Maps:
     de_overpass = Map('Overpass', 'de_overpass')
     de_train = Map('Train', 'de_train')
     de_vertigo = Map('Vertigo', 'de_vertigo')
-    all_maps = {de_cache, de_cbble, de_dust2, de_inferno, de_mirage, de_nuke, de_overpass, de_train, de_vertigo}
-    # _name_dict = {m.dev_name: m for m in all_maps}
-
-    # @classmethod
-    # def by_name(cls, dev_name):
-    #     return cls._name_dict[dev_name]
+    all = {de_cache, de_cbble, de_dust2, de_inferno, de_mirage, de_nuke, de_overpass, de_train, de_vertigo}
 
 
 class MapPool(set):
