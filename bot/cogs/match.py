@@ -390,12 +390,11 @@ class MapVoteMenu(discord.Message):
         # Add custom attributes
         self.bot = bot
         self.users = users
-        self.all_maps = all_maps(self.bot)
         self.voted_users = None
         self.map_pool = None
-        self.map_choices = None
         self.map_votes = None
         self.future = None
+        self.tie_count = 0
 
     def _vote_embed(self):
         embed = self.bot.embed_template(title='Map vote started! (1 min)')
@@ -428,18 +427,15 @@ class MapVoteMenu(discord.Message):
             if self.future is not None:
                 self.future.set_result(None)
 
-    async def vote(self):
+    async def vote(self, map_pool):
         """"""
         self.voted_users = set()
-        guild_data = await self.bot.db_helper.get_guild(self.guild.id)
-        self.map_pool = [m for m in self.all_maps if guild_data[m.dev_name]]
-        random.shuffle(self.map_pool)
-        self.map_choices = self.map_pool[:2]
-        self.map_votes = {m.emoji: 0 for m in self.map_pool[:2]}
+        self.map_pool = map_pool
+        self.map_votes = {m.emoji: 0 for m in self.map_pool}
         embed = self._vote_embed()
         await self.edit(embed=embed)
 
-        for map_option in self.map_choices:
+        for map_option in self.map_pool:
             await self.add_reaction(map_option.emoji)
 
         # Add listener handlers and wait until there are no maps left to ban
@@ -466,16 +462,21 @@ class MapVoteMenu(discord.Message):
             elif votes == winners_votes:
                 winners_emoji.append(emoji)
 
-        winner_emoji = winners_emoji[0] if len(winners_emoji) == 1 else random.choice(winners_emoji)
-        winner_map = [m for m in self.map_pool if m.emoji == winner_emoji][0]
+        self.map_pool = [m for m in map_pool if m.emoji in winners_emoji]
 
         # Return class to original state after map drafting is done
-        self.map_pool = None
-        self.map_choices = None
+        self.voted_users = None
         self.map_votes = None
         self.future = None
 
-        return winner_map
+        if len(winners_emoji) == 1:
+            return self.map_pool[0]
+        elif len(winners_emoji) == 2 and self.tie_count == 1:
+            return random.choice(self.map_pool)
+        else:
+            if len(winners_emoji) == 2:
+                self.tie_count += 1
+            return await self.vote(self.map_pool)
 
 
 class MatchCog(commands.Cog):
@@ -537,8 +538,10 @@ class MatchCog(commands.Cog):
 
     async def vote_maps(self, message, users):
         """"""
+        guild_data = await self.bot.db_helper.get_guild(message.guild.id)
+        map_pool = [m for m in self.all_maps if guild_data[m.dev_name]]
         menu = MapVoteMenu(message, self.bot, users)
-        voted_map = await menu.vote()
+        voted_map = await menu.vote(map_pool)
         return voted_map
 
     async def random_map(self, guild):
