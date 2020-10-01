@@ -500,9 +500,10 @@ class MatchCog(commands.Cog):
             raise ValueError('Users argument must have even length')
 
         # Get players and sort by RankMe score
-        users_dict = dict(zip(await self.bot.api_helper.get_players([user.id for user in users]), users))
-        players = list(users_dict.keys())
-        players.sort(key=lambda x: x.score)
+        users_ids = [user.id for user in users]
+        players = await self.bot.api_helper.get_players(users_ids)
+        players.sort(key=lambda u: users_ids.index(u.discord))
+        users_dict = dict(zip(players, users))
 
         # Balance teams
         team_size = len(players) // 2
