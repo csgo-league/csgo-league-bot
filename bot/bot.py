@@ -15,7 +15,9 @@ class LeagueBot(commands.AutoShardedBot):
     def __init__(self, discord_token, api_base_url, api_key, db_connect_url, emoji_dict, donate_url=None):
         """ Set attributes and configure bot. """
         # Call parent init
-        super().__init__(command_prefix=('q!', 'Q!'), case_insensitive=True)
+        intents = discord.Intents.default()
+        intents.members = True
+        super().__init__(command_prefix=('q!', 'Q!'), case_insensitive=True, intents=intents)
 
         # Set argument attributes
         self.discord_token = discord_token
