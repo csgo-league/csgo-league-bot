@@ -500,7 +500,9 @@ class MatchCog(commands.Cog):
             raise ValueError('Users argument must have even length')
 
         # Get players and sort by RankMe score
-        users_dict = dict(zip(await self.bot.api_helper.get_players([user.id for user in users]), users))
+        players = await self.bot.api_helper.get_players([member.id for member in member_ids])
+        players.sort(key=lambda x: member_ids.index(x['discord']))
+        members_dict = dict(zip(players, member_ids)
         players = list(users_dict.keys())
         players.sort(key=lambda x: x.score)
 
