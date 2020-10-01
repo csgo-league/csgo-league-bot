@@ -5,3 +5,4 @@ asyncpg>=0.20.1
 python-dotenv>=0.13.0
 yoyo-migrations>=7.0.2
 psycopg2>=2.8.5
+yarl==1.4.2
