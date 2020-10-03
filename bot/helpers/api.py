@@ -257,10 +257,10 @@ class ApiHelper:
         async with self.session.get(url=url, headers=self.headers) as resp:
             resp_json = await resp.json()
 
-            if resp_json.get('linked'):
-                return resp_json['linked']
-            else:
-                return False
+        if resp_json.get('linked'):
+            return resp_json['linked']
+        else:
+            return False
 
     async def update_discord_name(self, user):
         """ Update a users API name to their current Discord display name. """
@@ -284,8 +284,9 @@ class ApiHelper:
 
         async with self.session.post(url=url, headers=self.headers, json=discord_ids) as resp:
             players = await resp.json()
-            players.sort(key=lambda x: user_ids.index(int(x['discord'])))  # Preserve order of user_ids arg
-            return [Player(player_data, self.base_url) for player_data in players]
+
+        players.sort(key=lambda x: user_ids.index(int(x['discord'])))  # Preserve order of user_ids arg
+        return [Player(player_data, self.base_url) for player_data in players]
 
     async def start_match(self, team_one, team_two, map_pick=None):
         """ Get a match server from the API. """
