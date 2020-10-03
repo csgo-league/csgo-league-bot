@@ -2,11 +2,16 @@
 
 import discord
 from discord.ext import commands
+import json
 import logging
+import os.path
 import sys
 
 from . import cogs
 from . import helpers
+
+_CWD = os.path.dirname(os.path.abspath(__file__))
+INTENTS_JSON = os.path.join(_CWD, 'intents.json')
 
 
 class LeagueBot(commands.AutoShardedBot):
@@ -15,7 +20,11 @@ class LeagueBot(commands.AutoShardedBot):
     def __init__(self, discord_token, api_base_url, api_key, db_connect_url, emoji_dict, donate_url=None):
         """ Set attributes and configure bot. """
         # Call parent init
-        super().__init__(command_prefix=('q!', 'Q!'), case_insensitive=True)
+        with open(INTENTS_JSON) as f:
+            intents_attrs = json.load(f)
+
+        intents = discord.Intents(**intents_attrs)
+        super().__init__(command_prefix=('q!', 'Q!'), case_insensitive=True, intents=intents)
 
         # Set argument attributes
         self.discord_token = discord_token
