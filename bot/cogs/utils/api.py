@@ -1,12 +1,13 @@
 # api.py
 
-import re
 import aiohttp
 import asyncio
 import json
 import logging
 
 from typing import AsyncGenerator
+
+from .player import Player
 
 
 def catch_ZeroDivisionError(func):
