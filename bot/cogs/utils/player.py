@@ -1,5 +1,7 @@
 # player.py
 
+from ..resources import Config
+
 
 def catch_ZeroDivisionError(func):
     """ Decorator to catch ZeroDivisionError and return 0. """
@@ -16,7 +18,7 @@ def catch_ZeroDivisionError(func):
 class Player:
     """ Represents a player with the contents returned by the API. """
 
-    def __init__(self, player_data, web_url=None):
+    def __init__(self, player_data):
         """ Set attributes. """
 
         # This will be faster then looping over self.__dict__
@@ -110,13 +112,11 @@ class Player:
         self.no_scope_dis = player_data['no_scope_dis']
         self.in_match = player_data['inMatch']
 
-        self.web_url = web_url
-
     @property
     def league_profile(self):
         """ Generate the player's CS:GO League profile link. """
-        if self.web_url:
-            return f'{self.web_url}/profile/{self.steam}'
+        if Config.api_url:
+            return f'{Config.api_url}/profile/{self.steam}'
 
     @property
     def steam_profile(self):
