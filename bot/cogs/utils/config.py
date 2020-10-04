@@ -5,23 +5,34 @@ import enum
 from .map import MapPool
 
 
-class ConfigMethod(enum.Enum):
+class _ConfigMethod(enum.Enum):
     """
     Base class for config method enums.
     """
 
     @classmethod
-    def from_str(cls, option: str) -> int:
-        """Get the config method enum from a lowercase string.
+    def enum_str(cls, name: str) -> int:
+        """Get the config method enum from a string (case insensitive).
 
         Parameters
         ----------
-        option : str
+        name : str
+            Lowercase name of the enum to get.
+
+        Raises
+        ------
+        AttributeError
+            Class attribute doesn't exist.
+
+        Returns
+        -------
+        int
+            The found enum value.
         """
-        return getattr(cls, option.lower)
+        return getattr(cls, name.upper)
 
 
-class TeamMethod(ConfigMethod):
+class TeamMethod(_ConfigMethod):
     """
     Enum for options by which to decide teams.
     """
@@ -30,7 +41,7 @@ class TeamMethod(ConfigMethod):
     RANDOM = enum.auto()
 
 
-class CaptainMethod(ConfigMethod):
+class CaptainMethod(_ConfigMethod):
     """
     Enum for options by which to decide captains.
     """
@@ -39,7 +50,7 @@ class CaptainMethod(ConfigMethod):
     RANDOM = enum.auto()
 
 
-class MapMethod(ConfigMethod):
+class MapMethod(_ConfigMethod):
     """
     Enum for options by which to decide the map.
     """
@@ -49,8 +60,23 @@ class MapMethod(ConfigMethod):
 
 
 class GuildConfig:
-    """
-    Holds all of a guild's settings saved in the database.
+    """Holds all of a guild's settings saved in the database.
+
+    Attributes
+    ----------
+    capacity : int
+        Maximum queue size before popping to start a match.
+    team_method : int
+        Enum indicating the method by which teams are chosen. Specify this
+        argument using the values in the TeamMethod class.
+    captain_method : int
+        Enum indicating the method by which captains are chosen. Same as
+        team_method but for the CaptainMethod class.
+    map_method : int
+        Enum indicating the method by which the map is chosen. Same as
+        team_method but for the MapMethod class.
+    map_pool : MapPool
+        The guild's map pool.
     """
 
     def __init__(self, capacity: int, team_method: int, captain_method: int, map_method: int, map_pool: MapPool) -> GuildConfig:
@@ -61,10 +87,21 @@ class GuildConfig:
         self.map_pool = map_pool
 
     @classmethod
-    def from_dict(cls, config: dict) -> GuildConfig:
-        """"""
-        return cls(config['capacity'],
-                   TeamMethod.from_str(config['team_method']),
-                   CaptainMethod.from_str(config['captain_method']),
-                   MapMethod.from_str(config['map_method']),
-                   MapPool.from_dict(config))
+    def from_dict(cls, guild_data: dict) -> GuildConfig:
+        """Create a GuildConfig from a dictionary as returned by the API.
+
+        Parameters
+        ----------
+        guild_data : dict
+            Dictionary with guild config information from the API.
+
+        Returns
+        -------
+        GuildData
+            A new GuildData object.
+        """
+        return cls(guild_data['capacity'],
+                   TeamMethod.from_str(guild_data['team_method']),
+                   CaptainMethod.from_str(guild_data['captain_method']),
+                   MapMethod.from_str(guild_data['map_method']),
+                   MapPool.from_dict(guild_data))
