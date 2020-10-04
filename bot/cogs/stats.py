@@ -65,9 +65,9 @@ class StatsCog(commands.Cog):
     async def leaders(self, ctx):
         """ Send an embed containing the leaderboard data parsed from the player objects returned from the API. """
         num = 5  # Easily modfiy the number of players on the leaderboard
-        guild_players = await self.bot.api.get_players([user.id for user in ctx.guild.members])
+        guild_players = [x async for x in self.bot.api.get_players([user.id for user in ctx.guild.members])]
 
-        if len(guild_players) == 0:
+        if guild_players:
             embed = self.bot.embed_template(title='Nobody on this server is ranked!')
             await ctx.send(embed=embed)
 

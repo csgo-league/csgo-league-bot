@@ -182,7 +182,7 @@ class TeamDraftMenu(discord.Message):
 
         # Check captain methods
         if captain_method == 'rank':
-            players = await self.bot.api.get_players([user.id for user in self.users_left])
+            players = [x async for x in self.bot.api.get_players([user.id for user in self.users_left])]
             players.sort(reverse=True, key=lambda x: x.score)
 
             for team in self.teams:
@@ -491,7 +491,9 @@ class MatchCog(commands.Cog):
             raise ValueError('Users argument must have even length')
 
         # Get players and sort by RankMe score
-        users_dict = dict(zip(await self.bot.api.get_players([user.id for user in users]), users))
+        users_dict = dict(
+            zip([x async for x in self.bot.api.get_players([user.id for user in users])], users)
+        )
         players = list(users_dict.keys())
         players.sort(key=lambda x: x.score)
 
