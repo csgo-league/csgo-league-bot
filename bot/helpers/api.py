@@ -43,7 +43,7 @@ class Player:
         # This will be faster then looping over self.__dict__
         # and calling setattr a bunch of times.
         for key, value in player_data.items():
-            if key != "discord_name" and key != "inMatch":
+            if type(value) != str:
                 player_data[key] = 0 if value is None else int(value)
 
         self.steam = player_data['steam']
