@@ -11,11 +11,11 @@ from .player import Player
 class MatchServer:
     """ Represents a match server with the contents returned by the API. """
 
-    def __init__(self, json, web_url=None):
+    def __init__(self, id, ip, port, web_url=None):
         """ Set attributes. """
-        self.id = json['match_id']
-        self.ip = json['ip']
-        self.port = json['port']
+        self.id = match_id
+        self.ip = ip
+        self.port = port
         self.web_url = web_url
 
     @property
@@ -145,4 +145,6 @@ class ApiWrapper:
             data['maps'] = map_pick
 
         async with self.session.post(url=url, headers=self.headers, json=data) as resp:
-            return MatchServer(await resp.json(), self.base_url)
+            resp = await resp.json()
+
+        return MatchServer(**resp, self.base_url)
