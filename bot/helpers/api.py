@@ -5,11 +5,19 @@ import asyncio
 import json
 import logging
 
+from typing import AsyncGenerator
+
 
 def catch_ZeroDivisionError(func):
-    """ Decorator to catch ZeroDivisionError and return 0. """
+    """
+    Decorator to catch ZeroDivisionError and return 0.
+    """
+
     def caught_func(*args, **kwargs):
-        """ Function to be returned by the decorator. """
+        """
+        Function to be returned by the decorator.
+        """
+
         try:
             return func(*args, **kwargs)
         except ZeroDivisionError:
@@ -19,10 +27,25 @@ def catch_ZeroDivisionError(func):
 
 
 class Player:
-    """ Represents a player with the contents returned by the API. """
+    """
+    Represents a player with the contents returned by the API.
+    """
 
-    def __init__(self, player_data, web_url=None):
-        """ Set attributes. """
+    def __init__(self, player_data: dict, web_url: str = None) -> None:
+        """
+        Parameters
+        ----------
+        player_data : dict
+        web_url : str, optional
+            by default None
+        """
+
+        # This will be faster then looping over self.__dict__
+        # and calling setattr a bunch of times.
+        for key, value in player_data.items():
+            if key != "discord_name" and key != "inMatch":
+                player_data[key] = 0 if value is None else int(value)
+
         self.steam = player_data['steam']
         self.discord = player_data['discord']
         self.discord_name = player_data['discord_name']
@@ -108,64 +131,90 @@ class Player:
         self.no_scope_dis = player_data['no_scope_dis']
         self.in_match = player_data['inMatch']
 
-        # Convert player_data values to int
-        for attr, val in self.__dict__.items():
-            if attr != 'discord_name' and attr != 'in_match':  # These attributes are already the correct type
-                setattr(self, attr, 0 if val is None else int(val))  # Convert to ints with None being 0
-
         self.web_url = web_url
 
     @property
-    def league_profile(self):
-        """ Generate the player's CS:GO League profile link. """
+    def league_profile(self) -> str:
+        """
+        Generate the player's CS:GO League profile link.
+        """
+
         if self.web_url:
-            return f'{self.web_url}/profile/{self.steam}'
+            return "{}/profile/{}".format(self.web_url, self.steam)
 
     @property
-    def steam_profile(self):
-        """ Generate the player's Steam profile link. """
-        return f'https://steamcommunity.com/profiles/{self.steam}'
+    def steam_profile(self) -> str:
+        """
+        Generate the player's Steam profile link.
+        """
+
+        return "https://steamcommunity.com/profiles/{}".format(self.steam)
 
     @property
-    def matches_played(self):
-        """ Calculate and return matches played. """
+    def matches_played(self) -> int:
+        """
+        Calculate and return matches played.
+        """
+
         return self.match_win + self.match_draw + self.match_lose
 
     @property
     @catch_ZeroDivisionError
-    def win_percent(self):
-        """ Calculate and return win percentage. """
+    def win_percent(self) -> float:
+        """
+        Calculate and return win percentage.
+        """
+
         return self.match_win / (self.match_win + self.match_lose)
 
     @property
     @catch_ZeroDivisionError
-    def kd_ratio(self):
-        """ Calculate and return K/D ratio. """
+    def kd_ratio(self) -> float:
+        """
+        Calculate and return K/D ratio.
+        """
+
         return self.kills / self.deaths
 
     @property
     @catch_ZeroDivisionError
-    def adr(self):
-        """ Calculate and return average damage per round. """
+    def adr(self) -> float:
+        """
+        Calculate and return average damage per round.
+        """
+
         return self.damage / (self.rounds_tr + self.rounds_ct)
 
     @property
     @catch_ZeroDivisionError
-    def hs_percent(self):
-        """ Calculate and return headshot kill percentage. """
+    def hs_percent(self) -> float:
+        """
+        Calculate and return headshot kill percentage.
+        """
+
         return float(self.headshots / self.kills)
 
     @property
     @catch_ZeroDivisionError
-    def first_blood_rate(self):
+    def first_blood_rate(self) -> None:
+
         return self.first_blood / (self.rounds_tr + self.rounds_ct)
 
 
 class MatchServer:
-    """ Represents a match server with the contents returned by the API. """
+    """
+    Represents a match server with the contents returned by the API.
+    """
 
-    def __init__(self, json, web_url=None):
-        """ Set attributes. """
+    def __init__(self, json: dict, web_url: str = None):
+        """
+        Parameters
+        ----------
+        json : dict
+        web_url : str, optional
+            by default None
+        """
+
         self.id = json['match_id']
         self.ip = json['ip']
         self.port = json['port']
@@ -173,23 +222,33 @@ class MatchServer:
 
     @property
     def connect_url(self):
-        """ Format URL to connect to server. """
-        return f'steam://connect/{self.ip}:{self.port}'
+        """
+        Format URL to connect to server.
+        """
+
+        return "steam://connect/{}:{}".format(self.ip, self.port)
 
     @property
     def connect_command(self):
-        """ Format console command to connect to server. """
-        return f'connect {self.ip}:{self.port}'
+        """
+        Format console command to connect to server.
+        """
+
+        return "connect {}:{}".format(self.ip, self.port)
 
     @property
     def match_page(self):
-        """ Generate the matches CS:GO League page link. """
+        """
+        Generate the matches CS:GO League page link.
+        """
+
         if self.web_url:
-            return f'{self.web_url}/match/{self.id}'
+            return "{}/match/{}".format(self.web_url, self.id)
 
 
 async def start_request_log(session, ctx, params):
     """"""
+
     ctx.start = asyncio.get_event_loop().time()
     logger = logging.getLogger('csgoleague.api')
     logger.info(f'Sending {params.method} request to {params.url}')
@@ -197,6 +256,7 @@ async def start_request_log(session, ctx, params):
 
 async def end_request_log(session, ctx, params):
     """"""
+
     logger = logging.getLogger('csgoleague.api')
     elapsed = asyncio.get_event_loop().time() - ctx.start
     logger.info(f'Response received from {params.url} ({elapsed:.2f}s)\n'
@@ -209,16 +269,28 @@ async def end_request_log(session, ctx, params):
 class ApiHelper:
     """ Class to contain API request wrapper functions. """
 
-    def __init__(self, loop, base_url, api_key):
-        """ Set attributes and initialize logging handlers. """
-        # Set attributes
+    def __init__(self, loop, base_url: str, api_key: str) -> None:
+        """Set attributes and initialize logging handlers.
+
+        Parameters
+        ----------
+        loop
+        base_url : str
+        api_key : str
+        """
+
         self.base_url = base_url
         self.api_key = api_key
         self.logger = logging.getLogger('csgoleague.api')
 
         # Check API URL
-        if not self.base_url.startswith('https') and self.base_url.startswith('http'):
-            self.logger.warning(f'API url "{self.base_url}" should start with "https" instead of "http"')
+        if not self.base_url.startswith('https') \
+                and self.base_url.startswith('http'):
+
+            self.logger.warning(
+                "API url '{}' should start with 'https' instead of 'http'"
+                .format(self.base_url)
+            )
 
         # Register trace config handlers
         trace_config = aiohttp.TraceConfig()
@@ -227,77 +299,157 @@ class ApiHelper:
 
         # Start session
         self.logger.info('Starting API helper client session')
-        self.session = aiohttp.ClientSession(loop=loop, json_serialize=lambda x: json.dumps(x, ensure_ascii=False),
-                                             raise_for_status=True, trace_configs=[trace_config])
+        self.session = aiohttp.ClientSession(
+            loop=loop, json_serialize=lambda x: json.dumps(
+                x, ensure_ascii=False),
+            raise_for_status=True,
+            trace_configs=[trace_config]
+        )
 
-    async def close(self):
-        """ Close the API helper's session. """
+    async def close(self) -> None:
+        """
+        Close the API helper's session.
+        """
+
         self.logger.info('Closing API helper client session')
         await self.session.close()
 
     @property
-    def headers(self):
-        """ Default authentication header the API needs. """
-        return {'authentication': self.api_key}
+    def headers(self) -> dict:
+        """
+        Default authentication header the API needs.
+        """
 
-    async def generate_link_url(self, user_id):
-        """ Get custom URL from API for user to link accounts. """
-        url = f'{self.base_url}/discord/generate/{user_id}'
+        return {"authentication": self.api_key}
+
+    async def generate_link_url(self, user_id: int) -> str:
+        """Get custom URL from API for user to link accounts.
+
+        Parameters
+        ----------
+        user_id : int
+
+        Returns
+        -------
+        str
+            Formatted link.
+        """
+
+        url = "{}/discord/generate/{}".format(self.base_url, user_id)
 
         async with self.session.get(url=url, headers=self.headers) as resp:
             resp_json = await resp.json()
 
-            if resp_json.get('discord') and resp_json.get('code'):
-                return f'{self.base_url}/discord/{resp_json["discord"]}/{resp_json["code"]}'
+            if "discord" in resp_json and "code" in resp_json:
+                return "{}/discord/{}/{}".format(
+                    self.base_url, resp_json["discord"], resp_json["code"])
 
-    async def is_linked(self, user_id):
-        """ Check if a user has their account linked with the API. """
-        url = f'{self.base_url}/discord/check/{user_id}'
+    async def is_linked(self, user_id: int) -> bool:
+        """
+        Parameters
+        ----------
+        user_id : int
+
+        Returns
+        -------
+        bool
+        """
+
+        url = "{}/discord/check/{}".format(self.base_url, user_id)
 
         async with self.session.get(url=url, headers=self.headers) as resp:
             resp_json = await resp.json()
 
-        if resp_json.get('linked'):
-            return resp_json['linked']
-        else:
-            return False
+            return resp_json["linked"] if "linked" in resp_json else False
 
-    async def update_discord_name(self, user):
-        """ Update a users API name to their current Discord display name. """
-        url = f'{self.base_url}/discord/update/{user.id}'
-        data = {'discord_name': user.display_name}
+    async def update_discord_name(self, user: Player) -> bool:
+        """Update a users API name to their current Discord display name.
 
-        async with self.session.post(url=url, headers=self.headers, data=data) as resp:
+        Parameters
+        ----------
+        user : Player
+
+        Returns
+        -------
+        bool
+        """
+
+        url = "{}/discord/update/{}".format(self.base_url, user.id)
+        data = {"discord_name": user.display_name}
+
+        async with self.session.post(
+                url=url, headers=self.headers, data=data) as resp:
             return resp.status == 200
 
-    async def get_player(self, user_id):
-        """ Get player data from the API. """
-        url = f'{self.base_url}/player/discord/{user_id}'
+    async def get_player(self, user_id: int) -> Player:
+        """Get player data from the API.
+
+        Parameters
+        ----------
+        user_id : int
+
+        Returns
+        -------
+        Player
+        """
+
+        url = "{}/player/discord/{}".format(self.base_url, user_id)
 
         async with self.session.get(url=url, headers=self.headers) as resp:
             return Player(await resp.json(), self.base_url)
 
-    async def get_players(self, user_ids):
-        """ Get multiple players' data from the API. """
-        url = f'{self.base_url}/players/discord'
+    async def get_players(self, user_ids: list
+                          ) -> AsyncGenerator[Player, None]:
+        """Get multiple players' data from the API.
+
+        Parameters
+        ----------
+        user_ids : list
+
+        Yields
+        -------
+        Player
+        """
+
+        url = "{}/players/discord".format(self.base_url)
         discord_ids = {"discordIds": user_ids}
 
-        async with self.session.post(url=url, headers=self.headers, json=discord_ids) as resp:
+        async with self.session.post(
+                url=url, headers=self.headers, json=discord_ids) as resp:
             players = await resp.json()
 
-        players.sort(key=lambda x: user_ids.index(int(x['discord'])))  # Preserve order of user_ids arg
-        return [Player(player_data, self.base_url) for player_data in players]
+            players.sort(
+                key=lambda x: user_ids.index(int(x['discord']))
+            )  # Preserve order of user_ids arg
 
-    async def start_match(self, team_one, team_two, map_pick=None):
-        """ Get a match server from the API. """
-        url = f'{self.base_url}/match/start'
+            for player in players:
+                yield Player(player, self.base_url)
+
+    async def start_match(self, team_one: list,
+                          team_two: list, map_pick: str = None) -> MatchServer:
+        """Get a match server from the API.
+
+        Parameters
+        ----------
+        team_one : list
+        team_two : list
+        map_pick : str, optional
+            by default None
+
+        Returns
+        -------
+        MatchServer
+        """
+
+        url = "{}/match/start".format(self.base_url)
         data = {
-            'team_one': {user.id: user.display_name for user in team_one},
-            'team_two': {user.id: user.display_name for user in team_two}
+            "team_one": {user.id: user.display_name for user in team_one},
+            "team_two": {user.id: user.display_name for user in team_two}
         }
 
         if map_pick:
             data['maps'] = map_pick
 
-        async with self.session.post(url=url, headers=self.headers, json=data) as resp:
+        async with self.session.post(
+                url=url, headers=self.headers, json=data) as resp:
             return MatchServer(await resp.json(), self.base_url)
