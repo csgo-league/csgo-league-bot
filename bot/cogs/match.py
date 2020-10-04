@@ -9,6 +9,7 @@ import sys
 import traceback
 
 from .utils import Map
+from .utils.api import get_players, start_match
 
 
 EMOJI_NUMBERS = [u'\u0030\u20E3',
@@ -182,7 +183,7 @@ class TeamDraftMenu(discord.Message):
 
         # Check captain methods
         if captain_method == 'rank':
-            players = [x async for x in self.bot.api.get_players([user.id for user in self.users_left])]
+            players = [x async for x in get_players([user.id for user in self.users_left])]
             players.sort(reverse=True, key=lambda x: x.score)
 
             for team in self.teams:
@@ -492,7 +493,7 @@ class MatchCog(commands.Cog):
 
         # Get players and sort by RankMe score
         users_dict = dict(
-            zip([x async for x in self.bot.api.get_players([user.id for user in users])], users)
+            zip([x async for x in get_players([user.id for user in users])], users)
         )
         players = list(users_dict.keys())
         players.sort(key=lambda x: x.score)
@@ -621,7 +622,7 @@ class MatchCog(commands.Cog):
 
             # Check if able to get a match server and edit message embed accordingly
             try:
-                match = await self.bot.api.start_match(team_one, team_two, map_pick.dev_name)  # API start match
+                match = await start_match(team_one, team_two, map_pick.dev_name)  # API start match
             except aiohttp.ClientResponseError as e:
                 description = 'Sorry! Looks like there aren\'t any servers available at this time. ' \
                               'Please try again later.'

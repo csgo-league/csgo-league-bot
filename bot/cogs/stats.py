@@ -2,6 +2,8 @@
 
 from discord.ext import commands
 
+from .utils.api import User, get_players
+
 import math
 
 
@@ -38,7 +40,7 @@ class StatsCog(commands.Cog):
     async def stats(self, ctx):
         """ Send an embed containing stats data parsed from the player object returned from the API. """
         user = ctx.author
-        player = await self.bot.api.get_player(user.id)
+        player = await User(user.id).get_player()
 
         if player:
             win_percent_str = f'{player.win_percent * 100:.2f}%'
@@ -65,7 +67,7 @@ class StatsCog(commands.Cog):
     async def leaders(self, ctx):
         """ Send an embed containing the leaderboard data parsed from the player objects returned from the API. """
         num = 5  # Easily modfiy the number of players on the leaderboard
-        guild_players = [x async for x in self.bot.api.get_players([user.id for user in ctx.guild.members])]
+        guild_players = [x async for x in get_players([user.id for user in ctx.guild.members])]
 
         if guild_players:
             embed = self.bot.embed_template(title='Nobody on this server is ranked!')
