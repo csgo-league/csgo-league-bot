@@ -18,6 +18,13 @@ class Player:
 
     def __init__(self, player_data, web_url=None):
         """ Set attributes. """
+
+        # This will be faster then looping over self.__dict__
+        # and calling setattr a bunch of times.
+        for key, value in player_data.items():
+            if type(value) != str:
+                player_data[key] = 0 if value is None else int(value)
+
         self.steam = player_data['steam']
         self.discord = player_data['discord']
         self.discord_name = player_data['discord_name']
@@ -102,12 +109,6 @@ class Player:
         self.no_scope = player_data['no_scope']
         self.no_scope_dis = player_data['no_scope_dis']
         self.in_match = player_data['inMatch']
-
-        # Convert player_data values to int
-        for attr, val in self.__dict__.items():
-            if attr != 'discord_name' and attr != 'in_match':  # These attributes are already the correct type
-                # Convert to ints with None being 0
-                setattr(self, attr, 0 if val is None else int(val))
 
         self.web_url = web_url
 
