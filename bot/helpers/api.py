@@ -303,7 +303,8 @@ class ApiHelper:
             loop=loop, json_serialize=lambda x: json.dumps(
                 x, ensure_ascii=False),
             raise_for_status=True,
-            trace_configs=[trace_config]
+            trace_configs=[trace_config],
+            headers={"authentication": self.api_key}
         )
 
     async def close(self) -> None:
@@ -313,14 +314,6 @@ class ApiHelper:
 
         self.logger.info('Closing API helper client session')
         await self.session.close()
-
-    @property
-    def headers(self) -> dict:
-        """
-        Default authentication header the API needs.
-        """
-
-        return {"authentication": self.api_key}
 
     async def generate_link_url(self, user_id: int) -> str:
         """Get custom URL from API for user to link accounts.
@@ -337,7 +330,7 @@ class ApiHelper:
 
         url = "{}/discord/generate/{}".format(self.base_url, user_id)
 
-        async with self.session.get(url=url, headers=self.headers) as resp:
+        async with self.session.get(url=url) as resp:
             resp_json = await resp.json()
 
             if "discord" in resp_json and "code" in resp_json:
@@ -357,7 +350,7 @@ class ApiHelper:
 
         url = "{}/discord/check/{}".format(self.base_url, user_id)
 
-        async with self.session.get(url=url, headers=self.headers) as resp:
+        async with self.session.get(url=url) as resp:
             resp_json = await resp.json()
 
             return resp_json["linked"] if "linked" in resp_json else False
@@ -377,8 +370,7 @@ class ApiHelper:
         url = "{}/discord/update/{}".format(self.base_url, user.id)
         data = {"discord_name": user.display_name}
 
-        async with self.session.post(
-                url=url, headers=self.headers, data=data) as resp:
+        async with self.session.post(url=url, data=data) as resp:
             return resp.status == 200
 
     async def get_player(self, user_id: int) -> Player:
@@ -395,7 +387,7 @@ class ApiHelper:
 
         url = "{}/player/discord/{}".format(self.base_url, user_id)
 
-        async with self.session.get(url=url, headers=self.headers) as resp:
+        async with self.session.get(url=url) as resp:
             return Player(await resp.json(), self.base_url)
 
     async def get_players(self, user_ids: list
@@ -414,8 +406,7 @@ class ApiHelper:
         url = "{}/players/discord".format(self.base_url)
         discord_ids = {"discordIds": user_ids}
 
-        async with self.session.post(
-                url=url, headers=self.headers, json=discord_ids) as resp:
+        async with self.session.post(url=url, json=discord_ids) as resp:
             players = await resp.json()
 
             players.sort(
@@ -450,6 +441,5 @@ class ApiHelper:
         if map_pick:
             data['maps'] = map_pick
 
-        async with self.session.post(
-                url=url, headers=self.headers, json=data) as resp:
+        async with self.session.post(url=url, json=data) as resp:
             return MatchServer(await resp.json(), self.base_url)
