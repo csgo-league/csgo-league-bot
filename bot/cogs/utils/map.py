@@ -20,7 +20,9 @@ class Map:
 
 
 class Maps:
-    """ Namespace to store all maps under. """
+    """
+    Namespace to store all maps under.
+    """
     de_cache = Map('Cache', 'de_cache')
     de_cbble = Map('Cobblestone', 'de_cbble')
     de_dust2 = Map('Dust II', 'de_dust2')
@@ -39,4 +41,15 @@ class MapPool(set):
     @classmethod
     def from_dict(cls, map_dict):
         """ Get map pool from dict of dev name to boolean. """
-        return cls((m for m in Maps.all_maps if map_dict[m.dev_name]))
+        return cls((m for m in Maps.all if map_dict[m.dev_name]))
+
+    @property
+    def to_dict(self):
+        """Convert object to a dictionary format to match the database entry.
+
+        Returns
+        -------
+        dict
+            Dictionary containing the map pool data formatted for the database.
+        """
+        return {m.dev_name: m in self for m in Maps.all}
