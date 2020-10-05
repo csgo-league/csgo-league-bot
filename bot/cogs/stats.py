@@ -42,8 +42,6 @@ class StatsCog(commands.Cog):
             user = ctx.message.mentions[0]
         except IndexError:
             user = ctx.author
-        else:
-            user = ctx.message.mentions[0]
             
         player = await self.bot.api_helper.get_player(user.id)
 
