@@ -56,8 +56,8 @@ class LeagueBot(commands.AutoShardedBot):
             self.add_cog(cogs.DonateCog(self))
 
     async def get_context(self, message, *, cls=None):
-        """ Override parent method to use CustomContext """
-        return await super().get_context(message, cls=cls or cogs.utils.LeagueBotContext)
+        """ Override parent method to use LeagueContext """
+        return await super().get_context(message, cls=cls or cogs.utils.LeagueContext)
 
     def get_users(self, user_ids):
         """"""
