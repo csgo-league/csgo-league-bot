@@ -29,7 +29,7 @@ class _ConfigMethod(enum.Enum):
         int
             The found enum value.
         """
-        return getattr(cls, name.upper)
+        return getattr(cls, name.upper())
 
 
 class TeamMethod(_ConfigMethod):
@@ -79,7 +79,7 @@ class GuildConfig:
         The guild's map pool.
     """
 
-    def __init__(self, capacity: int, team_method: int, captain_method: int, map_method: int, map_pool: MapPool) -> GuildConfig:
+    def __init__(self, capacity: int, team_method: int, captain_method: int, map_method: int, map_pool: MapPool):
         self.capacity = capacity
         self.team_method = team_method
         self.captain_method = captain_method
@@ -87,13 +87,13 @@ class GuildConfig:
         self.map_pool = map_pool
 
     @classmethod
-    def from_dict(cls, guild_data: dict) -> GuildConfig:
-        """Create a GuildConfig from a dictionary as returned by the API.
+    def from_dict(cls, guild_data: dict):
+        """Create a GuildConfig from a dictionary as returned by the database.
 
         Parameters
         ----------
         guild_data : dict
-            Dictionary with guild config information from the API.
+            Dictionary with guild config information from the database.
 
         Returns
         -------
@@ -101,7 +101,25 @@ class GuildConfig:
             A new GuildData object.
         """
         return cls(guild_data['capacity'],
-                   TeamMethod.from_str(guild_data['team_method']),
-                   CaptainMethod.from_str(guild_data['captain_method']),
-                   MapMethod.from_str(guild_data['map_method']),
+                   TeamMethod.enum_str(guild_data['team_method']),
+                   CaptainMethod.enum_str(guild_data['captain_method']),
+                   MapMethod.enum_str(guild_data['map_method']),
                    MapPool.from_dict(guild_data))
+
+    @property
+    def to_dict(self):
+        """Convert object to a dictionary format to match the database entry.
+
+        Returns
+        -------
+        dict
+            Dictionary containing the config data formatted for the database.
+        """
+        guild_data = {
+            'capacity': self.capacity,
+            'team_method': TeamMethod(self.team_method).name.lower,
+            'captain_method': CaptainMethod(self.captain_method).name.lower,
+            'map_method': MapMethod(self.map_method).name.lower
+        }
+        guild_data.update(self.map_pool.to_dict)
+        return guild_data
