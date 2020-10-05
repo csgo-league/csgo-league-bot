@@ -131,6 +131,7 @@ class ApiWrapper:
 
         async with self.session.post(url=url, headers=self.headers, json=discord_ids) as resp:
             players = await resp.json()
+            players.sort(key=lambda x: user_ids.index(int(x['discord'])))  # Preserve order of user_ids arg
             return [Player(player_data, self.base_url) for player_data in players]
 
     async def start_match(self, team_one, team_two, map_pick=None):
