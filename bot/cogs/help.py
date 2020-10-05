@@ -15,7 +15,6 @@ class HelpCog(commands.Cog):
         self.bot = bot
         self.logo = 'https://raw.githubusercontent.com/csgo-league/csgo-league-bot/master/assets/logo/logo.jpg'
         self.bot.remove_command('help')
-        self.bot.ignore_error_types.add(commands.CommandNotFound)
 
     async def help_embed(self, ctx):
         embed = self.bot.embed_template(title='__CS:GO League Bot Commands__')
