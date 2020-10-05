@@ -147,4 +147,4 @@ class ApiWrapper:
         async with self.session.post(url=url, headers=self.headers, json=data) as resp:
             resp = await resp.json()
 
-        return MatchServer(**resp, self.base_url)
+        return MatchServer(**resp, web_url=self.base_url)
