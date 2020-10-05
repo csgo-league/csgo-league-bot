@@ -108,7 +108,4 @@ if __name__ == '__main__':
         guild_id = args.emojis
         create_emojis(guild_id)
 
-    try:
-        run_bot()
-    except OSError:
-        BOT_LOGGER.error('Emoji file not found: Use the "-e" flag with your guild ID to create bot emojis')
+    run_bot()
