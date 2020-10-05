@@ -1,8 +1,20 @@
+import discord
+import os
+
 ABS_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 EMOJI_FILE = os.path.join(ABS_ROOT_DIR, 'emojis.json')
 
-def create_emojis(client, guild):
-    """"""
+
+def create_emojis(client: discord.Client, guild: discord.Guild):
+    """Create the emojis the bot uses in the specified guild
+
+    Parameters
+    ----------
+    client : discord.Client
+        The client that will create the emojis
+    guild : discord.Guild
+        The guild object to create the emojis in
+    """
 
     icon_dir = os.path.join(ABS_ROOT_DIR, 'assets', 'maps', 'icons')
     reason = 'Used by the CS:GO League Bot'
@@ -47,5 +59,3 @@ def create_emojis(client, guild):
 
     with open(EMOJI_FILE, 'w+') as f:
         json.dump(emoji_dict, f)
-
-EMOJI_DICT =
