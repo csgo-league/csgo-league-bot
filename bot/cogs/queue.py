@@ -20,11 +20,10 @@ class QueueCog(commands.Cog):
     async def queue_embed(self, ctx, title=None):
         """ Method to create the queue embed for a guild. """
         queued_users = await ctx.queued_users()
-        guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
-        capacity = guild_data['capacity']
+        config = await ctx.guild_config()
 
         if title:
-            title += f' ({len(queued_users)}/{capacity})'
+            title += f' ({len(queued_users)}/{config.capacity})'
 
         if len(queued_users) == 0:  # If there are no users in the queue
             queue_str = '_The queue is empty..._'
@@ -55,18 +54,18 @@ class QueueCog(commands.Cog):
         else:  # Message author is linked
             awaitables = [
                 self.bot.api.get_player(ctx.author.id),
-                self.bot.db_helper.insert_users(ctx.author.id),
+                # self.bot.db_helper.insert_users(ctx.author.id),
                 ctx.queued_users(),
-                self.bot.db_helper.get_guild(ctx.guild.id),
+                ctx.guild_config(),
                 ctx.queue_banlist()
             ]
             results = await asyncio.gather(*awaitables, loop=self.bot.loop)
             player = results[0]
-            queued_users = results[2]
-            capacity = results[3]['capacity']
-            banned_users = results[4]
+            queued_users = results[1]
+            capacity = results[2].capacity
+            banned_users = results[3]
 
-            if ctx.author.id in banned_users:  # Author is banned from joining the queue
+            if ctx.author in banned_users:  # Author is banned from joining the queue
                 title = f'Unable to add **{ctx.author.display_name}**: Banned'
                 unban_time = banned_users[ctx.author.id]
 
@@ -77,7 +76,7 @@ class QueueCog(commands.Cog):
                 title = f'Unable to add **{ctx.author.display_name}**: Already in the queue'
             elif len(queued_users) >= capacity:  # Queue full
                 title = f'Unable to add **{ctx.author.display_name}**: Queue is full'
-            elif not player:  # ApiWrapper couldn't get player
+            elif not player:  # Couldn't get player from API TODO: Remove this logic and raise exception in ApiHelper
                 title = f'Unable to add **{ctx.author.display_name}**: Cannot verify match status'
             elif player.in_match:  # User is already in a match
                 title = f'Unable to add **{ctx.author.display_name}**: Already in a match'
