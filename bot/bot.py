@@ -4,6 +4,7 @@ import discord
 from discord.ext import commands
 
 import logging
+import os.path
 import sys
 import traceback
 import json
@@ -13,6 +14,9 @@ from aiohttp import ClientSession
 from . import cogs
 from .cogs.resources import Sessions, Config
 
+_CWD = os.path.dirname(os.path.abspath(__file__))
+INTENTS_JSON = os.path.join(_CWD, 'intents.json')
+
 
 class LeagueBot(commands.AutoShardedBot):
     """ Sub-classed AutoShardedBot modified to fit the needs of the application. """
@@ -20,7 +24,11 @@ class LeagueBot(commands.AutoShardedBot):
     def __init__(self, discord_token, api_base_url, api_key, db_pool, emoji_dict, donate_url=None):
         """ Set attributes and configure bot. """
         # Call parent init
-        super().__init__(command_prefix=('q!', 'Q!'), case_insensitive=True)
+        with open(INTENTS_JSON) as f:
+            intents_attrs = json.load(f)
+
+        intents = discord.Intents(**intents_attrs)
+        super().__init__(command_prefix=('q!', 'Q!'), case_insensitive=True, intents=intents)
 
         # Set argument attributes
         self.discord_token = discord_token
@@ -46,12 +54,8 @@ class LeagueBot(commands.AutoShardedBot):
                 .format(self.base_url)
             )
 
-        # Initialize set of errors to ignore
-        self.ignore_error_types = set()
-
         # Add check to not respond to DM'd commands
         self.add_check(lambda ctx: ctx.guild is not None)
-        self.ignore_error_types.add(commands.errors.CheckFailure)
 
         # Trigger typing before every command
         self.before_invoke(commands.Context.trigger_typing)
@@ -68,8 +72,21 @@ class LeagueBot(commands.AutoShardedBot):
             self.add_cog(cogs.DonateCog(self))
 
     async def get_context(self, message, *, cls=None):
-        """ Override parent method to use CustomContext """
-        return await super().get_context(message, cls=cls or cogs.utils.LeagueBotContext)
+        """ Override parent method to use LeagueContext """
+        return await super().get_context(message, cls=cls or cogs.utils.LeagueContext)
+
+    async def on_error(self, event_method, *args, **kwargs):
+        """"""
+        try:
+            logging_cog = self.get_cog('LoggingCog')
+
+            if logging_cog is None:
+                super().on_error(event_method, *args, **kwargs)
+            else:
+                exc_type, exc_value, traceback = sys.exc_info()
+                logging_cog.log_exception(f'Uncaught exception when handling "{event_method}" event:', exc_value)
+        except Exception as e:
+            print(e)
 
     def get_users(self, user_ids):
         """"""
@@ -109,13 +126,6 @@ class LeagueBot(commands.AutoShardedBot):
         async with self.db_pool.acquire() as conn:
             db = cogs.utils.DBHelper(conn)
             await db.delete_guilds(guild.id)
-
-    @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
-        """ Send help message when a mis-entered command is received. """
-        if type(error) not in self.ignore_error_types:
-            print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
-            traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
     def run(self):
         """ Override parent run to automatically include Discord token. """
