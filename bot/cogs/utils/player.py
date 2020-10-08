@@ -1,5 +1,7 @@
 # player.py
 
+from typing import AsyncGenerator
+
 from ..resources import Config
 
 

@@ -8,9 +8,7 @@ import random
 import sys
 import traceback
 
-from .utils import Map
-from .utils.api import start_match
-from .utils.player import get_players_stats
+from .utils import Map, start_match, get_players_stats
 
 
 EMOJI_NUMBERS = [u'\u0030\u20E3',

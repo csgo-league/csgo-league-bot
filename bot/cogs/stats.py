@@ -1,11 +1,9 @@
 # stats.py
 
 from discord.ext import commands
-
-from .utils import Player
-from .utils.player import get_players_stats
-
 import math
+
+from .utils import Player, get_players_stats
 
 
 def align_text(text, length, align='center'):
