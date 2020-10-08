@@ -6,7 +6,7 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 import re
 
-from .utils.api import User
+from .utils import Player
 
 
 class QueueCog(commands.Cog):
@@ -52,7 +52,7 @@ class QueueCog(commands.Cog):
     async def join(self, ctx):
         """ Check if the member can be added to the guild queue and add them if so. """
 
-        user = User(ctx.author.id)
+        user = Player(ctx.author.id)
         if not await user.is_linked():  # Message author isn't linked
             title = f'Unable to add **{ctx.author.display_name}**: Their account is not linked'
         else:  # Message author is linked

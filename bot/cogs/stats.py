@@ -2,7 +2,8 @@
 
 from discord.ext import commands
 
-from .utils.api import User, get_players
+from .utils import Player
+from .utils.player import get_players_stats
 
 import math
 
@@ -40,23 +41,23 @@ class StatsCog(commands.Cog):
     async def stats(self, ctx):
         """ Send an embed containing stats data parsed from the player object returned from the API. """
         user = ctx.author
-        player = await User(user.id).get_player()
+        stats = await Player(user.id).get_stats()
 
-        if player:
-            win_percent_str = f'{player.win_percent * 100:.2f}%'
-            hs_percent_str = f'{player.hs_percent * 100:.2f}%'
-            fb_percent_str = f'{player.first_blood_rate * 100:.2f}%'
+        if stats:
+            win_percent_str = f'{stats.win_percent * 100:.2f}%'
+            hs_percent_str = f'{stats.hs_percent * 100:.2f}%'
+            fb_percent_str = f'{stats.first_blood_rate * 100:.2f}%'
             description = '```ml\n' \
-                          f' RankMe Score:      {player.score:>6} \n' \
-                          f' Matches Played:    {player.matches_played:>6} \n' \
+                          f' RankMe Score:      {stats.score:>6} \n' \
+                          f' Matches Played:    {stats.matches_played:>6} \n' \
                           f' Win Percentage:    {win_percent_str:>6} \n' \
-                          f' KD Ratio:          {player.kd_ratio:>6.2f} \n' \
-                          f' ADR:               {player.adr:>6.2f} \n' \
+                          f' KD Ratio:          {stats.kd_ratio:>6.2f} \n' \
+                          f' ADR:               {stats.adr:>6.2f} \n' \
                           f' HS Percentage:     {hs_percent_str:>6} \n' \
                           f' First Blood Rate:  {fb_percent_str:>6} ' \
                           '```'
             embed = self.bot.embed_template(description=description)
-            embed.set_author(name=user.display_name, url=player.league_profile, icon_url=user.avatar_url_as(size=128))
+            embed.set_author(name=user.display_name, url=stats.league_profile, icon_url=user.avatar_url_as(size=128))
         else:
             title = f'Unable to get **{ctx.author.display_name}**\'s stats: Their account not linked'
             embed = self.bot.embed_template(title=title)
@@ -67,23 +68,23 @@ class StatsCog(commands.Cog):
     async def leaders(self, ctx):
         """ Send an embed containing the leaderboard data parsed from the player objects returned from the API. """
         num = 5  # Easily modfiy the number of players on the leaderboard
-        guild_players = [x async for x in get_players([user.id for user in ctx.guild.members])]
+        players_stats = [x async for x in get_players_stats([user.id for user in ctx.guild.members])]
 
-        if guild_players:
+        if players_stats:
             embed = self.bot.embed_template(title='Nobody on this server is ranked!')
             await ctx.send(embed=embed)
 
-        guild_players.sort(key=lambda u: (u.score, u.matches_played), reverse=True)
+        players_stats.sort(key=lambda u: (u.score, u.matches_played), reverse=True)
 
         # Select the top players only
-        if len(guild_players) > num:
-            guild_players = guild_players[:num]
+        if len(players_stats) > num:
+            players_stats = players_stats[:num]
 
         # Generate leaderboard text
-        data = [['Player'] + [ctx.guild.get_member(player.discord).display_name for player in guild_players],
-                ['Score'] + [str(player.score) for player in guild_players],
-                ['Winrate'] + [f'{player.win_percent * 100:.2f}%' for player in guild_players],
-                ['Played'] + [str(player.matches_played) for player in guild_players]]
+        data = [['Player'] + [ctx.guild.get_member(player.discord).display_name for player in players_stats],
+                ['Score'] + [str(player.score) for player in players_stats],
+                ['Winrate'] + [f'{player.win_percent * 100:.2f}%' for player in players_stats],
+                ['Played'] + [str(player.matches_played) for player in players_stats]]
         data[0] = [name if len(name) < 12 else name[:9] + '...' for name in data[0]]  # Shorten long names
         widths = list(map(lambda x: len(max(x, key=len)), data))
         aligns = ['left', 'right', 'right', 'right']

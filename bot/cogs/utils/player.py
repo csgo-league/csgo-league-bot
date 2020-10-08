@@ -15,7 +15,7 @@ def catch_ZeroDivisionError(func):
     return caught_func
 
 
-class Player:
+class PlayerStats:
     """ Represents a player with the contents returned by the API. """
 
     def __init__(self, player_data):
@@ -156,3 +156,104 @@ class Player:
     @catch_ZeroDivisionError
     def first_blood_rate(self):
         return self.first_blood / (self.rounds_tr + self.rounds_ct)
+
+
+class Player:
+    def __init__(self, user_id: int) -> None:
+        """
+
+        Parameters
+        ----------
+        user_id : int
+        """
+
+        self.user_id = user_id
+
+    async def generate_link_url(self) -> str:
+        """Get custom URL from API for user to link accounts.
+
+        Returns
+        -------
+        str
+            Formatted link.
+        """
+
+        url = f'{Config.api_url}/discord/generate/{self.user_id}'
+
+        async with Sessions.requests.get(url=url) as resp:
+            resp_json = await resp.json()
+
+            if "discord" in resp_json and "code" in resp_json:
+                return f'{Config.api_url}/discord/{resp_json["discord"]}/{resp_json["code"]}'
+
+    async def is_linked(self) -> bool:
+        """
+        Returns
+        -------
+        bool
+        """
+
+        url = f'{Config.api_url}/discord/check/{self.user_id}'
+
+        async with Sessions.requests.get(url=url) as resp:
+            resp_json = await resp.json()
+
+            return resp_json["linked"] if "linked" in resp_json else False
+
+    async def get_stats(self) -> PlayerStats:
+        """Get player data from the API.
+
+        Returns
+        -------
+        PlayerStats
+        """
+
+        url = f'{Config.api_url}/player/discord/{self.user_id}'
+
+        async with Sessions.requests.get(url=url) as resp:
+            return PlayerStats(await resp.json())
+
+
+async def update_discord_name(user: Player) -> bool:
+    """Update a users API name to their current Discord display name.
+
+    Parameters
+    ----------
+    user : Player
+
+    Returns
+    -------
+    bool
+    """
+
+    url = f'{Config.api_url}/discord/update/{user.id}'
+    data = {"discord_name": user.display_name}
+
+    async with Sessions.requests.post(url=url, data=data) as resp:
+        return resp.status == 200
+
+
+async def get_players_stats(user_ids: list) -> AsyncGenerator[PlayerStats, None]:
+    """Get multiple players' data from the API.
+
+    Parameters
+    ----------
+    user_ids : list
+
+    Yields
+    -------
+    PlayerStats
+    """
+
+    url = f'{Config.api_url}/players/discord'
+    discord_ids = {"discordIds": user_ids}
+
+    async with Sessions.requests.post(url=url, json=discord_ids) as resp:
+        players = await resp.json()
+
+        players.sort(
+            key=lambda x: user_ids.index(int(x['discord']))
+        )  # Preserve order of user_ids arg
+
+        for player in players:
+            yield PlayerStats(player)

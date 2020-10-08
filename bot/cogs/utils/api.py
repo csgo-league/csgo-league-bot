@@ -2,7 +2,6 @@
 
 from typing import AsyncGenerator
 
-from .player import Player
 from ..resources import Config, Sessions
 
 
