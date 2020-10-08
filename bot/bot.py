@@ -50,8 +50,7 @@ class LeagueBot(commands.AutoShardedBot):
                 and self.api_base_url.startswith('http'):
 
             self.logger.warning(
-                "API url '{}' should start with 'https' instead of 'http'"
-                .format(self.api_base_url)
+                f'API url "{self.api_base_url}" should start with "https" instead of "http"'
             )
 
         # Add check to not respond to DM'd commands

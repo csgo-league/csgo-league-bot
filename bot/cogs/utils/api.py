@@ -29,7 +29,7 @@ class MatchServer:
         Format console command to connect to server.
         """
 
-        return "connect {}:{}".format(self.ip, self.port)
+        return f'connect {self.ip}:{self.port}'
 
     @property
     def match_page(self):
