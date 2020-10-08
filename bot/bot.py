@@ -102,7 +102,7 @@ class LeagueBot(commands.AutoShardedBot):
         Sessions.requests = ClientSession(
             loop=self.loop,
             headers={"authentication": self.api_key},
-            son_serialize=lambda x: json.dumps(x, ensure_ascii=False),
+            json_serialize=lambda x: json.dumps(x, ensure_ascii=False),
             raise_for_status=True
         )
 
