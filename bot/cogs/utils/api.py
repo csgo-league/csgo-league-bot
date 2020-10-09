@@ -1,6 +1,6 @@
 # api.py
 
-from ..resources import Config, Sessions
+from ...resources import Config, Sessions
 
 
 class MatchServer:

@@ -12,7 +12,7 @@ import json
 from aiohttp import ClientSession
 
 from . import cogs
-from .cogs.resources import Sessions, Config
+from .resources import Sessions, Config
 
 _CWD = os.path.dirname(os.path.abspath(__file__))
 INTENTS_JSON = os.path.join(_CWD, 'intents.json')

@@ -2,7 +2,7 @@
 
 from typing import AsyncGenerator
 
-from ..resources import Config
+from ...resources import Config
 
 
 def catch_ZeroDivisionError(func):
