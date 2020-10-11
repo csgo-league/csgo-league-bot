@@ -11,8 +11,7 @@ class MatchServer:
     Represents a match server with the contents returned by the API.
     """
 
-    def __init__(self, id, ip, port):
-        """ Set attributes. """
+    def __init__(self, id: int, ip: str, port: int):
         self.id = match_id
         self.ip = ip
         self.port = port
