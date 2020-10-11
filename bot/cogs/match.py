@@ -492,7 +492,7 @@ class MatchCog(commands.Cog):
 
         # Get players and sort by RankMe score
         users_dict = dict(
-            zip([x async for x in get_players([user.id for user in users])], users)
+            zip([x async for x in PlayerStats.from_ids([user.id for user in users])], users)
         )
         players = list(users_dict.keys())
         players.sort(key=lambda x: x.score)

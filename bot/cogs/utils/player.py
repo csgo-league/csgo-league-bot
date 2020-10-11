@@ -3,7 +3,7 @@
 import discord
 from typing import AsyncGenerator, List
 
-from ...resources import Config
+from ...resources import Config, Sessions
 
 
 def catch_ZeroDivisionError(func):
@@ -184,7 +184,7 @@ class PlayerStats:
 
         Parameters
         ----------
-        user_ids : List[int]
+        discord_ids : List[int]
 
         Yields
         -------
@@ -192,19 +192,17 @@ class PlayerStats:
         """
 
         url = f'{Config.api_url}/players/discord'
-        discord_ids = {"discordIds": user_ids}
+        discord_ids = {"discordIds": discord_ids}
 
         async with Sessions.requests.post(url=url, json=discord_ids) as resp:
             players = await resp.json()
 
             players.sort(
-                key=lambda x: user_ids.index(int(x['discord']))
-            )  # Preserve order of user_ids arg
+                key=lambda x: discord_ids.index(int(x['discord']))
+            )  # Preserve order of discord_ids arg
 
             for player in players:
                 yield cls(player)
-
-
 
 
 class Player:

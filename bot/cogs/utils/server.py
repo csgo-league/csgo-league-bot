@@ -12,7 +12,7 @@ class MatchServer:
     """
 
     def __init__(self, id: int, ip: str, port: int):
-        self.id = match_id
+        self.id = id
         self.ip = ip
         self.port = port
 

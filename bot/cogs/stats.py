@@ -3,7 +3,7 @@
 from discord.ext import commands
 import math
 
-from .utils import Player, PlayerStats
+from .utils import PlayerStats
 
 
 def align_text(text, length, align='center'):
