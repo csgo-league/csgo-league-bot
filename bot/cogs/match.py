@@ -8,7 +8,7 @@ import random
 import sys
 import traceback
 
-from .utils import Map, MatchServer, get_players_stats
+from .utils import Map, MatchServer, PlayerStats
 
 
 EMOJI_NUMBERS = [u'\u0030\u20E3',
@@ -182,7 +182,7 @@ class TeamDraftMenu(discord.Message):
 
         # Check captain methods
         if captain_method == 'rank':
-            players_stats = [x async for x in get_players_stats([user.id for user in self.users_left])]
+            players_stats = [x async for x in PlayerStats.from_ids([user.id for user in self.users_left])]
             players_stats.sort(reverse=True, key=lambda x: x.score)
 
             for team in self.teams:

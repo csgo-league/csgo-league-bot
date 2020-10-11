@@ -1,6 +1,7 @@
 # player.py
 
-from typing import AsyncGenerator
+import discord
+from typing import AsyncGenerator, List
 
 from ...resources import Config
 
@@ -159,17 +160,63 @@ class PlayerStats:
     def first_blood_rate(self):
         return self.first_blood / (self.rounds_tr + self.rounds_ct)
 
+    @classmethod
+    async def from_id(cls, discord_id: int):
+        """Get player data from their Discord user ID.
+
+        Parameters
+        ----------
+        discord_id : int
+
+        Returns
+        -------
+        PlayerStats
+        """
+
+        url = f'{Config.api_url}/player/discord/{discord_id}'
+
+        async with Sessions.requests.get(url=url) as resp:
+            return cls(await resp.json())
+
+    @classmethod
+    async def from_ids(cls, discord_ids: List[int]) -> AsyncGenerator['PlayerStats', None]:
+        """Get multiple players' data from their Discord user IDs.
+
+        Parameters
+        ----------
+        user_ids : List[int]
+
+        Yields
+        -------
+        PlayerStats
+        """
+
+        url = f'{Config.api_url}/players/discord'
+        discord_ids = {"discordIds": user_ids}
+
+        async with Sessions.requests.post(url=url, json=discord_ids) as resp:
+            players = await resp.json()
+
+            players.sort(
+                key=lambda x: user_ids.index(int(x['discord']))
+            )  # Preserve order of user_ids arg
+
+            for player in players:
+                yield cls(player)
+
+
+
 
 class Player:
-    def __init__(self, user_id: int) -> None:
+    def __init__(self, discord_id: int) -> None:
         """
 
         Parameters
         ----------
-        user_id : int
+        discord_id : int
         """
 
-        self.user_id = user_id
+        self.discord_id = discord_id
 
     async def generate_link_url(self) -> str:
         """Get custom URL from API for user to link accounts.
@@ -180,12 +227,12 @@ class Player:
             Formatted link.
         """
 
-        url = f'{Config.api_url}/discord/generate/{self.user_id}'
+        url = f'{Config.api_url}/discord/generate/{self.discord_id}'
 
         async with Sessions.requests.get(url=url) as resp:
             resp_json = await resp.json()
 
-            if "discord" in resp_json and "code" in resp_json:
+            if 'discord' in resp_json and 'code' in resp_json:
                 return f'{Config.api_url}/discord/{resp_json["discord"]}/{resp_json["code"]}'
 
     async def is_linked(self) -> bool:
@@ -195,7 +242,7 @@ class Player:
         bool
         """
 
-        url = f'{Config.api_url}/discord/check/{self.user_id}'
+        url = f'{Config.api_url}/discord/check/{self.discord_id}'
 
         async with Sessions.requests.get(url=url) as resp:
             resp_json = await resp.json()
@@ -210,18 +257,15 @@ class Player:
         PlayerStats
         """
 
-        url = f'{Config.api_url}/player/discord/{self.user_id}'
-
-        async with Sessions.requests.get(url=url) as resp:
-            return PlayerStats(await resp.json())
+        return PlayerStats.from_id(self.discord_id)
 
 
-async def update_discord_name(user: Player) -> bool:
+async def update_discord_name(user: discord.User) -> bool:
     """Update a users API name to their current Discord display name.
 
     Parameters
     ----------
-    user : Player
+    user : discord.User
 
     Returns
     -------
@@ -229,33 +273,7 @@ async def update_discord_name(user: Player) -> bool:
     """
 
     url = f'{Config.api_url}/discord/update/{user.id}'
-    data = {"discord_name": user.display_name}
+    data = {'discord_name': user.display_name}
 
     async with Sessions.requests.post(url=url, data=data) as resp:
         return resp.status == 200
-
-
-async def get_players_stats(user_ids: list) -> AsyncGenerator[PlayerStats, None]:
-    """Get multiple players' data from the API.
-
-    Parameters
-    ----------
-    user_ids : list
-
-    Yields
-    -------
-    PlayerStats
-    """
-
-    url = f'{Config.api_url}/players/discord'
-    discord_ids = {"discordIds": user_ids}
-
-    async with Sessions.requests.post(url=url, json=discord_ids) as resp:
-        players = await resp.json()
-
-        players.sort(
-            key=lambda x: user_ids.index(int(x['discord']))
-        )  # Preserve order of user_ids arg
-
-        for player in players:
-            yield PlayerStats(player)

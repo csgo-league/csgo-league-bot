@@ -3,7 +3,7 @@
 from discord.ext import commands
 import math
 
-from .utils import Player, get_players_stats
+from .utils import Player, PlayerStats
 
 
 def align_text(text, length, align='center'):
@@ -66,7 +66,7 @@ class StatsCog(commands.Cog):
     async def leaders(self, ctx):
         """ Send an embed containing the leaderboard data parsed from the player objects returned from the API. """
         num = 5  # Easily modfiy the number of players on the leaderboard
-        players_stats = [x async for x in get_players_stats([user.id for user in ctx.guild.members])]
+        players_stats = [x async for x in PlayerStats.from_ids([user.id for user in ctx.guild.members])]
 
         if players_stats:
             embed = self.bot.embed_template(title='Nobody on this server is ranked!')
