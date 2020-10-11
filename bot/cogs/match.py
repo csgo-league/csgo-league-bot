@@ -491,10 +491,10 @@ class MatchCog(commands.Cog):
             raise ValueError('Users argument must have even length')
 
         # Get players and sort by RankMe score
-        users_dict = dict(
+        stats_dict = dict(
             zip([x async for x in PlayerStats.from_ids([user.id for user in users])], users)
         )
-        players = list(users_dict.keys())
+        players = list(stats_dict.keys())
         players.sort(key=lambda x: x.score)
 
         # Balance teams
@@ -512,7 +512,7 @@ class MatchCog(commands.Cog):
             else:
                 team_two.append(players.pop())
 
-        return list(map(users_dict.get, team_one)), list(map(users_dict.get, team_two))
+        return list(map(stats_dict.get, team_one)), list(map(stats_dict.get, team_two))
 
     @staticmethod
     async def randomize_teams(users):
