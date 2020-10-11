@@ -39,7 +39,7 @@ class StatsCog(commands.Cog):
     async def stats(self, ctx):
         """ Send an embed containing stats data parsed from the player object returned from the API. """
         user = ctx.author
-        stats = await Player(user.id).get_stats()
+        stats = await PlayerStats.from_id(user.id)
 
         if stats:
             win_percent_str = f'{stats.win_percent * 100:.2f}%'
