@@ -39,30 +39,31 @@ class MatchServer:
         if Config.api_url:
             return f'{Config.api_url}/match/{self.id}'
 
+    @classmethod
+    async def new_match(cls, team_one: list, team_two: list, map_pick: str = None) -> MatchServer:
+        """Get a match server from the API.
 
-async def start_match(team_one: list, team_two: list, map_pick: str = None) -> MatchServer:
-    """Get a match server from the API.
+        Parameters
+        ----------
+        team_one : list
+        team_two : list
+        map_pick : str, optional
+            by default None
 
-    Parameters
-    ----------
-    team_one : list
-    team_two : list
-    map_pick : str, optional
-        by default None
+        Returns
+        -------
+        MatchServer
+        """
 
-    Returns
-    -------
-    MatchServer
-    """
+        url = f'{Config.api_url}/match/start'
+        data = {
+            'team_one': {user.id: user.display_name for user in team_one},
+            'team_two': {user.id: user.display_name for user in team_two}
+        }
 
-    url = f'{Config.api_url}/match/start'
-    data = {
-        'team_one': {user.id: user.display_name for user in team_one},
-        'team_two': {user.id: user.display_name for user in team_two}
-    }
+        if map_pick:
+            data['maps'] = map_pick
 
-    if map_pick:
-        data['maps'] = map_pick
-
-    async with Sessions.requests.post(url=url, json=data) as resp:
-        return MatchServer(await resp.json())
+        async with Sessions.requests.post(url=url, json=data) as resp:
+            json = await resp.json()
+            return cls(**json)

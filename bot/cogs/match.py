@@ -8,7 +8,7 @@ import random
 import sys
 import traceback
 
-from .utils import Map, start_match, get_players_stats
+from .utils import Map, MatchServer, get_players_stats
 
 
 EMOJI_NUMBERS = [u'\u0030\u20E3',
@@ -621,7 +621,7 @@ class MatchCog(commands.Cog):
 
             # Check if able to get a match server and edit message embed accordingly
             try:
-                match = await start_match(team_one, team_two, map_pick.dev_name)  # API start match
+                match = await MatchServer.new_match(team_one, team_two, map_pick.dev_name)  # API start match
             except aiohttp.ClientResponseError as e:
                 description = 'Sorry! Looks like there aren\'t any servers available at this time. ' \
                               'Please try again later.'
