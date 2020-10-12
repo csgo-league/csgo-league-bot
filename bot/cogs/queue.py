@@ -6,6 +6,8 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 import re
 
+from .utils import Player
+
 
 class QueueCog(commands.Cog):
     """ Cog to manage queues of players among multiple servers. """
@@ -49,11 +51,13 @@ class QueueCog(commands.Cog):
     @commands.command(brief='Join the queue')
     async def join(self, ctx):
         """ Check if the member can be added to the guild queue and add them if so. """
-        if not await self.bot.api.is_linked(ctx.author.id):  # Message author isn't linked
+
+        user = Player(ctx.author.id)
+        if not await user.is_linked():  # Message author isn't linked
             title = f'Unable to add **{ctx.author.display_name}**: Their account is not linked'
         else:  # Message author is linked
             awaitables = [
-                self.bot.api.get_player(ctx.author.id),
+                user.get_player(),
                 # self.bot.db_helper.insert_users(ctx.author.id),
                 ctx.queued_users(),
                 ctx.guild_config(),

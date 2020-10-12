@@ -1,5 +1,10 @@
 # player.py
 
+import discord
+from typing import AsyncGenerator, List
+
+from ...resources import Config, Sessions
+
 
 def catch_ZeroDivisionError(func):
     """ Decorator to catch ZeroDivisionError and return 0. """
@@ -13,11 +18,18 @@ def catch_ZeroDivisionError(func):
     return caught_func
 
 
-class Player:
+class PlayerStats:
     """ Represents a player with the contents returned by the API. """
 
-    def __init__(self, player_data, web_url=None):
+    def __init__(self, player_data):
         """ Set attributes. """
+
+        # This will be faster then looping over self.__dict__
+        # and calling setattr a bunch of times.
+        for key, value in player_data.items():
+            if type(value) != str:
+                player_data[key] = 0 if value is None else int(value)
+
         self.steam = player_data['steam']
         self.discord = player_data['discord']
         self.discord_name = player_data['discord_name']
@@ -103,19 +115,11 @@ class Player:
         self.no_scope_dis = player_data['no_scope_dis']
         self.in_match = player_data['inMatch']
 
-        # Convert player_data values to int
-        for attr, val in self.__dict__.items():
-            if attr != 'discord_name' and attr != 'in_match':  # These attributes are already the correct type
-                # Convert to ints with None being 0
-                setattr(self, attr, 0 if val is None else int(val))
-
-        self.web_url = web_url
-
     @property
     def league_profile(self):
         """ Generate the player's CS:GO League profile link. """
-        if self.web_url:
-            return f'{self.web_url}/profile/{self.steam}'
+        if Config.api_url:
+            return f'{Config.api_url}/profile/{self.steam}'
 
     @property
     def steam_profile(self):
@@ -155,3 +159,119 @@ class Player:
     @catch_ZeroDivisionError
     def first_blood_rate(self):
         return self.first_blood / (self.rounds_tr + self.rounds_ct)
+
+    @classmethod
+    async def from_id(cls, discord_id: int):
+        """Get player data from their Discord user ID.
+
+        Parameters
+        ----------
+        discord_id : int
+
+        Returns
+        -------
+        PlayerStats
+        """
+
+        url = f'{Config.api_url}/player/discord/{discord_id}'
+
+        async with Sessions.requests.get(url=url) as resp:
+            return cls(await resp.json())
+
+    @classmethod
+    async def from_ids(cls, discord_ids: List[int]) -> AsyncGenerator['PlayerStats', None]:
+        """Get multiple players' data from their Discord user IDs.
+
+        Parameters
+        ----------
+        discord_ids : List[int]
+
+        Yields
+        -------
+        PlayerStats
+        """
+
+        url = f'{Config.api_url}/players/discord'
+        discord_ids = {"discordIds": discord_ids}
+
+        async with Sessions.requests.post(url=url, json=discord_ids) as resp:
+            players = await resp.json()
+
+            players.sort(
+                key=lambda x: discord_ids.index(int(x['discord']))
+            )  # Preserve order of discord_ids arg
+
+            for player in players:
+                yield cls(player)
+
+
+class Player:
+    def __init__(self, discord_id: int) -> None:
+        """
+
+        Parameters
+        ----------
+        discord_id : int
+        """
+
+        self.discord_id = discord_id
+
+    async def generate_link_url(self) -> str:
+        """Get custom URL from API for user to link accounts.
+
+        Returns
+        -------
+        str
+            Formatted link.
+        """
+
+        url = f'{Config.api_url}/discord/generate/{self.discord_id}'
+
+        async with Sessions.requests.get(url=url) as resp:
+            resp_json = await resp.json()
+
+            if 'discord' in resp_json and 'code' in resp_json:
+                return f'{Config.api_url}/discord/{resp_json["discord"]}/{resp_json["code"]}'
+
+    async def is_linked(self) -> bool:
+        """
+        Returns
+        -------
+        bool
+        """
+
+        url = f'{Config.api_url}/discord/check/{self.discord_id}'
+
+        async with Sessions.requests.get(url=url) as resp:
+            resp_json = await resp.json()
+
+            return resp_json["linked"] if "linked" in resp_json else False
+
+    async def get_stats(self) -> PlayerStats:
+        """Get player data from the API.
+
+        Returns
+        -------
+        PlayerStats
+        """
+
+        return PlayerStats.from_id(self.discord_id)
+
+
+async def update_discord_name(user: discord.User) -> bool:
+    """Update a users API name to their current Discord display name.
+
+    Parameters
+    ----------
+    user : discord.User
+
+    Returns
+    -------
+    bool
+    """
+
+    url = f'{Config.api_url}/discord/update/{user.id}'
+    data = {'discord_name': user.display_name}
+
+    async with Sessions.requests.post(url=url, data=data) as resp:
+        return resp.status == 200

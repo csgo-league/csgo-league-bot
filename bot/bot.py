@@ -2,12 +2,17 @@
 
 import discord
 from discord.ext import commands
-import json
+
 import logging
 import os.path
 import sys
+import traceback
+import json
+
+from aiohttp import ClientSession
 
 from . import cogs
+from .resources import Sessions, Config
 
 _CWD = os.path.dirname(os.path.abspath(__file__))
 INTENTS_JSON = os.path.join(_CWD, 'intents.json')
@@ -39,8 +44,14 @@ class LeagueBot(commands.AutoShardedBot):
         self.activity = discord.Activity(type=discord.ActivityType.watching, name="noobs type q!help")  # TODO: Make help command string dynamic
         self.logger = logging.getLogger('csgoleague.bot')
 
-        # Create session for API
-        self.api = cogs.utils.ApiWrapper(self.loop, self.api_base_url, self.api_key)
+        Config.api_url = self.api_base_url
+
+        if not self.api_base_url.startswith('https') \
+                and self.api_base_url.startswith('http'):
+
+            self.logger.warning(
+                f'API url "{self.api_base_url}" should start with "https" instead of "http"'
+            )
 
         # Add check to not respond to DM'd commands
         self.add_check(lambda ctx: ctx.guild is not None)
@@ -86,6 +97,15 @@ class LeagueBot(commands.AutoShardedBot):
         return discord.Embed(**kwargs)
 
     @commands.Cog.listener()
+    async def on_connect(self):
+        Sessions.requests = ClientSession(
+            loop=self.loop,
+            headers={"authentication": self.api_key},
+            json_serialize=lambda x: json.dumps(x, ensure_ascii=False),
+            raise_for_status=True
+        )
+
+    @commands.Cog.listener()
     async def on_ready(self):
         """ Synchronize the guilds the bot is in with the guilds table. """
         async with self.db_pool.acquire() as conn:
@@ -113,5 +133,7 @@ class LeagueBot(commands.AutoShardedBot):
     async def close(self):
         """ Override parent close to close the API session and DB connection pool. """
         await super().close()
-        await self.api.close()
         await self.db_pool.close()
+
+        self.logger.info('Closing API helper client session')
+        await Sessions.requests.close()

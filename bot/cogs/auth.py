@@ -2,6 +2,8 @@
 
 from discord.ext import commands
 
+from .utils import Player
+
 
 class AuthCog(commands.Cog):
     """ Cog to manage authorisation. """
@@ -13,12 +15,12 @@ class AuthCog(commands.Cog):
     @commands.command(brief='Link a player on the backend')
     async def link(self, ctx):
         """ Link a player by sending them a link to sign in with steam on the backend. """
-        is_linked = await self.bot.api.is_linked(ctx.author.id)
+        player = Player(ctx.author.id)
 
-        if is_linked:
+        if await player.is_linked():
             title = f'Unable to link **{ctx.author.display_name}**: They are already linked'
         else:
-            link = await self.bot.api.generate_link_url(ctx.author.id)
+            link = await player.generate_link_url()
 
             if link:
                 # Send the author a DM containing this link

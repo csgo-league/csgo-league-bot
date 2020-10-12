@@ -8,7 +8,7 @@ import random
 import sys
 import traceback
 
-from .utils import Map
+from .utils import Map, MatchServer, PlayerStats
 
 
 EMOJI_NUMBERS = [u'\u0030\u20E3',
@@ -182,11 +182,11 @@ class TeamDraftMenu(discord.Message):
 
         # Check captain methods
         if captain_method == 'rank':
-            players = await self.bot.api.get_players([user.id for user in self.users_left])
-            players.sort(reverse=True, key=lambda x: x.score)
+            players_stats = [x async for x in PlayerStats.from_ids([user.id for user in self.users_left])]
+            players_stats.sort(reverse=True, key=lambda x: x.score)
 
             for team in self.teams:
-                captain = self.guild.get_member(players.pop(0).discord)
+                captain = self.guild.get_member(players_stats.pop(0).discord)
                 self.users_left.remove(captain)
                 team.append(captain)
         elif captain_method == 'random':
@@ -491,8 +491,10 @@ class MatchCog(commands.Cog):
             raise ValueError('Users argument must have even length')
 
         # Get players and sort by RankMe score
-        users_dict = dict(zip(await self.bot.api.get_players([user.id for user in users]), users))
-        players = list(users_dict.keys())
+        stats_dict = dict(
+            zip([x async for x in PlayerStats.from_ids([user.id for user in users])], users)
+        )
+        players = list(stats_dict.keys())
         players.sort(key=lambda x: x.score)
 
         # Balance teams
@@ -510,7 +512,7 @@ class MatchCog(commands.Cog):
             else:
                 team_two.append(players.pop())
 
-        return list(map(users_dict.get, team_one)), list(map(users_dict.get, team_two))
+        return list(map(stats_dict.get, team_one)), list(map(stats_dict.get, team_two))
 
     @staticmethod
     async def randomize_teams(users):
@@ -619,7 +621,7 @@ class MatchCog(commands.Cog):
 
             # Check if able to get a match server and edit message embed accordingly
             try:
-                match = await self.bot.api.start_match(team_one, team_two, map_pick.dev_name)  # API start match
+                match = await MatchServer.new_match(team_one, team_two, map_pick.dev_name)  # API start match
             except aiohttp.ClientResponseError as e:
                 description = 'Sorry! Looks like there aren\'t any servers available at this time. ' \
                               'Please try again later.'
