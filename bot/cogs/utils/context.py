@@ -44,9 +44,9 @@ class LeagueContext(commands.Context):
 
     async def queue_banlist(self):
         async with self.bot.db_pool.acquire() as conn:
-            banned_ids = await DBHelper(conn).get_banned_users(self.guild.id)
+            banned_dict = await DBHelper(conn).get_banned_users(self.guild.id)
 
-        return self.bot.get_users(banned_ids)
+        return {self.bot.get_user(user_id): time for user_id, time in banned_dict.items()}
 
     async def ban_from_queue(self, *user_ids, unban_time=None):
         async with self.bot.db_pool.acquire() as conn:
