@@ -58,7 +58,6 @@ class QueueCog(commands.Cog):
         else:  # Message author is linked
             awaitables = [
                 user.get_player(),
-                # self.bot.db_helper.insert_users(ctx.author.id),
                 ctx.queued_users(),
                 ctx.guild_config(),
                 ctx.queue_banlist()
@@ -71,7 +70,7 @@ class QueueCog(commands.Cog):
 
             if ctx.author in banned_users:  # Author is banned from joining the queue
                 title = f'Unable to add **{ctx.author.display_name}**: Banned'
-                unban_time = banned_users[ctx.author.id]
+                unban_time = banned_users[ctx.author]
 
                 if unban_time is not None:  # If the user is banned for a duration
                     title += f' for {self.timedelta_str(unban_time - datetime.now(timezone.utc))}'
@@ -85,7 +84,7 @@ class QueueCog(commands.Cog):
             elif player.in_match:  # User is already in a match
                 title = f'Unable to add **{ctx.author.display_name}**: Already in a match'
             else:  # User can be added
-                await self.bot.db_helper.insert_queued_users(ctx.guild.id, ctx.author.id)
+                await ctx.enqueue_users(ctx.author)
                 queued_users += [ctx.author]
                 title = f'**{ctx.author.display_name}** has been added to the queue'
 
@@ -99,8 +98,7 @@ class QueueCog(commands.Cog):
                         return
 
                     if all_readied:
-                        user_ids = [user.id for user in queued_users]
-                        await self.bot.db_helper.delete_queued_users(ctx.guild.id, *user_ids)
+                        await ctx.empty_queue()
 
                     return
 
@@ -112,10 +110,10 @@ class QueueCog(commands.Cog):
     @commands.command(brief='Leave the queue')
     async def leave(self, ctx):
         """ Check if the member can be remobed from the guild and remove them if so. """
-        removed = await self.bot.db_helper.delete_queued_users(ctx.guild.id, ctx.author.id)
+        removed = await ctx.dequeue_users(ctx.author)
         name = ctx.author.nick if ctx.author.nick is not None else ctx.author.display_name
 
-        if ctx.author.id in removed:
+        if ctx.author in removed:
             title = f'**{name}** has been removed from the queue'
         else:
             title = f'**{name}** isn\'t in the queue'
@@ -145,10 +143,10 @@ class QueueCog(commands.Cog):
             embed = self.bot.embed_template(title='Mention a user in the command to remove them')
             await ctx.send(embed=embed)
         else:
-            removed = await self.bot.db_helper.delete_queued_users(ctx.guild.id, removee.id)
+            removed = await ctx.dequeue_users(removee)
             name = removee.nick if removee.nick is not None else removee.display_name
 
-            if removee.id in removed:
+            if removee in removed:
                 title = f'**{name}** has been removed from the queue'
             else:
                 title = f'**{name}** is not in the queue'
@@ -162,7 +160,7 @@ class QueueCog(commands.Cog):
     @commands.has_permissions(kick_members=True)
     async def empty(self, ctx):
         """ Reset the guild queue list to empty. """
-        await self.bot.db_helper.clear_queued_users(ctx.guild.id)
+        await ctx.empty_queue()
         embed = await self.queue_embed(ctx, 'The queue has been emptied')
 
         # Update queue display message
@@ -183,8 +181,8 @@ class QueueCog(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def cap(self, ctx, *args):
         """ Set the queue capacity. """
-        guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
-        capacity = guild_data['capacity']
+        config = await ctx.guild_config()
+        capacity = config.capacity
         lower_bound = 2
         upper_bound = 100
 
@@ -204,8 +202,8 @@ class QueueCog(commands.Cog):
                     title = f'Capacity is outside of valid range ({lower_bound}-{upper_bound})'
                     embed = self.bot.embed_template(title=title)
                 else:
-                    await self.bot.db_helper.clear_queued_users(ctx.guild.id)
-                    await self.bot.db_helper.update_guild(ctx.guild.id, capacity=new_cap)
+                    await ctx.empty_queue()
+                    await ctx.set_guild_config(capacity=new_cap)
                     embed = self.bot.embed_template(title=f'Queue capacity set to {new_cap}')
                     embed.set_footer(text='The queue has been emptied because of the capacity change')
 
@@ -262,13 +260,11 @@ class QueueCog(commands.Cog):
         time_delta = timedelta(**time_delta_values)
         unban_time = None if time_delta_values == {} else datetime.now(timezone.utc) + time_delta
 
-        # Get user IDs to ban from mentions and insert them into ban table
-        user_ids = [user.id for user in ctx.message.mentions]
-        await self.bot.db_helper.insert_banned_users(ctx.guild.id, *user_ids, unban_time=unban_time)
+        # Insert mentions into ban table
+        await ctx.ban_from_queue(*ctx.message.mentions, unban_time=unban_time)
 
         # Remove banned users from the queue
-        for user in ctx.message.mentions:
-            await self.bot.db_helper.delete_queued_users(ctx.guild.id, *user_ids)
+        await ctx.dequeue_users(*ctx.message.mentions)
 
         # Generate embed and send message
         banned_users_str = ', '.join(f'**{user.display_name}**' for user in ctx.message.mentions)
@@ -288,13 +284,11 @@ class QueueCog(commands.Cog):
             await ctx.send(embed=embed)
             return
 
-        # Get user IDs to unban from mentions and delete them from the ban table
-        user_ids = [user.id for user in ctx.message.mentions]
-        unbanned_ids = await self.bot.db_helper.delete_banned_users(ctx.guild.id, *user_ids)
+        # Delete users from the ban table
+        unbanned_users = await ctx.unban_from_queue(*ctx.message.mentions)
 
         # Generate embed and send message
-        unbanned_users = [user for user in ctx.message.mentions if user.id in unbanned_ids]
-        never_banned_users = [user for user in ctx.message.mentions if user.id not in unbanned_ids]
+        never_banned_users = [user for user in ctx.message.mentions if user not in unbanned_users]
         unbanned_users_str = ', '.join(f'**{user.display_name}**' for user in unbanned_users)
         never_banned_users_str = ', '.join(f'**{user.display_name}**' for user in never_banned_users)
         title_1 = 'nobody' if unbanned_users_str == '' else unbanned_users_str
