@@ -24,7 +24,9 @@ class LeagueContext(commands.Context):
         user_ids = [user.id for user in users]
 
         async with self.bot.db_pool.acquire() as conn:
-            await DBHelper(conn).insert_queued_users(self.guild.id, *user_ids)
+            db_helper = DBHelper(conn)
+            await db_helper.insert_users(*user_ids)
+            await db_helper.insert_queued_users(self.guild.id, *user_ids)
 
     async def dequeue_users(self, *users):
         user_ids = [user.id for user in users]
@@ -48,7 +50,9 @@ class LeagueContext(commands.Context):
 
     async def ban_from_queue(self, *user_ids, unban_time=None):
         async with self.bot.db_pool.acquire() as conn:
-            await DBHelper(conn).insert_banned_users(self.guild.id, *user_ids, unban_time=unban_time)
+            db_helper = DBHelper(conn)
+            await db_helper.insert_users(*user_ids)
+            await db_helper.insert_banned_users(self.guild.id, *user_ids, unban_time=unban_time)
 
     async def unban_from_queue(self, *user_ids) -> List[discord.User]:
         async with self.bot.db_pool.acquire() as conn:
