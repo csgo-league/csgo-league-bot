@@ -233,6 +233,16 @@ class Player:
             if 'discord' in resp_json and 'code' in resp_json:
                 return f'{Config.api_url}/discord/{resp_json["discord"]}/{resp_json["code"]}'
 
+    async def unlink(self) -> None:
+        """ Unlink the player on the web backend and delete their data. """
+
+        url = f'{Config.api_url}/discord/delete/{self.discord_id}'
+
+        async with Sessions.requests.post(url=url) as resp:
+            resp_json = await resp.json()
+
+            return resp_json['success']
+
     async def is_linked(self) -> bool:
         """
         Returns
@@ -245,7 +255,7 @@ class Player:
         async with Sessions.requests.get(url=url) as resp:
             resp_json = await resp.json()
 
-            return resp_json["linked"] if "linked" in resp_json else False
+            return resp_json.get('linked', False)
 
     async def get_stats(self) -> PlayerStats:
         """Get player data from the API.

@@ -29,7 +29,9 @@ If you appreciate the project then please take the time to star our repository.
 
 `q!about` **-** Display basic info about this bot<br>
 
-`q!link` **-** Link a player on the backend<br>
+`q!link` **-** Link Discord account to Steam to start playing<br>
+
+`q!unlink` **-** Unlink Steam account and delete all user data<br>
 
 `q!join` **-** Join the queue<br>
 
