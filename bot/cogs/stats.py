@@ -37,7 +37,12 @@ class StatsCog(commands.Cog):
     @commands.command(brief='See your stats')
     async def stats(self, ctx):
         """ Send an embed containing stats data parsed from the player object returned from the API. """
-        user = ctx.author
+
+        try:
+            user = ctx.message.mentions[0]
+        except IndexError:
+            user = ctx.author
+
         player = await self.bot.api_helper.get_player(user.id)
 
         if player:

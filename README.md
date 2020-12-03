@@ -64,6 +64,8 @@ If you appreciate the project then please take the time to star our repository.
 
    * The necessary OAuth2 invite permission scopes integer is `17067072`.
 
+   * Enable the "server members intent" for your bot, as shown [here](https://discordpy.readthedocs.io/en/latest/intents.html#privileged-intents).
+
 2. Setup and get an API token for the CS:GO League [web API](https://github.com/csgo-league/csgo-league-web) along with the host base URL.
 
 3. Install libpq-dev with `sudo apt-get install libpq-dev`. This is needed to install the psycopg2 Python package.

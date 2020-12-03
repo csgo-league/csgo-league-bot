@@ -17,10 +17,10 @@ class QueueCog(commands.Cog):
         self.bot = bot
         self.last_queue_msgs = {}
 
-    async def queue_embed(self, guild, title=None):
+    async def queue_embed(self, ctx, title=None):
         """ Method to create the queue embed for a guild. """
-        queued_ids = await self.bot.db_helper.get_queued_users(guild.id)
-        guild_data = await self.bot.db_helper.get_guild(guild.id)
+        queued_ids = await self.bot.db_helper.get_queued_users(ctx.guild.id)
+        guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
         capacity = guild_data['capacity']
 
         if title:
@@ -101,7 +101,7 @@ class QueueCog(commands.Cog):
 
                     return
 
-        embed = await self.queue_embed(ctx.guild, title)
+        embed = await self.queue_embed(ctx, title)
 
         # Delete last queue message
         await self.update_last_msg(ctx, embed)
@@ -117,7 +117,7 @@ class QueueCog(commands.Cog):
         else:
             title = f'**{name}** isn\'t in the queue'
 
-        embed = await self.queue_embed(ctx.guild, title)
+        embed = await self.queue_embed(ctx, title)
 
         # Update queue display message
         await self.update_last_msg(ctx, embed)
@@ -126,7 +126,7 @@ class QueueCog(commands.Cog):
     async def view(self, ctx):
         """ Display the queue as an embed list of mentioned names. """
         title = 'Players in queue for PUGs'
-        embed = await self.queue_embed(ctx.guild, title)
+        embed = await self.queue_embed(ctx, title)
 
         # Update queue display message
         await self.update_last_msg(ctx, embed)
@@ -150,7 +150,7 @@ class QueueCog(commands.Cog):
             else:
                 title = f'**{name}** is not in the queue'
 
-            embed = await self.queue_embed(ctx.guild, title)
+            embed = await self.queue_embed(ctx, title)
 
             # Update queue display message
             await self.update_last_msg(ctx, embed)
@@ -159,8 +159,8 @@ class QueueCog(commands.Cog):
     @commands.has_permissions(kick_members=True)
     async def empty(self, ctx):
         """ Reset the guild queue list to empty. """
-        await self.bot.db_helper.delete_all_queued_users(ctx.guild.id)
-        embed = await self.queue_embed(ctx.guild, 'The queue has been emptied')
+        await self.bot.db_helper.clear_queued_users(ctx.guild.id)
+        embed = await self.queue_embed(ctx, 'The queue has been emptied')
 
         # Update queue display message
         await self.update_last_msg(ctx, embed)
@@ -201,7 +201,7 @@ class QueueCog(commands.Cog):
                     title = f'Capacity is outside of valid range ({lower_bound}-{upper_bound})'
                     embed = self.bot.embed_template(title=title)
                 else:
-                    await self.bot.db_helper.delete_all_queued_users(ctx.guild.id)
+                    await self.bot.db_helper.clear_queued_users(ctx.guild.id)
                     await self.bot.db_helper.update_guild(ctx.guild.id, capacity=new_cap)
                     embed = self.bot.embed_template(title=f'Queue capacity set to {new_cap}')
                     embed.set_footer(text='The queue has been emptied because of the capacity change')

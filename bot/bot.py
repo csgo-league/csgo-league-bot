@@ -2,12 +2,16 @@
 
 import discord
 from discord.ext import commands
+import json
 import logging
+import os.path
 import sys
-import traceback
 
 from . import cogs
 from . import helpers
+
+_CWD = os.path.dirname(os.path.abspath(__file__))
+INTENTS_JSON = os.path.join(_CWD, 'intents.json')
 
 
 class LeagueBot(commands.AutoShardedBot):
@@ -16,7 +20,11 @@ class LeagueBot(commands.AutoShardedBot):
     def __init__(self, discord_token, api_base_url, api_key, db_connect_url, emoji_dict, donate_url=None):
         """ Set attributes and configure bot. """
         # Call parent init
-        super().__init__(command_prefix=('q!', 'Q!'), case_insensitive=True)
+        with open(INTENTS_JSON) as f:
+            intents_attrs = json.load(f)
+
+        intents = discord.Intents(**intents_attrs)
+        super().__init__(command_prefix=('q!', 'Q!'), case_insensitive=True, intents=intents)
 
         # Set argument attributes
         self.discord_token = discord_token
@@ -38,12 +46,8 @@ class LeagueBot(commands.AutoShardedBot):
         # Create DB helper to use connection pool
         self.db_helper = helpers.DBHelper(self.db_connect_url)
 
-        # Initialize set of errors to ignore
-        self.ignore_error_types = set()
-
         # Add check to not respond to DM'd commands
         self.add_check(lambda ctx: ctx.guild is not None)
-        self.ignore_error_types.add(commands.errors.CheckFailure)
 
         # Trigger typing before every command
         self.before_invoke(commands.Context.trigger_typing)
@@ -58,6 +62,19 @@ class LeagueBot(commands.AutoShardedBot):
 
         if self.donate_url:
             self.add_cog(cogs.DonateCog(self))
+
+    async def on_error(self, event_method, *args, **kwargs):
+        """"""
+        try:
+            logging_cog = self.get_cog('LoggingCog')
+
+            if logging_cog is None:
+                super().on_error(event_method, *args, **kwargs)
+            else:
+                exc_type, exc_value, traceback = sys.exc_info()
+                logging_cog.log_exception(f'Uncaught exception when handling "{event_method}" event:', exc_value)
+        except Exception as e:
+            print(e)
 
     def embed_template(self, **kwargs):
         """ Implement the bot's default-style embed. """
@@ -78,13 +95,6 @@ class LeagueBot(commands.AutoShardedBot):
     async def on_guild_remove(self, guild):
         """ Delete the recently removed guild from the guilds table. """
         await self.db_helper.delete_guilds(guild.id)
-
-    @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
-        """ Send help message when a mis-entered command is received. """
-        if type(error) not in self.ignore_error_types:
-            print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
-            traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
     def run(self):
         """ Override parent run to automatically include Discord token. """

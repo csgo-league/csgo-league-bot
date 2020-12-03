@@ -177,7 +177,7 @@ class DBHelper:
 
         return self._get_record_attrs(deleted, 'user_id')
 
-    async def delete_all_queued_users(self, guild_id):
+    async def clear_queued_users(self, guild_id):
         """ Delete all users of a guild from the queued_users table. """
         statement = (
             'DELETE FROM queued_users\n'

@@ -1,10 +1,11 @@
-# console.py
+# logging.py
 
 import __main__
 from discord.ext import commands
 import logging
 from logging import config
 from os import path
+import traceback
 
 
 LOGGING_CONFIG = {
@@ -58,6 +59,12 @@ LOGGING_CONFIG = {
 config.dictConfig(LOGGING_CONFIG)
 
 
+def indent(string, n=4):
+    """"""
+    indent = ' ' * n
+    return indent + string.replace('\n', '\n' + indent)
+
+
 def log_lines(lvl, msg, *args, sub_lines=None, **kwargs):
     """"""
     if sub_lines is not None:
@@ -76,6 +83,18 @@ class LoggingCog(commands.Cog):
         """ Set bot attribute. """
         self.bot = bot
         self.logger = logging.getLogger('csgoleague.bot')
+
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx, error):
+        """ Log exceptions inside of commands. """
+        self.log_exception(f'Uncaught exception in "{ctx.command}" command:', error)
+
+    def log_exception(self, msg, error):
+        """"""
+        msg += '\n\n'
+        exc_lines = traceback.format_exception(type(error), error, error.__traceback__)
+        exc = ''.join(exc_lines)
+        self.logger.error(msg + indent(exc))
 
     @commands.Cog.listener()
     async def on_connect(self):
