@@ -133,9 +133,6 @@ class TeamDraftMenu(discord.Message):
     async def _update_menu(self, title):
         """ Update the message to reflect the current status of the team draft. """
         await self.edit(embed=self._draft_embed(title))
-        items = self.pick_emojis.items()
-        awaitables = [self.clear_reaction(emoji) for emoji, user in items if user not in self.users_left]
-        await asyncio.gather(*awaitables, loop=self.bot.loop)
 
     async def _process_pick(self, reaction, user):
         """ Handler function for player pick reactions. """
@@ -155,6 +152,7 @@ class TeamDraftMenu(discord.Message):
         except PickError as e:  # Player not picked
             title = e.message
         else:  # Player picked
+            await self.clear_reaction(reaction.emoji)
             title = f'**Team {user.display_name}** picked {pick.display_name}'
 
         if len(self.users_left) == 1:
@@ -311,8 +309,6 @@ class MapDraftMenu(discord.Message):
     async def _update_menu(self, title):
         """ Update the message to reflect the current status of the map draft. """
         await self.edit(embed=self._draft_embed(title))
-        awaitables = [self.clear_reaction(m.emoji) for m in self.map_pool if m.emoji not in self.maps_left]
-        await asyncio.gather(*awaitables, loop=self.bot.loop)
 
     async def _process_ban(self, reaction, user):
         """ Handler function for map ban reactions. """
@@ -327,6 +323,9 @@ class MapDraftMenu(discord.Message):
             return
 
         self.ban_number += 1
+
+        # Clear banned map reaction
+        await self.clear_reaction(map_ban.emoji)
 
         # Check if the draft is over
         if len(self.maps_left) == 1:
