@@ -1,6 +1,8 @@
 # console.py
 
 import __main__
+import aiohttp
+import asyncio
 from discord.ext import commands
 import logging
 from logging import config
@@ -126,3 +128,24 @@ class LoggingCog(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
         log_lines(logging.INFO, 'Bot has been removed from server "%s" (%s)', guild.name, guild.id)
+
+async def start_request_log(session, ctx, params):
+    """"""
+    ctx.start = asyncio.get_event_loop().time()
+    logger = logging.getLogger('csgoleague.api')
+    logger.info(f'Sending {params.method} request to {params.url}')
+
+
+async def end_request_log(session, ctx, params):
+    """"""
+    logger = logging.getLogger('csgoleague.api')
+    elapsed = asyncio.get_event_loop().time() - ctx.start
+    logger.info(f'Response received from {params.url} ({elapsed:.2f}s)\n'
+                f'    Status: {params.response.status}\n'
+                f'    Reason: {params.response.reason}')
+    resp_json = await params.response.json()
+    logger.debug(f'Response JSON from {params.url}: {resp_json}')
+
+TRACE_CONFIG = aiohttp.TraceConfig()
+TRACE_CONFIG.on_request_start.append(start_request_log)
+TRACE_CONFIG.on_request_end.append(end_request_log)

@@ -16,7 +16,7 @@ class AuthCog(commands.Cog):
     @commands.command(brief='Link Discord account to Steam to start playing')
     async def link(self, ctx):
         """ Link a player by sending them a link to sign in with Steam on the backend. """
-        player = Player(ctx.author.id)
+        player = Player(ctx.author)
 
         if await player.is_linked():
             title = f'Unable to link **{ctx.author.display_name}**: They are already linked'
@@ -48,7 +48,7 @@ class AuthCog(commands.Cog):
         except asyncio.TimeoutError:  # Sender didn't react
             embed.description = '*Account preserved*'
         else:
-            await Player(ctx.author.id).unlink()
+            await Player(ctx.author).unlink()
             embed.description = '*Account unlinked and deleted*'
 
         embed.set_footer()

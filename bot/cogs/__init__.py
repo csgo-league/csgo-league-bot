@@ -1,7 +1,7 @@
 # __init__.py
 
 from .auth import AuthCog
-from .logging import LoggingCog
+from .logger import LoggingCog, TRACE_CONFIG
 from .donate import DonateCog
 from .help import HelpCog
 from .queue import QueueCog

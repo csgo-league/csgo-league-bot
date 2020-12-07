@@ -8,7 +8,7 @@ import random
 import sys
 import traceback
 
-from .utils import Map, MatchServer, PlayerStats
+from .utils import Map, MatchServer, PlayerStats, TeamMethod, CaptainMethod, MapMethod
 
 
 EMOJI_NUMBERS = [u'\u0030\u20E3',
@@ -35,18 +35,19 @@ class PickError(ValueError):
 class TeamDraftMenu(discord.Message):
     """ Message containing the components for a team draft. """
 
-    def __init__(self, message, bot, users):
+    def __init__(self, ctx, bot, users):
         """ Copy constructor from a message and specific team draft args. """
         # Copy all attributes from message object
-        for attr_name in message.__slots__:
+        for attr_name in ctx.message.__slots__:
             try:
-                attr_val = getattr(message, attr_name)
+                attr_val = getattr(ctx.message, attr_name)
             except AttributeError:
                 continue
 
             setattr(self, attr_name, attr_val)
 
         # Add custom attributes
+        self.ctx = ctx
         self.bot = bot
         self.users = users
         self.pick_emojis = dict(zip(EMOJI_NUMBERS[1:], users))
@@ -174,22 +175,22 @@ class TeamDraftMenu(discord.Message):
     async def draft(self):
         """ Start the team draft and return the teams after it's finished. """
         # Initialize draft
-        guild_data = await self.bot.db_helper.get_guild(self.guild.id)
+        config = await self.ctx.guild_config()
         self.users_left = self.users.copy()  # Copy users to edit players remaining in the player pool
         self.teams = [[], []]
         self.pick_number = 0
-        captain_method = guild_data['captain_method']
+        captain_method = config.captain_method
 
         # Check captain methods
-        if captain_method == 'rank':
-            players_stats = [x async for x in PlayerStats.from_ids([user.id for user in self.users_left])]
+        if captain_method == CaptainMethod.RANK:
+            players_stats = [x async for x in PlayerStats.from_users(self.users_left)]
             players_stats.sort(reverse=True, key=lambda x: x.score)
 
             for team in self.teams:
                 captain = self.guild.get_member(players_stats.pop(0).discord)
                 self.users_left.remove(captain)
                 team.append(captain)
-        elif captain_method == 'random':
+        elif captain_method == CaptainMethod.RANDOM:
             temp_users = self.users_left.copy()
             random.shuffle(temp_users)
 
@@ -197,7 +198,7 @@ class TeamDraftMenu(discord.Message):
                 captain = temp_users.pop()
                 self.users_left.remove(captain)
                 team.append(captain)
-        elif captain_method == 'volunteer':
+        elif captain_method == CaptainMethod.VOLUNTEER:
             pass
         else:
             raise ValueError(f'Captain method "{captain_method}" isn\'t valid')
@@ -328,9 +329,10 @@ class MapDraftMenu(discord.Message):
     async def draft(self, captain_1, captain_2):
         """ Start the team draft and return the teams after it's finished. """
         # Initialize draft
-        guild_data = await self.bot.db_helper.get_guild(self.guild.id)
+        config = await self.ctx.guild_config()
         self.captains = [captain_1, captain_2]
-        self.map_pool = [m for m in self.all_maps if guild_data[m.dev_name]]
+        mp_dict = config.map_pool.to_dict
+        self.map_pool = [m for m in self.all_maps if mp_dict[m.dev_name]]
         self.maps_left = {self.emoji_dict[m.dev_name]: m for m in self.map_pool}
         self.ban_number = 0
 
@@ -421,8 +423,9 @@ class MapVoteMenu(discord.Message):
     async def vote(self):
         """"""
         self.voted_users = set()
-        guild_data = await self.bot.db_helper.get_guild(self.guild.id)
-        self.map_pool = [m for m in self.all_maps if guild_data[m.dev_name]]
+        config = await self.ctx.guild_config()
+        mp_dict = config.map_pool.to_dict
+        self.map_pool = [m for m in self.all_maps if mp_dict[m.dev_name]]
         random.shuffle(self.map_pool)
         self.map_choices = self.map_pool[:2]
         self.map_votes = {
@@ -478,9 +481,9 @@ class MatchCog(commands.Cog):
         self.pending_ready_tasks = {}
         self.all_maps = ALL_MAPS
 
-    async def draft_teams(self, message, users):
+    async def draft_teams(self, ctx, users):
         """ Create a TeamDraftMenu from an existing message and run the draft. """
-        menu = TeamDraftMenu(message, self.bot, users)
+        menu = TeamDraftMenu(ctx, self.bot, users)
         teams = await menu.draft()
         return teams[0], teams[1]
 
@@ -492,7 +495,7 @@ class MatchCog(commands.Cog):
 
         # Get players and sort by RankMe score
         stats_dict = dict(
-            zip([x async for x in PlayerStats.from_ids([user.id for user in users])], users)
+            zip([x async for x in PlayerStats.from_users(users)], users)
         )
         players = list(stats_dict.keys())
         players.sort(key=lambda x: x.score)
@@ -534,10 +537,11 @@ class MatchCog(commands.Cog):
         voted_map = await menu.vote()
         return voted_map
 
-    async def random_map(self, guild):
+    async def random_map(self, ctx):
         """"""
-        guild_data = await self.bot.db_helper.get_guild(guild.id)
-        map_pool = [m for m in self.all_maps if guild_data[m.dev_name]]
+        config = await ctx.guild_config()
+        mp_dict = config.map_pool.to_dict
+        map_pool = [m for m in self.all_maps if mp_dict[m.dev_name]]
         return random.choice(map_pool)
 
     async def start_match(self, ctx, users):
@@ -576,7 +580,7 @@ class MatchCog(commands.Cog):
             unreadied = set(users) - reactors
             awaitables = [
                 ready_message.clear_reactions(),
-                self.bot.db_helper.delete_queued_users(ctx.guild.id, *(user.id for user in unreadied))
+                ctx.dequeue_users(*unreadied)
             ]
             await asyncio.gather(*awaitables, loop=self.bot.loop)
             description = '\n'.join(':heavy_multiplication_x:  ' + user.mention for user in unreadied)
@@ -590,29 +594,31 @@ class MatchCog(commands.Cog):
             # Attempt to make teams and start match
             awaitables = [
                 ready_message.clear_reactions(),
-                self.bot.db_helper.get_guild(ctx.guild.id)
+                ctx.guild_config()
             ]
             results = await asyncio.gather(*awaitables, loop=self.bot.loop)
-            team_method = results[1]['team_method']
-            map_method = results[1]['map_method']
+            team_method = results[1].team_method
+            map_method = results[1].map_method
+
+            ready_ctx = await self.bot.get_context(ready_message)
 
             # Create teams
-            if team_method == 'autobalance':
+            if team_method == TeamMethod.AUTOBALANCE:
                 team_one, team_two = await self.autobalance_teams(users)
-            elif team_method == 'captains':
-                team_one, team_two = await self.draft_teams(ready_message, users)
-            elif team_method == 'random':
+            elif team_method == TeamMethod.CAPTAINS:
+                team_one, team_two = await self.draft_teams(ready_ctx, users)
+            elif team_method == TeamMethod.RANDOM:
                 team_one, team_two = await self.randomize_teams(users)
             else:
                 raise ValueError(f'Team method "{team_method}" isn\'t valid')
 
             # Get map pick
-            if map_method == 'captains':
+            if map_method == MapMethod.CAPTAINS:
                 map_pick = await self.draft_maps(ready_message, team_one[0], team_two[0])
-            elif map_method == 'vote':
+            elif map_method == MapMethod.VOTE:
                 map_pick = await self.vote_maps(ready_message, users)
-            elif map_method == 'random':
-                map_pick = await self.random_map(ctx.guild)
+            elif map_method == MapMethod.RANDOM:
+                map_pick = await self.random_map(ctx)
             else:
                 raise ValueError(f'Map method "{map_method}" isn\'t valid')
 
@@ -647,22 +653,22 @@ class MatchCog(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def teams(self, ctx, method=None):
         """ Set or display the method by which teams are created. """
-        guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
-        team_method = guild_data['team_method']
-        valid_methods = ['captains', 'autobalance', 'random']
+        config = await ctx.guild_config()
+        team_method = config.team_method
+        valid_methods = list(TeamMethod)
 
         if method is None:
-            title = f'The current team creation method is {team_method}'
+            title = f'The current team creation method is "{team_method}"'
         else:
-            method = method.lower()
+            method = TeamMethod.enum_str(method.lower())
 
             if method == team_method:
-                title = f'The current team creation method is already set to {team_method}'
+                title = f'The current team creation method is already set to "{team_method}"'
             elif method in valid_methods:
-                title = f'Team creation method set to {method}'
-                await self.bot.db_helper.update_guild(ctx.guild.id, team_method=method)
+                title = f'Team creation method set to "{method}"'
+                await ctx.set_guild_config(team_method=str(method))
             else:
-                title = f'Team creation method must be {valid_methods[0]}, {valid_methods[1]} or {valid_methods[2]}'
+                title = f'Team creation method must be "{valid_methods[0]}", "{valid_methods[1]}" or "{valid_methods[2]}"'
 
         embed = self.bot.embed_template(title=title)
         await ctx.send(embed=embed)
@@ -672,22 +678,22 @@ class MatchCog(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def captains(self, ctx, method=None):
         """ Set or display the method by which captains are selected. """
-        guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
-        captain_method = guild_data['captain_method']
-        valid_methods = ['volunteer', 'rank', 'random']
+        config = await ctx.guild_config()
+        captain_method = config.captain_method
+        valid_methods = list(CaptainMethod)
 
         if method is None:
-            title = f'The current captain selection method is {captain_method}'
+            title = f'The current captain selection method is "{captain_method}"'
         else:
-            method = method.lower()
+            method = CaptainMethod.enum_str(method.lower())
 
             if method == captain_method:
-                title = f'The current captain selection method is already set to {captain_method}'
+                title = f'The current captain selection method is already set to "{captain_method}"'
             elif method in valid_methods:
-                title = f'Captain selection method set to {method}'
-                await self.bot.db_helper.update_guild(ctx.guild.id, captain_method=method)
+                title = f'Captain selection method set to "{method}"'
+                await ctx.set_guild_config(captain_method=str(method))
             else:
-                title = f'Captain selection method must be {valid_methods[0]}, {valid_methods[1]} or {valid_methods[2]}'
+                title = f'Captain selection method must be "{valid_methods[0]}", "{valid_methods[1]}" or "{valid_methods[2]}"'
 
         embed = self.bot.embed_template(title=title)
         await ctx.send(embed=embed)
@@ -697,22 +703,22 @@ class MatchCog(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def maps(self, ctx, method=None):
         """ Set or display the method by which the teams are created. """
-        guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
-        map_method = guild_data['map_method']
-        valid_methods = ['captains', 'vote', 'random']
+        config = await ctx.guild_config()
+        map_method = config.map_method
+        valid_methods = list(MapMethod)
 
         if method is None:
-            title = f'The current map selection method is {map_method}'
+            title = f'The current map selection method is "{map_method}"'
         else:
-            method = method.lower()
+            method = MapMethod.enum_str(method.lower())
 
             if method == map_method:
-                title = f'The current map selection method is already set to {map_method}'
+                title = f'The current map selection method is already set to "{map_method}"'
             elif method in valid_methods:
-                title = f'Map selection method set to {method}'
-                await self.bot.db_helper.update_guild(ctx.guild.id, map_method=method)
+                title = f'Map selection method set to "{method}"'
+                await ctx.set_guild_config(map_method=str(method))
             else:
-                title = f'Map selection method must be {valid_methods[0]}, {valid_methods[1]} or {valid_methods[2]}'
+                title = f'Map selection method must be "{valid_methods[0]}", "{valid_methods[1]}" or "{valid_methods[2]}"'
 
         embed = self.bot.embed_template(title=title)
         await ctx.send(embed=embed)
@@ -734,8 +740,9 @@ class MatchCog(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def mpool(self, ctx, *args):
         """ Edit the guild's map pool for map drafts. """
-        guild_data = await self.bot.db_helper.get_guild(ctx.guild.id)
-        map_pool = [m.dev_name for m in self.all_maps if guild_data[m.dev_name]]
+        config = await ctx.guild_config()
+        mp_dict = config.map_pool.to_dict
+        map_pool = [m.dev_name for m in self.all_maps if mp_dict[m.dev_name]]
 
         if len(args) == 0:
             embed = self.bot.embed_template(title='Current map pool')
@@ -765,7 +772,7 @@ class MatchCog(commands.Cog):
                 description = 'Pool cannot have fewer than 3 maps!'
             else:
                 map_pool_data = {m.dev_name: m.dev_name in map_pool for m in self.all_maps}
-                await self.bot.db_helper.update_guild(ctx.guild.id, **map_pool_data)
+                await ctx.set_guild_config(**map_pool_data)
 
             embed = self.bot.embed_template(title='Modified map pool', description=description)
 

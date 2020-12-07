@@ -10,6 +10,9 @@ class _ConfigMethod(enum.Enum):
     Base class for config method enums.
     """
 
+    def __str__(self):
+        return self.name.lower()
+
     @classmethod
     def enum_str(cls, name: str) -> int:
         """Get the config method enum from a string (case insensitive).

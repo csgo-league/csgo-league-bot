@@ -52,18 +52,18 @@ class QueueCog(commands.Cog):
     async def join(self, ctx):
         """ Check if the member can be added to the guild queue and add them if so. """
 
-        user = Player(ctx.author.id)
-        if not await user.is_linked():  # Message author isn't linked
+        player = Player(ctx.author)
+        if not await player.is_linked():  # Message author isn't linked
             title = f'Unable to add **{ctx.author.display_name}**: Their account is not linked'
         else:  # Message author is linked
             awaitables = [
-                user.get_player(),
+                player.get_stats(),
                 ctx.queued_users(),
                 ctx.guild_config(),
                 ctx.queue_banlist()
             ]
             results = await asyncio.gather(*awaitables, loop=self.bot.loop)
-            player = results[0]
+            player_stats = results[0]
             queued_users = results[1]
             capacity = results[2].capacity
             banned_users = results[3]
@@ -79,9 +79,9 @@ class QueueCog(commands.Cog):
                 title = f'Unable to add **{ctx.author.display_name}**: Already in the queue'
             elif len(queued_users) >= capacity:  # Queue full
                 title = f'Unable to add **{ctx.author.display_name}**: Queue is full'
-            elif not player:  # Couldn't get player from API TODO: Remove this logic and raise exception in ApiHelper
+            elif not player_stats:  # Couldn't get player from API TODO: Remove this logic and raise exception in ApiHelper
                 title = f'Unable to add **{ctx.author.display_name}**: Cannot verify match status'
-            elif player.in_match:  # User is already in a match
+            elif player_stats.in_match:  # User is already in a match
                 title = f'Unable to add **{ctx.author.display_name}**: Already in a match'
             else:  # User can be added
                 await ctx.enqueue_users(ctx.author)

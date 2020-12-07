@@ -102,7 +102,8 @@ class LeagueBot(commands.AutoShardedBot):
             loop=self.loop,
             headers={"authentication": self.api_key},
             json_serialize=lambda x: json.dumps(x, ensure_ascii=False),
-            raise_for_status=True
+            raise_for_status=True,
+            trace_configs=[cogs.TRACE_CONFIG]
         )
 
     @commands.Cog.listener()

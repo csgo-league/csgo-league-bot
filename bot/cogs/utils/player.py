@@ -24,8 +24,6 @@ class PlayerStats:
     def __init__(self, player_data):
         """ Set attributes. """
 
-        # This will be faster then looping over self.__dict__
-        # and calling setattr a bunch of times.
         for key, value in player_data.items():
             if type(value) != str:
                 player_data[key] = 0 if value is None else int(value)
@@ -161,30 +159,30 @@ class PlayerStats:
         return self.first_blood / (self.rounds_tr + self.rounds_ct)
 
     @classmethod
-    async def from_id(cls, discord_id: int):
+    async def from_user(cls, user: discord.User):
         """Get player data from their Discord user ID.
 
         Parameters
         ----------
-        discord_id : int
+        user : discord.User
 
         Returns
         -------
         PlayerStats
         """
 
-        url = f'{Config.api_url}/player/discord/{discord_id}'
+        url = f'{Config.api_url}/player/discord/{user.id}'
 
         async with Sessions.requests.get(url=url) as resp:
             return cls(await resp.json())
 
     @classmethod
-    async def from_ids(cls, discord_ids: List[int]) -> AsyncGenerator['PlayerStats', None]:
-        """Get multiple players' data from their Discord user IDs.
+    async def from_users(cls, users: List[discord.User]) -> AsyncGenerator['PlayerStats', None]:
+        """Get multiple players' data from their Discord user objects.
 
         Parameters
         ----------
-        discord_ids : List[int]
+        users : List[discord.User]
 
         Yields
         -------
@@ -192,9 +190,9 @@ class PlayerStats:
         """
 
         url = f'{Config.api_url}/players/discord'
-        discord_ids = {"discordIds": discord_ids}
+        discord_ids = [user.id for user in users]
 
-        async with Sessions.requests.post(url=url, json=discord_ids) as resp:
+        async with Sessions.requests.post(url=url, json={"discordIds": discord_ids}) as resp:
             players = await resp.json()
 
             players.sort(
@@ -206,15 +204,15 @@ class PlayerStats:
 
 
 class Player:
-    def __init__(self, discord_id: int) -> None:
+    def __init__(self, member: discord.Member) -> None:
         """
 
         Parameters
         ----------
-        discord_id : int
+        member : int
         """
 
-        self.discord_id = discord_id
+        self.member = member
 
     async def generate_link_url(self) -> str:
         """Get custom URL from API for user to link accounts.
@@ -225,7 +223,7 @@ class Player:
             Formatted link.
         """
 
-        url = f'{Config.api_url}/discord/generate/{self.discord_id}'
+        url = f'{Config.api_url}/discord/generate/{self.member.id}'
 
         async with Sessions.requests.get(url=url) as resp:
             resp_json = await resp.json()
@@ -236,7 +234,7 @@ class Player:
     async def unlink(self) -> None:
         """ Unlink the player on the web backend and delete their data. """
 
-        url = f'{Config.api_url}/discord/delete/{self.discord_id}'
+        url = f'{Config.api_url}/discord/delete/{self.member.id}'
 
         async with Sessions.requests.post(url=url) as resp:
             resp_json = await resp.json()
@@ -250,7 +248,7 @@ class Player:
         bool
         """
 
-        url = f'{Config.api_url}/discord/check/{self.discord_id}'
+        url = f'{Config.api_url}/discord/check/{self.member.id}'
 
         async with Sessions.requests.get(url=url) as resp:
             resp_json = await resp.json()
@@ -265,23 +263,19 @@ class Player:
         PlayerStats
         """
 
-        return PlayerStats.from_id(self.discord_id)
+        return await PlayerStats.from_user(self.member)
 
 
-async def update_discord_name(user: discord.User) -> bool:
-    """Update a users API name to their current Discord display name.
+    async def update_discord_name(self) -> bool:
+        """Update a users API name to their current Discord display name.
 
-    Parameters
-    ----------
-    user : discord.User
+        Returns
+        -------
+        bool
+        """
 
-    Returns
-    -------
-    bool
-    """
+        url = f'{Config.api_url}/discord/update/{self.member.id}'
+        data = {'discord_name': self.member.display_name}
 
-    url = f'{Config.api_url}/discord/update/{user.id}'
-    data = {'discord_name': user.display_name}
-
-    async with Sessions.requests.post(url=url, data=data) as resp:
-        return resp.status == 200
+        async with Sessions.requests.post(url=url, data=data) as resp:
+            return resp.status == 200
