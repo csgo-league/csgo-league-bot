@@ -51,6 +51,7 @@ class TeamDraftMenu(discord.Message):
         self.pick_order = '12211221'
         self.pick_number = None
         self.users_left = None
+        self.players = None
         self.teams = None
         self.future = None
 
@@ -85,9 +86,10 @@ class TeamDraftMenu(discord.Message):
 
         users_left_str = ''
 
-        for emoji, user in self.pick_emojis.items():
+        for index, (emoji, user) in enumerate(self.pick_emojis.items()):
             if not any(user in team for team in self.teams):
-                users_left_str += f'{emoji}  {user.display_name}\n'
+                users_left_str += f'{emoji}  [{user.display_name}]({self.players[index].league_profile})  | \
+                                    {self.players[index].score}\n'
             else:
                 users_left_str += f':heavy_multiplication_x:  ~~{user.display_name}~~\n'
 
@@ -173,6 +175,7 @@ class TeamDraftMenu(discord.Message):
         # Initialize draft
         guild_data = await self.bot.db_helper.get_guild(self.guild.id)
         self.users_left = self.users.copy()  # Copy users to edit players remaining in the player pool
+        self.players = await self.bot.api_helper.get_players([user.id for user in self.users])
         self.teams = [[], []]
         self.pick_number = 0
         captain_method = guild_data['captain_method']
