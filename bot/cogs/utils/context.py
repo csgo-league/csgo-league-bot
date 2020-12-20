@@ -21,7 +21,7 @@ class LeagueContext(commands.Context):
         return self.bot.get_users(user_ids)
 
     async def enqueue_users(self, *users):
-        user_ids = [user.id for user in users]
+        user_ids = (user.id for user in users)
 
         async with self.bot.db_pool.acquire() as conn:
             db_helper = DBHelper(conn)
@@ -29,10 +29,8 @@ class LeagueContext(commands.Context):
             await db_helper.insert_queued_users(self.guild.id, *user_ids)
 
     async def dequeue_users(self, *users):
-        user_ids = [user.id for user in users]
-
         async with self.bot.db_pool.acquire() as conn:
-            dequeued_ids = await DBHelper(conn).delete_queued_users(self.guild.id, *user_ids)
+            dequeued_ids = await DBHelper(conn).delete_queued_users(self.guild.id, *(user.id for user in users))
 
         return self.bot.get_users(dequeued_ids)
 
@@ -48,15 +46,17 @@ class LeagueContext(commands.Context):
 
         return {self.bot.get_user(user_id): time for user_id, time in banned_dict.items()}
 
-    async def ban_from_queue(self, *user_ids, unban_time=None):
+    async def ban_from_queue(self, *users, unban_time=None):
+        user_ids = (user.id for user in users)
+
         async with self.bot.db_pool.acquire() as conn:
             db_helper = DBHelper(conn)
             await db_helper.insert_users(*user_ids)
             await db_helper.insert_banned_users(self.guild.id, *user_ids, unban_time=unban_time)
 
-    async def unban_from_queue(self, *user_ids) -> List[discord.User]:
+    async def unban_from_queue(self, *users) -> List[discord.User]:
         async with self.bot.db_pool.acquire() as conn:
-            unbanned_ids = await DBHelper(conn).delete_banned_users(self.guild.id, *user_ids)
+            unbanned_ids = await DBHelper(conn).delete_banned_users(self.guild.id, *(user.id for user in users))
 
         return self.bot.get_users(unbanned_ids)
 
