@@ -44,7 +44,7 @@ class StatsCog(commands.Cog):
         except IndexError:
             user = ctx.author
 
-        player = await self.bot.api_helper.get_player(user.id)
+        stats = await PlayerStats.from_user(user)
 
         if stats:
             win_percent_str = f'{stats.win_percent * 100:.2f}%'
