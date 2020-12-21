@@ -54,6 +54,7 @@ class TeamDraftMenu(discord.Message):
         self.pick_order = '12211221'
         self.pick_number = None
         self.users_left = None
+        self.players = None
         self.teams = None
         self.future = None
 
@@ -88,9 +89,10 @@ class TeamDraftMenu(discord.Message):
 
         users_left_str = ''
 
-        for emoji, user in self.pick_emojis.items():
+        for index, (emoji, user) in enumerate(self.pick_emojis.items()):
             if not any(user in team for team in self.teams):
-                users_left_str += f'{emoji}  {user.display_name}\n'
+                users_left_str += f'{emoji}  [{user.display_name}]({self.players[index].league_profile})  | \
+                                    {self.players[index].score}\n'
             else:
                 users_left_str += f':heavy_multiplication_x:  ~~{user.display_name}~~\n'
 
@@ -136,20 +138,18 @@ class TeamDraftMenu(discord.Message):
     async def _update_menu(self, title):
         """ Update the message to reflect the current status of the team draft. """
         await self.edit(embed=self._draft_embed(title))
-        items = self.pick_emojis.items()
-        awaitables = [self.clear_reaction(emoji) for emoji, user in items if user not in self.users_left]
-        await asyncio.gather(*awaitables, loop=self.bot.loop)
 
     async def _process_pick(self, reaction, user):
         """ Handler function for player pick reactions. """
-        # Check that reaction is on this message and user is in the team draft
-        if reaction.message.id != self.id or user not in self.users:
+        # Check that reaction is on this message and user is not the bot
+        if reaction.message.id != self.id or user == self.author:
             return
 
         # Check that picked player is in the player pool
         pick = self.pick_emojis.get(str(reaction.emoji), None)
 
         if pick is None or pick not in self.users_left:
+            await self.remove_reaction(reaction, user)
             return
 
         # Attempt to pick the player for the team
@@ -158,6 +158,7 @@ class TeamDraftMenu(discord.Message):
         except PickError as e:  # Player not picked
             title = e.message
         else:  # Player picked
+            await self.clear_reaction(reaction.emoji)
             title = f'**Team {user.display_name}** picked {pick.display_name}'
 
         if len(self.users_left) == 1:
@@ -177,6 +178,7 @@ class TeamDraftMenu(discord.Message):
         # Initialize draft
         config = await self.ctx.guild_config()
         self.users_left = self.users.copy()  # Copy users to edit players remaining in the player pool
+        self.players = await self.bot.api_helper.get_players([user.id for user in self.users])
         self.teams = [[], []]
         self.pick_number = 0
         captain_method = config.captain_method
@@ -305,8 +307,13 @@ class MapDraftMenu(discord.Message):
 
     async def _process_ban(self, reaction, user):
         """ Handler function for map ban reactions. """
-        # Check that reaction is on this message and user is a captain
-        if reaction.message.id != self.id or user != self._active_picker:
+        # Check that reaction is on this message and user is not the bot
+        if reaction.message.id != self.id or user == self.author:
+            return
+
+        # Check that user is the active captain and reaction in left maps
+        if user != self._active_picker or str(reaction) not in [m for m in self.maps_left]:
+            await self.remove_reaction(reaction, user)
             return
 
         # Ban map if the emoji is valid
@@ -316,6 +323,9 @@ class MapDraftMenu(discord.Message):
             return
 
         self.ban_number += 1
+
+        # Clear banned map reaction
+        await self.clear_reaction(map_ban.emoji)
 
         # Check if the draft is over
         if len(self.maps_left) == 1:
@@ -398,12 +408,13 @@ class MapVoteMenu(discord.Message):
 
     async def _process_vote(self, reaction, user):
         """"""
-        # Check that reaction is on this message and user is a captain
-        if reaction.message.id != self.id or user not in self.users:
+        # Check that reaction is on this message and user is not the bot
+        if reaction.message.id != self.id or user == self.author:
             return
 
         # Add map vote if it is valid
-        if user in self.voted_users:
+        if user not in self.users or user in self.voted_users or str(reaction) not in [m.emoji for m in self.map_pool]:
+            await self.remove_reaction(reaction, user)
             return
 
         try:

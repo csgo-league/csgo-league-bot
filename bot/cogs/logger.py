@@ -1,4 +1,4 @@
-# console.py
+# logging.py
 
 import __main__
 import aiohttp

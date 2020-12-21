@@ -76,7 +76,7 @@ If you appreciate the project then please take the time to star our repository.
 
 5. Install PostgreSQL 9.5 or higher with `sudo apt-get install postgresql`.
 
-6. Run the psql tool with `sudo -u postgres psql` and create a database by running the following commands:
+6. Run the psql tool with `sudo service postgresql start && sudo -u postgres psql` and create a database by running the following commands:
 
     ```sql
     CREATE ROLE csgoleague WITH LOGIN PASSWORD 'yourpassword';
