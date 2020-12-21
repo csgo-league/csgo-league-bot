@@ -68,35 +68,35 @@ class StatsCog(commands.Cog):
         num = 5  # Easily modfiy the number of players on the leaderboard
         players_stats = [x async for x in PlayerStats.from_users(ctx.guild.members)]
 
-        if players_stats:
+        if not players_stats:
             embed = self.bot.embed_template(title='Nobody on this server is ranked!')
             await ctx.send(embed=embed)
+        else:
+            players_stats.sort(key=lambda u: (u.score, u.matches_played), reverse=True)
 
-        players_stats.sort(key=lambda u: (u.score, u.matches_played), reverse=True)
+            # Select the top players only
+            if len(players_stats) > num:
+                players_stats = players_stats[:num]
 
-        # Select the top players only
-        if len(players_stats) > num:
-            players_stats = players_stats[:num]
+            # Generate leaderboard text
+            data = [['Player'] + ctx._get_members([player.discord for player in players_stats]),
+                    ['Score'] + [str(player.score) for player in players_stats],
+                    ['Winrate'] + [f'{player.win_percent * 100:.2f}%' for player in players_stats],
+                    ['Played'] + [str(player.matches_played) for player in players_stats]]
+            data[0] = [data[0][0]] + [member.display_name if len(member.display_name) < 12 else member.display_name[:9] + '...' for member in data[0][1:]]  # Shorten long names
+            widths = list(map(lambda x: len(max(x, key=len)), data))
+            aligns = ['left', 'right', 'right', 'right']
+            z = zip(data, widths, aligns)
+            formatted_data = [list(map(lambda x: align_text(x, width, align), col)) for col, width, align in z]
+            formatted_data = list(map(list, zip(*formatted_data)))  # Transpose list for .format() string
+            description = '```ml\n    {}  {}  {}  {} \n'.format(*formatted_data[0])
 
-        # Generate leaderboard text
-        data = [['Player'] + [player.discord_name for player in players_stats],
-                ['Score'] + [str(player.score) for player in players_stats],
-                ['Winrate'] + [f'{player.win_percent * 100:.2f}%' for player in players_stats],
-                ['Played'] + [str(player.matches_played) for player in players_stats]]
-        data[0] = [name if len(name) < 12 else name[:9] + '...' for name in data[0]]  # Shorten long names
-        widths = list(map(lambda x: len(max(x, key=len)), data))
-        aligns = ['left', 'right', 'right', 'right']
-        z = zip(data, widths, aligns)
-        formatted_data = [list(map(lambda x: align_text(x, width, align), col)) for col, width, align in z]
-        formatted_data = list(map(list, zip(*formatted_data)))  # Transpose list for .format() string
-        description = '```ml\n    {}  {}  {}  {} \n'.format(*formatted_data[0])
+            for rank, player_row in enumerate(formatted_data[1:], start=1):
+                description += ' {}. {}  {}  {}  {} \n'.format(rank, *player_row)
 
-        for rank, player_row in enumerate(formatted_data[1:], start=1):
-            description += ' {}. {}  {}  {}  {} \n'.format(rank, *player_row)
+            description += '```'
 
-        description += '```'
-
-        # Send leaderboard
-        title = '__CS:GO League Server Leaderboard__'
-        embed = self.bot.embed_template(title=title, description=description)
-        await ctx.send(embed=embed)
+            # Send leaderboard
+            title = '__CS:GO League Server Leaderboard__'
+            embed = self.bot.embed_template(title=title, description=description)
+            await ctx.send(embed=embed)

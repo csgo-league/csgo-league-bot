@@ -333,7 +333,7 @@ class MapDraftMenu(discord.Message):
         self.captains = [captain_1, captain_2]
         mp_dict = config.map_pool.to_dict
         self.map_pool = [m for m in self.all_maps if mp_dict[m.dev_name]]
-        self.maps_left = {self.emoji_dict[m.dev_name]: m for m in self.map_pool}
+        self.maps_left = {self.bot.emoji_dict[m.dev_name]: m for m in self.map_pool}
         self.ban_number = 0
 
         if len(self.map_pool) % 2 == 0:
@@ -343,7 +343,7 @@ class MapDraftMenu(discord.Message):
         await self.edit(embed=self._draft_embed('Map bans have begun!'))
 
         for m in self.map_pool:
-            await self.add_reaction(self.emoji_dict[m.dev_name])
+            await self.add_reaction(self.bot.emoji_dict[m.dev_name])
 
         # Add listener handlers and wait until there are no maps left to ban
         self.future = self.bot.loop.create_future()
@@ -390,9 +390,9 @@ class MapVoteMenu(discord.Message):
     def _vote_embed(self):
         embed = self.bot.embed_template(title='Map vote started! (1 min)')
         embed.add_field(name="Map", value='\n\n'.join(
-            f'{self.emoji_dict[m.dev_name]} {m.name}' for m in self.map_pool))
+            f'{self.bot.emoji_dict[m.dev_name]} {m.name}' for m in self.map_pool))
         embed.add_field(name="Votes", value='\n\n'.join(
-            EMOJI_NUMBERS[self.map_votes[self.emoji_dict[m.dev_name]]] for m in self.map_pool))
+            EMOJI_NUMBERS[self.map_votes[self.bot.emoji_dict[m.dev_name]]] for m in self.map_pool))
         embed.set_footer(text='React to either of the map icons below to vote for the corresponding map')
         return embed
 
@@ -429,12 +429,12 @@ class MapVoteMenu(discord.Message):
         random.shuffle(self.map_pool)
         self.map_choices = self.map_pool[:2]
         self.map_votes = {
-            self.emoji_dict[m.dev_name]: 0 for m in self.map_pool[:2]}
+            self.bot.emoji_dict[m.dev_name]: 0 for m in self.map_pool[:2]}
         embed = self._vote_embed()
         await self.edit(embed=embed)
 
         for map_option in self.map_choices:
-            await self.add_reaction(self.emoji_dict[map_option.dev_name])
+            await self.add_reaction(self.bot.emoji_dict[map_option.dev_name])
 
         # Add listener handlers and wait until there are no maps left to ban
         self.future = self.bot.loop.create_future()
@@ -658,17 +658,20 @@ class MatchCog(commands.Cog):
         valid_methods = list(TeamMethod)
 
         if method is None:
-            title = f'The current team creation method is "{team_method}"'
+            title = f'The current team creation method is `{team_method}`'
         else:
-            method = TeamMethod.enum_str(method.lower())
-
-            if method == team_method:
-                title = f'The current team creation method is already set to "{team_method}"'
-            elif method in valid_methods:
-                title = f'Team creation method set to "{method}"'
-                await ctx.set_guild_config(team_method=str(method))
+            try:
+                method = TeamMethod.enum_str(method.lower())
+            except AttributeError:
+                title = f'Team creation method must be `{valid_methods[0]}`, `{valid_methods[1]}` or `{valid_methods[2]}`'
             else:
-                title = f'Team creation method must be "{valid_methods[0]}", "{valid_methods[1]}" or "{valid_methods[2]}"'
+                if method == team_method:
+                    title = f'The current team creation method is already set to `{team_method}`'
+                elif method in valid_methods:
+                    title = f'Team creation method set to `{method}`'
+                    await ctx.set_guild_config(team_method=str(method))
+                else:
+                    pass  # If method is invalid then AttributeError should be caught above
 
         embed = self.bot.embed_template(title=title)
         await ctx.send(embed=embed)
@@ -683,17 +686,20 @@ class MatchCog(commands.Cog):
         valid_methods = list(CaptainMethod)
 
         if method is None:
-            title = f'The current captain selection method is "{captain_method}"'
+            title = f'The current captain selection method is `{captain_method}`'
         else:
-            method = CaptainMethod.enum_str(method.lower())
-
-            if method == captain_method:
-                title = f'The current captain selection method is already set to "{captain_method}"'
-            elif method in valid_methods:
-                title = f'Captain selection method set to "{method}"'
-                await ctx.set_guild_config(captain_method=str(method))
+            try:
+                method = CaptainMethod.enum_str(method.lower())
+            except AttributeError:
+                title = f'Captain selection method must be `{valid_methods[0]}`, `{valid_methods[1]}` or `{valid_methods[2]}`'
             else:
-                title = f'Captain selection method must be "{valid_methods[0]}", "{valid_methods[1]}" or "{valid_methods[2]}"'
+                if method == captain_method:
+                    title = f'The current captain selection method is already set to `{captain_method}`'
+                elif method in valid_methods:
+                    title = f'Captain selection method set to `{method}`'
+                    await ctx.set_guild_config(captain_method=str(method))
+                else:
+                    pass  # If method is invalid then AttributeError should be caught above
 
         embed = self.bot.embed_template(title=title)
         await ctx.send(embed=embed)
@@ -708,17 +714,20 @@ class MatchCog(commands.Cog):
         valid_methods = list(MapMethod)
 
         if method is None:
-            title = f'The current map selection method is "{map_method}"'
+            title = f'The current map selection method is `{map_method}`'
         else:
-            method = MapMethod.enum_str(method.lower())
-
-            if method == map_method:
-                title = f'The current map selection method is already set to "{map_method}"'
-            elif method in valid_methods:
-                title = f'Map selection method set to "{method}"'
-                await ctx.set_guild_config(map_method=str(method))
+            try:
+                method = MapMethod.enum_str(method.lower())
+            except AttributeError:
+                title = f'Map selection method must be `{valid_methods[0]}`, `{valid_methods[1]}` or `{valid_methods[2]}`'
             else:
-                title = f'Map selection method must be "{valid_methods[0]}", "{valid_methods[1]}" or "{valid_methods[2]}"'
+                if method == map_method:
+                    title = f'The current map selection method is already set to `{map_method}`'
+                elif method in valid_methods:
+                    title = f'Map selection method set to `{method}`'
+                    await ctx.set_guild_config(map_method=str(method))
+                else:
+                    pass  # If method is invalid then AttributeError should be caught above
 
         embed = self.bot.embed_template(title=title)
         await ctx.send(embed=embed)
@@ -780,9 +789,9 @@ class MatchCog(commands.Cog):
                 embed.set_footer(text=f'Ex: {self.bot.command_prefix[0]}mpool +de_cache -de_mirage')
 
         active_maps = ''.join(
-            f'{self.emoji_dict[m.dev_name]}  `{m.dev_name}`\n' for m in self.all_maps if m.dev_name in map_pool)
+            f'{self.bot.emoji_dict[m.dev_name]}  `{m.dev_name}`\n' for m in self.all_maps if m.dev_name in map_pool)
         inactive_maps = ''.join(
-            f'{self.emoji_dict[m.dev_name]}  `{m.dev_name}`\n' for m in self.all_maps if m.dev_name not in map_pool)
+            f'{self.bot.emoji_dict[m.dev_name]}  `{m.dev_name}`\n' for m in self.all_maps if m.dev_name not in map_pool)
 
         if not inactive_maps:
             inactive_maps = '*None*'

@@ -25,7 +25,7 @@ class PlayerStats:
         """ Set attributes. """
 
         for key, value in player_data.items():
-            if type(value) != str:
+            if key != 'discord_name' and key != 'inMatch':
                 player_data[key] = 0 if value is None else int(value)
 
         self.steam = player_data['steam']
