@@ -88,7 +88,9 @@ class StatsCog(commands.Cog):
                     ['Score'] + [str(player.score) for player in players_stats],
                     ['Winrate'] + [f'{player.win_percent * 100:.2f}%' for player in players_stats],
                     ['Played'] + [str(player.matches_played) for player in players_stats]]
-            data[0] = [data[0][0]] + [member.display_name if len(member.display_name) < 12 else member.display_name[:9] + '...' for member in data[0][1:]]  # Shorten long names
+            data[0] = [data[0][0]] + \
+                [member.display_name if len(member.display_name) < 12 else member.display_name[:9] + '...'
+                    for member in data[0][1:]]  # Shorten long names
             widths = list(map(lambda x: len(max(x, key=len)), data))
             aligns = ['left', 'right', 'right', 'right']
             z = zip(data, widths, aligns)

@@ -265,7 +265,6 @@ class Player:
 
         return await PlayerStats.from_user(self.member)
 
-
     async def update_discord_name(self) -> bool:
         """Update a users API name to their current Discord display name.
 

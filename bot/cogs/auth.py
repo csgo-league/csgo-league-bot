@@ -38,7 +38,10 @@ class AuthCog(commands.Cog):
         """ Unlink a player on the backend and delete their stored data. """
         timeout = 15
         check_mark = '✅'
-        embed = self.bot.embed_template(title='Are you sure you want to unlink your account?', description='**Your Steam account link and all stored data (rank, matches, stats) will be deleted**')
+        embed = self.bot.embed_template(
+            title='Are you sure you want to unlink your account?',
+            description='**Your Steam account link and all stored data (rank, matches, stats) will be deleted**'
+        )
         embed.set_footer(text=f'Click the {check_mark} within the next {timeout} seconds to confirm')
         msg = await ctx.send(embed=embed)
         await msg.add_reaction(check_mark)

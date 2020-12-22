@@ -229,6 +229,7 @@ class TeamDraftMenu(discord.Message):
 
         return picked_teams
 
+
 ALL_MAPS = [
     Map('Cache', 'de_cache'),
     Map('Cobblestone', 'de_cbble'),
@@ -674,7 +675,9 @@ class MatchCog(commands.Cog):
             try:
                 method = TeamMethod.enum_str(method.lower())
             except AttributeError:
-                title = f'Team creation method must be `{valid_methods[0]}`, `{valid_methods[1]}` or `{valid_methods[2]}`'
+                title = f'Team creation method must be `{valid_methods[0]}`, ' \
+                                                     f'`{valid_methods[1]}` or ' \
+                                                     f'`{valid_methods[2]}`'
             else:
                 if method == team_method:
                     title = f'The current team creation method is already set to `{team_method}`'
@@ -702,7 +705,9 @@ class MatchCog(commands.Cog):
             try:
                 method = CaptainMethod.enum_str(method.lower())
             except AttributeError:
-                title = f'Captain selection method must be `{valid_methods[0]}`, `{valid_methods[1]}` or `{valid_methods[2]}`'
+                title = f'Captain selection method must be `{valid_methods[0]}`, ' \
+                                                         f'`{valid_methods[1]}` or ' \
+                                                         f'`{valid_methods[2]}`'
             else:
                 if method == captain_method:
                     title = f'The current captain selection method is already set to `{captain_method}`'
@@ -730,7 +735,9 @@ class MatchCog(commands.Cog):
             try:
                 method = MapMethod.enum_str(method.lower())
             except AttributeError:
-                title = f'Map selection method must be `{valid_methods[0]}`, `{valid_methods[1]}` or `{valid_methods[2]}`'
+                title = f'Map selection method must be `{valid_methods[0]}`, ' \
+                                                     f'`{valid_methods[1]}` or ' \
+                                                     f'`{valid_methods[2]}`'
             else:
                 if method == map_method:
                     title = f'The current map selection method is already set to `{map_method}`'

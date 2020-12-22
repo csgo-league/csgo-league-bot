@@ -129,6 +129,7 @@ class LoggingCog(commands.Cog):
     async def on_guild_remove(self, guild):
         log_lines(logging.INFO, 'Bot has been removed from server "%s" (%s)', guild.name, guild.id)
 
+
 async def start_request_log(session, ctx, params):
     """"""
     ctx.start = asyncio.get_event_loop().time()

@@ -11,6 +11,7 @@ from .match import MatchCog
 __all__ = [
     AuthCog,
     LoggingCog,
+    TRACE_CONFIG,
     DonateCog,
     HelpCog,
     QueueCog,

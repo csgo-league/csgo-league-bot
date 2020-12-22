@@ -1,8 +1,5 @@
 # db.py
 
-import asyncio
-import logging
-
 
 class DBHelper:
     """ Class to contain database query wrapper functions. """

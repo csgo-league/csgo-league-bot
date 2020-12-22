@@ -42,7 +42,12 @@ class MatchServer:
             return f'{Config.api_url}/match/{self.id}'
 
     @classmethod
-    async def new_match(cls, team_one: List[discord.Member], team_two: List[discord.Member], map_pick: str = None) -> 'MatchServer':
+    async def new_match(
+        cls,
+        team_one: List[discord.Member],
+        team_two: List[discord.Member],
+        map_pick: str = None
+    ) -> 'MatchServer':
         """Get a match server from the API.
 
         Parameters

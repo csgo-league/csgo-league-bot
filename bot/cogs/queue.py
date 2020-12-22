@@ -79,7 +79,7 @@ class QueueCog(commands.Cog):
                 title = f'Unable to add **{ctx.author.display_name}**: Already in the queue'
             elif len(queued_users) >= capacity:  # Queue full
                 title = f'Unable to add **{ctx.author.display_name}**: Queue is full'
-            elif not player_stats:  # Couldn't get player from API TODO: Remove this logic and raise exception in ApiHelper
+            elif not player_stats:  # Couldn't get player from API TODO: Remove this and raise exception in ApiHelper
                 title = f'Unable to add **{ctx.author.display_name}**: Cannot verify match status'
             elif player_stats.in_match:  # User is already in a match
                 title = f'Unable to add **{ctx.author.display_name}**: Already in a match'

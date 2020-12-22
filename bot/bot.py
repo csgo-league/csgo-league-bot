@@ -6,7 +6,6 @@ from discord.ext import commands
 import logging
 import os.path
 import sys
-import traceback
 import json
 
 from aiohttp import ClientSession
@@ -41,7 +40,7 @@ class LeagueBot(commands.AutoShardedBot):
         # Set constants
         self.description = 'An easy to use, fully automated system to set up and play CS:GO pickup games'
         self.color = 0x000000
-        self.activity = discord.Activity(type=discord.ActivityType.watching, name="noobs type q!help")  # TODO: Make help command string dynamic
+        self.activity = discord.Activity(type=discord.ActivityType.watching, name="noobs type q!help")
         self.logger = logging.getLogger('csgoleague.bot')
 
         Config.api_url = self.api_base_url

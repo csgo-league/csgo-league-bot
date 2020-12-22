@@ -1,5 +1,6 @@
 # map.py
 
+
 class Map:
     """ A group of attributes representing a map. """
     image_folder = 'https://raw.githubusercontent.com/csgo-league/csgo-league-bot/develop/assets/maps/images/'
