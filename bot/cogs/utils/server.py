@@ -11,8 +11,8 @@ class MatchServer:
     Represents a match server with the contents returned by the API.
     """
 
-    def __init__(self, id: int, ip: str, port: int):
-        self.id = id
+    def __init__(self, match_id: int, ip: str, port: int):
+        self.id = match_id
         self.ip = ip
         self.port = port
 
@@ -61,7 +61,7 @@ class MatchServer:
         -------
         MatchServer
         """
-        return cls(id=10, ip='127.0.0.1', port=1)  # TODO: Remove
+
         url = f'{Config.api_url}/match/start'
         data = {
             'team_one': {user.id: user.display_name for user in team_one},
