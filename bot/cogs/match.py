@@ -377,7 +377,7 @@ class MapDraftMenu(discord.Message):
 class MapVoteMenu(discord.Message):
     """ Message containing the components for a map draft. """
 
-    def __init__(self, message, bot, users):
+    def __init__(self, ctx, message, bot, users):
         """ Copy constructor from a message and specific team draft args. """
         # Copy all attributes from message object
         for attr_name in message.__slots__:
