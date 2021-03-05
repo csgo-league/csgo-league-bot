@@ -389,6 +389,7 @@ class MapVoteMenu(discord.Message):
             setattr(self, attr_name, attr_val)
 
         # Add custom attributes
+        self.ctx = ctx
         self.bot = bot
         self.users = users
         self.all_maps = ALL_MAPS
@@ -543,9 +544,9 @@ class MatchCog(commands.Cog):
         map_pick = await menu.draft(captain_1, captain_2)
         return map_pick
 
-    async def vote_maps(self, message, users):
+    async def vote_maps(self, ctx, message, users):
         """"""
-        menu = MapVoteMenu(message, self.bot, users)
+        menu = MapVoteMenu(message, ctx, self.bot, users)
         voted_map = await menu.vote()
         return voted_map
 
@@ -628,7 +629,7 @@ class MatchCog(commands.Cog):
             if map_method == MapMethod.CAPTAINS:
                 map_pick = await self.draft_maps(ready_message, team_one[0], team_two[0])
             elif map_method == MapMethod.VOTE:
-                map_pick = await self.vote_maps(ready_message, users)
+                map_pick = await self.vote_maps(ctx, ready_message, users)
             elif map_method == MapMethod.RANDOM:
                 map_pick = await self.random_map(ctx)
             else:
