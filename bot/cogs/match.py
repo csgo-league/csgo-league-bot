@@ -178,7 +178,7 @@ class TeamDraftMenu(discord.Message):
         # Initialize draft
         config = await self.ctx.guild_config()
         self.users_left = self.users.copy()  # Copy users to edit players remaining in the player pool
-        self.players = await PlayerStats.from_users(self.users)
+        self.players = [x async for x in PlayerStats.from_users(self.users)]
         self.teams = [[], []]
         self.pick_number = 0
         captain_method = config.captain_method
