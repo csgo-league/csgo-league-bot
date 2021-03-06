@@ -246,7 +246,7 @@ ALL_MAPS = [
 class MapDraftMenu(discord.Message):
     """ Message containing the components for a map draft. """
 
-    def __init__(self, message, bot):
+    def __init__(self, ctx, message, bot):
         """ Copy constructor from a message and specific team draft args. """
         # Copy all attributes from message object
         for attr_name in message.__slots__:
@@ -258,6 +258,7 @@ class MapDraftMenu(discord.Message):
             setattr(self, attr_name, attr_val)
 
         # Add custom attributes
+        self.ctx = ctx
         self.bot = bot
         self.ban_order = '12121212'
         self.all_maps = ALL_MAPS
@@ -538,9 +539,9 @@ class MatchCog(commands.Cog):
         team_size = len(temp_users) // 2
         return temp_users[:team_size], temp_users[team_size:]
 
-    async def draft_maps(self, message, captain_1, captain_2):
+    async def draft_maps(self, ctx, message, captain_1, captain_2):
         """"""
-        menu = MapDraftMenu(message, self.bot)
+        menu = MapDraftMenu(ctx, message, self.bot)
         map_pick = await menu.draft(captain_1, captain_2)
         return map_pick
 
@@ -627,7 +628,7 @@ class MatchCog(commands.Cog):
 
             # Get map pick
             if map_method == MapMethod.CAPTAINS:
-                map_pick = await self.draft_maps(ready_message, team_one[0], team_two[0])
+                map_pick = await self.draft_maps(ctx, ready_message, team_one[0], team_two[0])
             elif map_method == MapMethod.VOTE:
                 map_pick = await self.vote_maps(ctx, ready_message, users)
             elif map_method == MapMethod.RANDOM:
