@@ -246,12 +246,12 @@ ALL_MAPS = [
 class MapDraftMenu(discord.Message):
     """ Message containing the components for a map draft. """
 
-    def __init__(self, ctx, message, bot):
+    def __init__(self, ctx, bot):
         """ Copy constructor from a message and specific team draft args. """
         # Copy all attributes from message object
-        for attr_name in message.__slots__:
+        for attr_name in ctx.message.__slots__:
             try:
-                attr_val = getattr(message, attr_name)
+                attr_val = getattr(ctx.message, attr_name)
             except AttributeError:
                 continue
 
@@ -378,12 +378,12 @@ class MapDraftMenu(discord.Message):
 class MapVoteMenu(discord.Message):
     """ Message containing the components for a map draft. """
 
-    def __init__(self, ctx, message, bot, users):
+    def __init__(self, ctx, bot, users):
         """ Copy constructor from a message and specific team draft args. """
         # Copy all attributes from message object
-        for attr_name in message.__slots__:
+        for attr_name in ctx.message.__slots__:
             try:
-                attr_val = getattr(message, attr_name)
+                attr_val = getattr(ctx.message, attr_name)
             except AttributeError:
                 continue
 
@@ -539,15 +539,15 @@ class MatchCog(commands.Cog):
         team_size = len(temp_users) // 2
         return temp_users[:team_size], temp_users[team_size:]
 
-    async def draft_maps(self, ctx, message, captain_1, captain_2):
+    async def draft_maps(self, ctx, captain_1, captain_2):
         """"""
-        menu = MapDraftMenu(ctx, message, self.bot)
+        menu = MapDraftMenu(ctx, self.bot)
         map_pick = await menu.draft(captain_1, captain_2)
         return map_pick
 
-    async def vote_maps(self, ctx, message, users):
+    async def vote_maps(self, ctx, users):
         """"""
-        menu = MapVoteMenu(ctx, message, self.bot, users)
+        menu = MapVoteMenu(ctx, self.bot, users)
         voted_map = await menu.vote()
         return voted_map
 
@@ -628,9 +628,9 @@ class MatchCog(commands.Cog):
 
             # Get map pick
             if map_method == MapMethod.CAPTAINS:
-                map_pick = await self.draft_maps(ctx, ready_message, team_one[0], team_two[0])
+                map_pick = await self.draft_maps(ready_ctx, team_one[0], team_two[0])
             elif map_method == MapMethod.VOTE:
-                map_pick = await self.vote_maps(ctx, ready_message, users)
+                map_pick = await self.vote_maps(ready_ctx, users)
             elif map_method == MapMethod.RANDOM:
                 map_pick = await self.random_map(ctx)
             else:
