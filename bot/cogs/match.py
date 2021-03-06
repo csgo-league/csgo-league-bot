@@ -546,7 +546,7 @@ class MatchCog(commands.Cog):
 
     async def vote_maps(self, ctx, message, users):
         """"""
-        menu = MapVoteMenu(message, ctx, self.bot, users)
+        menu = MapVoteMenu(ctx, message, self.bot, users)
         voted_map = await menu.vote()
         return voted_map
 
@@ -629,7 +629,7 @@ class MatchCog(commands.Cog):
             if map_method == MapMethod.CAPTAINS:
                 map_pick = await self.draft_maps(ready_message, team_one[0], team_two[0])
             elif map_method == MapMethod.VOTE:
-                map_pick = await self.vote_maps(ready_ctx, ready_message, users)
+                map_pick = await self.vote_maps(ctx, ready_message, users)
             elif map_method == MapMethod.RANDOM:
                 map_pick = await self.random_map(ctx)
             else:
