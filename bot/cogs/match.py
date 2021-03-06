@@ -327,7 +327,7 @@ class MapDraftMenu(discord.Message):
         self.ban_number += 1
 
         # Clear banned map reaction
-        await self.clear_reaction(map_ban.emoji)
+        await self.clear_reaction(self.bot.emoji_dict[map_ban.dev_name])
 
         # Check if the draft is over
         if len(self.maps_left) == 1:
