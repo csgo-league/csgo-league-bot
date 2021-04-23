@@ -416,7 +416,8 @@ class MapVoteMenu(discord.Message):
             return
 
         # Add map vote if it is valid
-        if user not in self.users or user in self.voted_users or str(reaction) not in [m.emoji for m in self.map_pool]:
+        if user not in self.users or user in self.voted_users or \
+        str(reaction) not in [self.bot.emoji_dict[m.dev_name] for m in self.map_pool]:
             await self.remove_reaction(reaction, user)
             return
 
@@ -441,9 +442,9 @@ class MapVoteMenu(discord.Message):
         mp_dict = config.map_pool.to_dict
         self.map_pool = [m for m in self.all_maps if mp_dict[m.dev_name]]
         random.shuffle(self.map_pool)
-        self.map_choices = self.map_pool[:2]
+        self.map_choices = self.map_pool
         self.map_votes = {
-            self.bot.emoji_dict[m.dev_name]: 0 for m in self.map_pool[:2]}
+            self.bot.emoji_dict[m.dev_name]: 0 for m in self.map_pool}
         embed = self._vote_embed()
         await self.edit(embed=embed)
 
@@ -475,7 +476,7 @@ class MapVoteMenu(discord.Message):
                 winners_emoji.append(emoji)
 
         winner_emoji = winners_emoji[0] if len(winners_emoji) == 1 else random.choice(winners_emoji)
-        winner_map = [m for m in self.map_pool if m.emoji == winner_emoji][0]
+        winner_map = [m for m in self.map_pool if self.bot.emoji_dict[m.dev_name] == winner_emoji][0]
 
         # Return class to original state after map drafting is done
         self.map_pool = None
