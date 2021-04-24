@@ -417,9 +417,9 @@ class MapVoteMenu(discord.Message):
 
         # Add map vote if it is valid
         if user not in self.users or user in self.voted_users or \
-        str(reaction) not in [self.bot.emoji_dict[m.dev_name] for m in self.map_pool]:
-            await self.remove_reaction(reaction, user)
-            return
+            str(reaction) not in [self.bot.emoji_dict[m.dev_name] for m in self.map_pool]:
+                await self.remove_reaction(reaction, user)
+                return
 
         try:
             self.map_votes[str(reaction)] += 1
