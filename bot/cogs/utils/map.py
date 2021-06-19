@@ -24,6 +24,7 @@ class Maps:
     """
     Namespace to store all maps under.
     """
+    de_ancient = Map('Ancient', 'de_ancient')
     de_cache = Map('Cache', 'de_cache')
     de_cbble = Map('Cobblestone', 'de_cbble')
     de_dust2 = Map('Dust II', 'de_dust2')
