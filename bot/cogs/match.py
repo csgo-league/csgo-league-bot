@@ -231,7 +231,7 @@ class TeamDraftMenu(discord.Message):
 
 
 ALL_MAPS = [
-    Map('Ancient', 'de_ancient')
+    Map('Ancient', 'de_ancient'),
     Map('Cache', 'de_cache'),
     Map('Cobblestone', 'de_cbble'),
     Map('Dust II', 'de_dust2'),
