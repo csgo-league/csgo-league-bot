@@ -178,7 +178,7 @@ class TeamDraftMenu(discord.Message):
         # Initialize draft
         config = await self.ctx.guild_config()
         self.users_left = self.users.copy()  # Copy users to edit players remaining in the player pool
-        self.players = await PlayerStats.from_users(self.users)
+        self.players = [x async for x in PlayerStats.from_users(self.users)]
         self.teams = [[], []]
         self.pick_number = 0
         captain_method = config.captain_method
@@ -247,18 +247,19 @@ ALL_MAPS = [
 class MapDraftMenu(discord.Message):
     """ Message containing the components for a map draft. """
 
-    def __init__(self, message, bot):
+    def __init__(self, ctx, bot):
         """ Copy constructor from a message and specific team draft args. """
         # Copy all attributes from message object
-        for attr_name in message.__slots__:
+        for attr_name in ctx.message.__slots__:
             try:
-                attr_val = getattr(message, attr_name)
+                attr_val = getattr(ctx.message, attr_name)
             except AttributeError:
                 continue
 
             setattr(self, attr_name, attr_val)
 
         # Add custom attributes
+        self.ctx = ctx
         self.bot = bot
         self.ban_order = '121212121'
         self.all_maps = ALL_MAPS
@@ -327,7 +328,7 @@ class MapDraftMenu(discord.Message):
         self.ban_number += 1
 
         # Clear banned map reaction
-        await self.clear_reaction(map_ban.emoji)
+        await self.clear_reaction(self.bot.emoji_dict[map_ban.dev_name])
 
         # Check if the draft is over
         if len(self.maps_left) == 1:
@@ -378,18 +379,19 @@ class MapDraftMenu(discord.Message):
 class MapVoteMenu(discord.Message):
     """ Message containing the components for a map draft. """
 
-    def __init__(self, message, bot, users):
+    def __init__(self, ctx, bot, users):
         """ Copy constructor from a message and specific team draft args. """
         # Copy all attributes from message object
-        for attr_name in message.__slots__:
+        for attr_name in ctx.message.__slots__:
             try:
-                attr_val = getattr(message, attr_name)
+                attr_val = getattr(ctx.message, attr_name)
             except AttributeError:
                 continue
 
             setattr(self, attr_name, attr_val)
 
         # Add custom attributes
+        self.ctx = ctx
         self.bot = bot
         self.users = users
         self.all_maps = ALL_MAPS
@@ -415,9 +417,10 @@ class MapVoteMenu(discord.Message):
             return
 
         # Add map vote if it is valid
-        if user not in self.users or user in self.voted_users or str(reaction) not in [m.emoji for m in self.map_pool]:
-            await self.remove_reaction(reaction, user)
-            return
+        if user not in self.users or user in self.voted_users or \
+            str(reaction) not in [self.bot.emoji_dict[m.dev_name] for m in self.map_pool]:
+                await self.remove_reaction(reaction, user)
+                return
 
         try:
             self.map_votes[str(reaction)] += 1
@@ -440,9 +443,9 @@ class MapVoteMenu(discord.Message):
         mp_dict = config.map_pool.to_dict
         self.map_pool = [m for m in self.all_maps if mp_dict[m.dev_name]]
         random.shuffle(self.map_pool)
-        self.map_choices = self.map_pool[:2]
+        self.map_choices = self.map_pool
         self.map_votes = {
-            self.bot.emoji_dict[m.dev_name]: 0 for m in self.map_pool[:2]}
+            self.bot.emoji_dict[m.dev_name]: 0 for m in self.map_pool}
         embed = self._vote_embed()
         await self.edit(embed=embed)
 
@@ -474,7 +477,7 @@ class MapVoteMenu(discord.Message):
                 winners_emoji.append(emoji)
 
         winner_emoji = winners_emoji[0] if len(winners_emoji) == 1 else random.choice(winners_emoji)
-        winner_map = [m for m in self.map_pool if m.emoji == winner_emoji][0]
+        winner_map = [m for m in self.map_pool if self.bot.emoji_dict[m.dev_name] == winner_emoji][0]
 
         # Return class to original state after map drafting is done
         self.map_pool = None
@@ -538,15 +541,15 @@ class MatchCog(commands.Cog):
         team_size = len(temp_users) // 2
         return temp_users[:team_size], temp_users[team_size:]
 
-    async def draft_maps(self, message, captain_1, captain_2):
+    async def draft_maps(self, ctx, captain_1, captain_2):
         """"""
-        menu = MapDraftMenu(message, self.bot)
+        menu = MapDraftMenu(ctx, self.bot)
         map_pick = await menu.draft(captain_1, captain_2)
         return map_pick
 
-    async def vote_maps(self, message, users):
+    async def vote_maps(self, ctx, users):
         """"""
-        menu = MapVoteMenu(message, self.bot, users)
+        menu = MapVoteMenu(ctx, self.bot, users)
         voted_map = await menu.vote()
         return voted_map
 
@@ -627,9 +630,9 @@ class MatchCog(commands.Cog):
 
             # Get map pick
             if map_method == MapMethod.CAPTAINS:
-                map_pick = await self.draft_maps(ready_message, team_one[0], team_two[0])
+                map_pick = await self.draft_maps(ready_ctx, team_one[0], team_two[0])
             elif map_method == MapMethod.VOTE:
-                map_pick = await self.vote_maps(ready_message, users)
+                map_pick = await self.vote_maps(ready_ctx, users)
             elif map_method == MapMethod.RANDOM:
                 map_pick = await self.random_map(ctx)
             else:
