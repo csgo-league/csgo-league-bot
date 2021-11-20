@@ -44,7 +44,7 @@ class DBHelper:
 
     async def insert_guilds(self, *guild_ids):
         """ Add a list of guilds into the guilds table and return the ones successfully added. """
-        rows = [tuple([guild_id] + [None] * 13) for guild_id in guild_ids]
+        rows = [tuple([guild_id] + [None] * 14) for guild_id in guild_ids]
         statement = (
             'INSERT INTO guilds (id)\n'
             '    (SELECT id FROM unnest($1::guilds[]))\n'
@@ -73,7 +73,7 @@ class DBHelper:
     async def sync_guilds(self, *guild_ids):
         """ Synchronizes the guilds table with the guilds in the bot. """
 
-        insert_rows = [tuple([guild_id] + [None] * 13) for guild_id in guild_ids]
+        insert_rows = [tuple([guild_id] + [None] * 14) for guild_id in guild_ids]
         insert_statement = (
             'INSERT INTO guilds (id)\n'
             '    (SELECT id FROM unnest($1::guilds[]))\n'
