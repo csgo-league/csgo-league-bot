@@ -135,5 +135,6 @@ class LeagueBot(commands.AutoShardedBot):
         await super().close()
         await self.db_pool.close()
 
-        self.logger.info('Closing API helper client session')
-        await Sessions.requests.close()
+        if hasattr(Sessions, 'requests'):
+            self.logger.info('Closing API helper client session')
+            await Sessions.requests.close()
