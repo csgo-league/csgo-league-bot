@@ -64,12 +64,12 @@ class MatchServer:
 
         url = f'{Config.api_url}/match/start'
         data = {
-            'team_one': {user.id: user.display_name for user in team_one},
-            'team_two': {user.id: user.display_name for user in team_two}
+            'team_one': {f'{user.id}': user.display_name for user in team_one},
+            'team_two': {f'{user.id}': user.display_name for user in team_two}
         }
 
         if map_pick:
-            data['maps'] = map_pick
+            data['maps'] = [f'{map_pick}']
 
         async with Sessions.requests.post(url=url, json=data) as resp:
             json = await resp.json()
