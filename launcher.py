@@ -16,13 +16,21 @@ EMOJI_FILE = os.path.join(ABS_ROOT_DIR, 'emojis.json')
 BOT_LOGGER = logging.getLogger('csgoleague.bot')
 load_dotenv()  # Load the environment variables in the local .env file
 
+if os.name == 'nt':
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+
+def _get_loop():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    return loop
+
 
 def run_bot():
     """ Parse the config file and run the bot. """
     # Get database pool for bot
     db_connect_url = 'postgresql://{POSTGRESQL_USER}:{POSTGRESQL_PASSWORD}@{POSTGRESQL_HOST}/{POSTGRESQL_DB}'
-    loop = asyncio.get_event_loop()
-    db_pool = loop.run_until_complete(asyncpg.create_pool(db_connect_url.format(**os.environ)))
+    db_pool = _get_loop().run_until_complete(asyncpg.create_pool(db_connect_url.format(**os.environ)))
 
     # Check API URL
     api_url = os.environ['CSGO_LEAGUE_API_URL']
@@ -41,7 +49,7 @@ def run_bot():
 
 def create_emojis(guild_id):
     """"""
-    client = discord.Client(loop=asyncio.new_event_loop())
+    client = discord.Client(loop=_get_loop())
 
     @client.event
     async def on_ready():

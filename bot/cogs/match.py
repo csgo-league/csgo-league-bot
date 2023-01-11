@@ -231,6 +231,7 @@ class TeamDraftMenu(discord.Message):
 
 
 ALL_MAPS = [
+    Map('Ancient', 'de_ancient'),
     Map('Cache', 'de_cache'),
     Map('Cobblestone', 'de_cbble'),
     Map('Dust II', 'de_dust2'),
@@ -260,7 +261,7 @@ class MapDraftMenu(discord.Message):
         # Add custom attributes
         self.ctx = ctx
         self.bot = bot
-        self.ban_order = '12121212'
+        self.ban_order = '121212121'
         self.all_maps = ALL_MAPS
         self.captains = None
         self.map_pool = None

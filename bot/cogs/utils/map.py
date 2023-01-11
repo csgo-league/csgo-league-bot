@@ -24,6 +24,7 @@ class Maps:
     """
     Namespace to store all maps under.
     """
+    de_ancient = Map('Ancient', 'de_ancient')
     de_cache = Map('Cache', 'de_cache')
     de_cbble = Map('Cobblestone', 'de_cbble')
     de_dust2 = Map('Dust II', 'de_dust2')
@@ -33,7 +34,7 @@ class Maps:
     de_overpass = Map('Overpass', 'de_overpass')
     de_train = Map('Train', 'de_train')
     de_vertigo = Map('Vertigo', 'de_vertigo')
-    all = {de_cache, de_cbble, de_dust2, de_inferno, de_mirage, de_nuke, de_overpass, de_train, de_vertigo}
+    all = {de_ancient, de_cache, de_cbble, de_dust2, de_inferno, de_mirage, de_nuke, de_overpass, de_train, de_vertigo}
 
 
 class MapPool(set):

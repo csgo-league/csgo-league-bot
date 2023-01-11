@@ -1,4 +1,3 @@
-[![HitCount](http://hits.dwyl.io/csgo-league/csgo-league-bot.svg)](http://hits.dwyl.io/csgo-league/csgo-league-bot)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/csgo-league/csgo-league-bot/graphs/commit-activity)
 [![GitHub release](https://img.shields.io/github/release/csgo-league/csgo-league-bot.svg)](https://github.com/csgo-league/csgo-league-bot/releases/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
@@ -64,7 +63,7 @@ If you appreciate the project then please take the time to star our repository.
 ## Setup (Linux)
 1. First you must have a bot instance to run this script on. Follow the discord.py tutorial [here](https://discordpy.readthedocs.io/en/latest/discord.html) on how to set one up. Be sure to invite it to a server to use it.
 
-   * The necessary OAuth2 invite permission scopes integer is `17067072`.
+   * The necessary OAuth2 invite permission scopes integer is `1090808896` as shown [here](https://discordapi.com/permissions.html#1090808896).
 
    * Enable the "server members intent" for your bot, as shown [here](https://discordpy.readthedocs.io/en/latest/intents.html#privileged-intents).
 
